@@ -6,6 +6,7 @@ import Header from './Header';
 import Notifications from './Notifications';
 import AdminLogin from './AdminLogin';
 import BlockSchedule from './BlockSchedule';
+import ReportsView from './ReportsView';
 import { STATUS_COLORS } from '../utils/data';
 import {
   getTodayStr,
@@ -55,6 +56,7 @@ export default function AdminView() {
   const navItems = [
     { key: "dashboard", label: "Panel", active: view === "dashboard", onClick: () => setView("dashboard") },
     { key: "team", label: "Equipo", active: view === "team", onClick: () => setView("team") },
+    { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") }
   ];
 
@@ -65,6 +67,7 @@ export default function AdminView() {
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}>
         {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
+        {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
       </main>
     </div>
