@@ -141,3 +141,47 @@ export const getTakenTimes = (appointments, barberId, date) => {
     )
     .map(a => a.time);
 };
+
+// ==================== BLOQUEOS ====================
+export const isTimeBlocked = (blocks, barberId, date, time) => {
+  if (!blocks || blocks.length === 0) return false;
+
+  return blocks.some(block => {
+    // Verificar si aplica al barbero
+    if (block.barberId !== 'all' && String(block.barberId) !== String(barberId)) return false;
+
+    // Verificar fecha según tipo
+    if (block.type === 'fullDay') {
+      return block.date === date;
+    }
+    if (block.type === 'range') {
+      return date >= block.date && date <= block.endDate;
+    }
+    if (block.type === 'hours') {
+      return block.date === date && block.hours && block.hours.includes(time);
+    }
+    return false;
+  });
+};
+
+export const getBlockedTimes = (blocks, barberId, date) => {
+  if (!blocks || blocks.length === 0 || !barberId || !date) return [];
+
+  const blocked = new Set();
+  blocks.forEach(block => {
+    if (block.barberId !== 'all' && String(block.barberId) !== String(barberId)) return;
+
+    if (block.type === 'fullDay' && block.date === date) {
+      // Bloquea todo el día — no devolvemos horas, devolvemos un flag
+      blocked.add('FULL_DAY');
+    }
+    if (block.type === 'range' && date >= block.date && date <= block.endDate) {
+      blocked.add('FULL_DAY');
+    }
+    if (block.type === 'hours' && block.date === date && block.hours) {
+      block.hours.forEach(h => blocked.add(h));
+    }
+  });
+
+  return Array.from(blocked);
+};

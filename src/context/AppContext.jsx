@@ -9,6 +9,7 @@ const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [appointments, setAppointments] = useState([]);
   const [barbers, setBarbers] = useState([]);
+  const [blocks, setBlocks] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +25,21 @@ export function AppProvider({ children }) {
         setAppointments([]);
       }
       setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  // ========== ESCUCHAR BLOQUEOS EN TIEMPO REAL ==========
+  useEffect(() => {
+    const blocksRef = ref(db, 'bloqueos');
+    const unsub = onValue(blocksRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const lista = Object.entries(data).map(([id, val]) => ({ ...val, id }));
+        setBlocks(lista);
+      } else {
+        setBlocks([]);
+      }
     });
     return () => unsub();
   }, []);
@@ -143,7 +159,7 @@ export function AppProvider({ children }) {
   }, [addNotification]);
 
   const value = {
-    appointments, barbers, notifications, loading,
+    appointments, barbers, blocks, notifications, loading,
     addAppointment, updateAppointmentStatus, deleteAppointment,
     addBarber, toggleBarber, deleteBarber,
     addNotification, removeNotification,

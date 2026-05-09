@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
 import { SERVICES, HOURS, BARBERSHOP_INFO } from '../utils/data';
-import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone } from '../utils/helpers';
+import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone, getBlockedTimes } from '../utils/helpers';
 
 const STEPS = [
   { num: 1, label: "Tus datos" },
@@ -25,7 +25,7 @@ export default function ClientView() {
     client: "", phone: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
 
-  const { appointments, barbers, addAppointment, loading } = useApp();
+  const { appointments, barbers, blocks, addAppointment, loading } = useApp();
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
   if (loading) return <LoadingScreen />;
@@ -36,6 +36,8 @@ export default function ClientView() {
   const selectedBarber = activeBarbers.find(b => b.id === form.barberId);
   const selectedService = SERVICES.find(s => s.id === Number(form.serviceId));
   const takenTimes = getTakenTimes(appointments, form.barberId, form.date);
+  const blockedTimes = getBlockedTimes(blocks, form.barberId, form.date);
+  const isFullDayBlocked = blockedTimes.includes('FULL_DAY');
 
   const update = (k, v) => {
     setForm(f => ({ ...f, [k]: v }));
@@ -105,6 +107,8 @@ export default function ClientView() {
             selectedBarber={selectedBarber}
             selectedService={selectedService}
             takenTimes={takenTimes}
+            blockedTimes={blockedTimes}
+            isFullDayBlocked={isFullDayBlocked}
             handleNext={handleNext}
             handleSubmit={handleSubmit}
           />
@@ -115,7 +119,7 @@ export default function ClientView() {
 }
 
 // ==================== BOOKING FLOW ====================
-function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, handleNext, handleSubmit }) {
+function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, blockedTimes, isFullDayBlocked, handleNext, handleSubmit }) {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 32 }}>
@@ -127,7 +131,7 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
       <StepsIndicator currentStep={step} steps={STEPS} />
       {step === 1 && <Step1ClientInfo form={form} update={update} errors={errors} barbers={barbers} selectedBarber={selectedBarber} onNext={handleNext} />}
       {step === 2 && <Step2Service form={form} update={update} onBack={() => setStep(1)} onNext={handleNext} />}
-      {step === 3 && <Step3DateTime form={form} update={update} takenTimes={takenTimes} onBack={() => setStep(2)} onNext={handleNext} />}
+      {step === 3 && <Step3DateTime form={form} update={update} takenTimes={takenTimes} blockedTimes={blockedTimes} isFullDayBlocked={isFullDayBlocked} onBack={() => setStep(2)} onNext={handleNext} />}
       {step === 4 && <Step4Confirm form={form} selectedBarber={selectedBarber} selectedService={selectedService} onBack={() => setStep(3)} onSubmit={handleSubmit} />}
     </div>
   );
@@ -216,8 +220,10 @@ function Step2Service({ form, update, onBack, onNext }) {
 }
 
 // ==================== STEP 3 ====================
-function Step3DateTime({ form, update, takenTimes, onBack, onNext }) {
+function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocked, onBack, onNext }) {
   const days = getNext7Days();
+  const blockedHoursOnly = (blockedTimes || []).filter(t => t !== 'FULL_DAY');
+
   return (
     <div className="fade-in card" style={{ padding: 28 }}>
       <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#aaa" }}>Elige fecha y hora</h3>
@@ -235,19 +241,54 @@ function Step3DateTime({ form, update, takenTimes, onBack, onNext }) {
           })}
         </div>
       </div>
-      {form.date && (
+      {form.date && isFullDayBlocked && (
+        <div className="fade-in" style={{
+          background: "#3f1111",
+          border: "1px solid #dc2626",
+          borderRadius: 10,
+          padding: 16,
+          marginBottom: 16,
+          textAlign: "center"
+        }}>
+          <p style={{ fontSize: 24, marginBottom: 4 }}>🚫</p>
+          <p style={{ color: "#fca5a5", fontWeight: 600, fontSize: 14 }}>
+            Este día no está disponible
+          </p>
+          <p style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+            Por favor elige otra fecha
+          </p>
+        </div>
+      )}
+      {form.date && !isFullDayBlocked && (
         <div className="fade-in" style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Hora disponible</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {HOURS.map(h => {
               const taken = takenTimes.includes(h);
+              const blocked = blockedHoursOnly.includes(h);
+              const unavailable = taken || blocked;
               const isSelected = form.time === h;
               return (
-                <div key={h} onClick={() => !taken && update("time", h)} style={{ padding: "10px 16px", borderRadius: 8, border: `1.5px solid ${isSelected ? "#c9a84c" : taken ? "#1a1a1a" : "#1e1e1e"}`, background: isSelected ? "#1a150a" : taken ? "#0d0d0d" : "#0f0f0f", cursor: taken ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, color: isSelected ? "#c9a84c" : taken ? "#333" : "#f5f0eb", textDecoration: taken ? "line-through" : "none", transition: "all 0.2s" }}>{h}</div>
+                <div key={h} onClick={() => !unavailable && update("time", h)} style={{
+                  padding: "10px 16px",
+                  borderRadius: 8,
+                  border: `1.5px solid ${isSelected ? "#c9a84c" : unavailable ? "#1a1a1a" : "#1e1e1e"}`,
+                  background: isSelected ? "#1a150a" : unavailable ? "#0d0d0d" : "#0f0f0f",
+                  cursor: unavailable ? "not-allowed" : "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: isSelected ? "#c9a84c" : unavailable ? "#333" : "#f5f0eb",
+                  textDecoration: unavailable ? "line-through" : "none",
+                  transition: "all 0.2s"
+                }}>{h}</div>
               );
             })}
           </div>
-          {takenTimes.length > 0 && <p style={{ fontSize: 11, color: "#666", marginTop: 10 }}>Los horarios tachados ya están ocupados</p>}
+          {(takenTimes.length > 0 || blockedHoursOnly.length > 0) && (
+            <p style={{ fontSize: 11, color: "#666", marginTop: 10 }}>
+              Los horarios tachados no están disponibles
+            </p>
+          )}
         </div>
       )}
       <FormField label="Notas adicionales (opcional)">
@@ -255,7 +296,7 @@ function Step3DateTime({ form, update, takenTimes, onBack, onNext }) {
       </FormField>
       <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between" }}>
         <button className="btn-ghost" onClick={onBack}>← Atrás</button>
-        <button className="btn-gold" onClick={onNext} disabled={!form.date || !form.time}>Siguiente →</button>
+        <button className="btn-gold" onClick={onNext} disabled={!form.date || !form.time || isFullDayBlocked}>Siguiente →</button>
       </div>
     </div>
   );

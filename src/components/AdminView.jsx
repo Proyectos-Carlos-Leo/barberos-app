@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
 import AdminLogin from './AdminLogin';
+import BlockSchedule from './BlockSchedule';
 import { STATUS_COLORS } from '../utils/data';
 import {
   getTodayStr,
@@ -19,7 +20,7 @@ export default function AdminView() {
   const [isAuth, setIsAuth] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState("dashboard");
-  const { appointments, barbers, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
+  const { appointments, barbers, blocks, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
   // Escuchar cambios de auth en Firebase
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function AdminView() {
       <Notifications />
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}>
         {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
-        {view === "team" && <TeamView barbers={barbers} appointments={appointments} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
+        {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
       </main>
     </div>
@@ -209,8 +210,9 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 }
 
 // ==================== TEAM VIEW ====================
-function TeamView({ barbers, appointments, onToggle, onAdd, onDelete }) {
+function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) {
   const [showForm, setShowForm] = useState(false);
+  const [showBlocks, setShowBlocks] = useState(false);
   const [form, setForm] = useState({ name: "", specialty: "" });
 
   const handleAdd = () => {
@@ -225,10 +227,32 @@ function TeamView({ barbers, appointments, onToggle, onAdd, onDelete }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>Tu <span className="gold">equipo</span></h1>
-          <p style={{ color: "#888", fontSize: 14 }}>Gestiona a tus barberos</p>
+          <p style={{ color: "#888", fontSize: 14 }}>Gestiona barberos y horarios</p>
         </div>
-        <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancelar" : "+ Agregar barbero"}</button>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button
+            onClick={() => setShowBlocks(true)}
+            style={{
+              padding: "10px 18px",
+              background: "transparent",
+              border: "1px solid #3f1111",
+              color: "#f87171",
+              borderRadius: 8,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              cursor: "pointer"
+            }}
+          >
+            🚫 Bloqueos {blocks?.length > 0 && `(${blocks.length})`}
+          </button>
+          <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancelar" : "+ Agregar barbero"}</button>
+        </div>
       </div>
+
+      {showBlocks && <BlockSchedule barbers={barbers} blocks={blocks} onClose={() => setShowBlocks(false)} />}
 
       {showForm && (
         <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid #3d2e0a" }}>
