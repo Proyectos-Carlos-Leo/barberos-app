@@ -162,7 +162,7 @@ export default function AdminView() {
           </button>
         </div>
       )}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}>
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 14px" }}>
         {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
         {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
@@ -199,7 +199,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         <p style={{ color: "#888", fontSize: 14 }}>Administra todas las citas en tiempo real</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
         {statCards.map(s => (
           <div key={s.label} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
             <span style={{ position: "absolute", top: 12, right: 14, fontSize: 18, opacity: 0.4 }}>{s.icon}</span>
@@ -250,7 +250,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           const sc = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
           const isOpen = selected === appt.id;
           return (
-            <div key={appt.id} className="card" style={{ padding: "18px 22px", cursor: "pointer", border: `1px solid ${isOpen ? "#c9a84c33" : "#1e1e1e"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
+            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "#c9a84c33" : "#1e1e1e"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#c9a84c", minWidth: 56 }}>{appt.time}</div>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "#333", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
@@ -368,7 +368,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
       {showForm && (
         <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid #3d2e0a" }}>
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "#c9a84c" }}>Nuevo barbero</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             <div>
               <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Nombre *</label>
               <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej. Juan Pérez" />
@@ -437,7 +437,7 @@ function HistoryView({ appointments, barbers }) {
         <h1 className="section-title" style={{ marginBottom: 4 }}><span className="gold">Historial</span> de citas</h1>
         <p style={{ color: "#888", fontSize: 14 }}>Citas completadas y reportes</p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
         {[["Total completadas", completed.length, "#4ade80"], ["Ingresos totales", formatCurrency(totalRevenue), "#c9a84c"], ["Ticket promedio", completed.length > 0 ? formatCurrency(Math.round(totalRevenue / completed.length)) : "$0", "#60a5fa"]].map(([label, value, color]) => (
           <div key={label} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: "18px 20px" }}>
             <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>

@@ -11,6 +11,7 @@ html, body {
   color: #f5f0eb;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
 }
 
 #root {
@@ -45,7 +46,7 @@ input, select, textarea {
   padding: 10px 14px;
   width: 100%;
   font-family: 'Barlow', sans-serif;
-  font-size: 14px;
+  font-size: 16px; /* 16px en móvil para evitar zoom automático en iOS */
   outline: none;
   transition: border-color 0.2s;
 }
@@ -77,6 +78,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
   text-transform: uppercase;
+  min-height: 44px; /* Touch target mínimo */
 }
 
 .btn-gold:hover:not(:disabled) {
@@ -99,6 +101,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 14px;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
+  min-height: 44px;
 }
 
 .btn-ghost:hover {
@@ -147,6 +150,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ==================== NAVIGATION ==================== */
@@ -163,6 +167,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding: 8px 16px;
   border-radius: 6px;
   transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
 }
 
 .nav-btn.active {
@@ -172,6 +177,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .nav-btn:hover:not(.active) {
   color: #f5f0eb;
+}
+
+/* ==================== HEADER ==================== */
+.app-header {
+  border-bottom: 1px solid #1e1e1e;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  background: #0a0a0a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.app-nav-section {
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid #2e2e2e;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* ==================== UTILITIES ==================== */
@@ -195,73 +229,38 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
-.fade-in {
-  animation: fadeIn 0.3s ease;
+.fade-in { animation: fadeIn 0.3s ease; }
+.fade-in-up { animation: fadeInUp 0.5s ease; }
+.slide-in { animation: slideIn 0.3s ease; }
+.pulse { animation: pulse 2s ease infinite; }
+
+/* ==================== LINKS ==================== */
+a {
+  color: #c9a84c;
+  text-decoration: none;
 }
 
-.fade-in-up {
-  animation: fadeInUp 0.5s ease;
-}
-
-.slide-in {
-  animation: slideIn 0.3s ease;
-}
-
-.pulse {
-  animation: pulse 2s ease infinite;
-}
-
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 768px) {
-  .section-title {
-    font-size: 24px;
-  }
-  
-  .btn-gold, .btn-ghost {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
+a:hover {
+  text-decoration: underline;
 }
 
 /* ==================== ACCESSIBILITY ==================== */
@@ -273,12 +272,115 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* ==================== LINKS ==================== */
-a {
-  color: #c9a84c;
-  text-decoration: none;
+/* ==================== TABLET (768px y menos) ==================== */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 24px;
+  }
+
+  .btn-gold, .btn-ghost {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .app-header {
+    padding: 0 14px;
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-nav {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-nav::-webkit-scrollbar {
+    height: 0;
+  }
+
+  .nav-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .app-nav-section {
+    margin-left: auto;
+    padding-left: 8px;
+    gap: 6px;
+  }
 }
 
-a:hover {
-  text-decoration: underline;
+/* ==================== MÓVIL (480px y menos) ==================== */
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 22px;
+  }
+
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-large {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
+/* ==================== MEJORAS GENERALES MÓVIL ==================== */
+@media (hover: none) {
+  /* En dispositivos táctiles, quitar efectos hover */
+  .btn-gold:hover, .btn-ghost:hover {
+    transform: none;
+  }
+}
+
+/* Prevenir overflow horizontal */
+body {
+  overflow-x: hidden;
+}
+
+main {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ==================== BOOKING CARDS ==================== */
+.booking-card {
+  padding: 28px;
+}
+
+@media (max-width: 600px) {
+  .booking-card {
+    padding: 18px 16px;
+  }
+}
+
+/* ==================== APPOINTMENT CARDS ==================== */
+.appt-card {
+  padding: 18px 22px;
+}
+
+@media (max-width: 600px) {
+  .appt-card {
+    padding: 14px 14px;
+  }
+}
+
+/* ==================== MODAL BODIES ==================== */
+.modal-body {
+  padding: 24px;
+}
+
+@media (max-width: 600px) {
+  .modal-body {
+    padding: 16px 14px;
+  }
 }

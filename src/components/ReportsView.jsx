@@ -114,7 +114,7 @@ export default function ReportsView({ appointments, barbers }) {
       </div>
 
       {/* Resumen general */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
         <KPI label="Total citas completadas" value={completed.length} color="#4ade80" icon="✓" />
         <KPI label="Ingresos totales" value={formatCurrency(totalRevenue)} color="#c9a84c" icon="💰" />
         <KPI label="Ticket promedio" value={formatCurrency(Math.round(avgTicket))} color="#60a5fa" icon="🧾" />

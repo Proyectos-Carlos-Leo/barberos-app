@@ -32,7 +32,7 @@ export default function LoginScreen() {
         {/* Title */}
         <h1 style={{ 
           fontFamily: "'Barlow Condensed', sans-serif", 
-          fontSize: 56, 
+          fontSize: "clamp(40px, 12vw, 56px)", 
           fontWeight: 800, 
           letterSpacing: 2, 
           textTransform: "uppercase", 

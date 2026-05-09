@@ -102,7 +102,7 @@ export default function ClientView() {
     <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
       <Header userType="client" />
       <Notifications />
-      <main style={{ maxWidth: 700, margin: "0 auto", padding: "32px 20px" }}>
+      <main style={{ maxWidth: 700, margin: "0 auto", padding: "24px 14px" }}>
         {done && completedAppointment ? (
           <SuccessView
             appointment={completedAppointment}
@@ -173,7 +173,7 @@ function StepsIndicator({ currentStep, steps }) {
 // ==================== STEP 1 ====================
 function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext }) {
   return (
-    <div className="fade-in card" style={{ padding: 28 }}>
+    <div className="fade-in card booking-card">
       <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "#aaa" }}>Ingresa tus datos</h3>
       <div style={{ display: "grid", gap: 18 }}>
         <FormField label="Nombre completo *" error={errors.client}>
@@ -208,7 +208,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 // ==================== STEP 2 ====================
 function Step2Service({ form, update, onBack, onNext }) {
   return (
-    <div className="fade-in card" style={{ padding: 28 }}>
+    <div className="fade-in card booking-card">
       <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "#aaa" }}>Elige tu servicio</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
         {SERVICES.map(s => {
@@ -239,7 +239,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
   const blockedHoursOnly = (blockedTimes || []).filter(t => t !== 'FULL_DAY');
 
   return (
-    <div className="fade-in card" style={{ padding: 28 }}>
+    <div className="fade-in card booking-card">
       <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#aaa" }}>Elige fecha y hora</h3>
       <div style={{ marginBottom: 24 }}>
         <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Fecha</label>
@@ -343,10 +343,10 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
   ];
 
   return (
-    <div className="fade-in card" style={{ padding: 28 }}>
+    <div className="fade-in card booking-card">
       <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#aaa" }}>Confirma tu cita</h3>
       <div style={{ background: "#0f0f0f", borderRadius: 12, padding: 22, marginBottom: 20, border: "1px solid #1e1e1e" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
           {summary.map(([label, val]) => (
             <div key={label}>
               <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{label}</p>

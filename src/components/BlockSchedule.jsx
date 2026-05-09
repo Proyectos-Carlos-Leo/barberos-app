@@ -85,7 +85,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
       <div className="fade-in" style={{
         background: '#0f0f0f', border: '1px solid #2e2e2e',
         borderRadius: 16, width: '100%', maxWidth: 700,
-        maxHeight: '90vh', overflowY: 'auto'
+        maxHeight: '92vh', overflowY: 'auto'
       }}>
         {/* Header */}
         <div style={{
@@ -113,7 +113,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           }}>×</button>
         </div>
 
-        <div style={{ padding: 24 }}>
+        <div className="modal-body">
           {/* Tipo de bloqueo */}
           <div style={{ marginBottom: 20 }}>
             <label style={{
@@ -123,7 +123,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
             }}>
               Tipo de bloqueo
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
               {[
                 { val: 'hours', label: '⏰ Horas sueltas', desc: 'Comida, descanso' },
                 { val: 'fullDay', label: '📅 Día completo', desc: 'Día libre' },
