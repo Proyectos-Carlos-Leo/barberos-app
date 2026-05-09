@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
@@ -8,6 +8,7 @@ import AdminLogin from './AdminLogin';
 import BlockSchedule from './BlockSchedule';
 import ReportsView from './ReportsView';
 import { STATUS_COLORS } from '../utils/data';
+import { initNotifications, notifyNewAppointment, updateTabTitle } from '../utils/notifications';
 import {
   getTodayStr,
   filterAppointments,
@@ -21,6 +22,8 @@ export default function AdminView() {
   const [isAuth, setIsAuth] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState("dashboard");
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
+  const previousIdsRef = useRef(null);
   const { appointments, barbers, blocks, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
   // Escuchar cambios de auth en Firebase
@@ -31,6 +34,53 @@ export default function AdminView() {
     });
     return () => unsub();
   }, []);
+
+  // Pedir permisos de notificación al entrar al admin
+  useEffect(() => {
+    if (!isAuth) return;
+    if ('Notification' in window) {
+      if (Notification.permission === 'default') {
+        setShowNotifBanner(true);
+      }
+    }
+  }, [isAuth]);
+
+  // Detectar citas nuevas y notificar
+  useEffect(() => {
+    if (!isAuth || loading) return;
+
+    const currentIds = new Set(appointments.map(a => a.id));
+
+    // Primera carga: solo guardar IDs, no notificar
+    if (previousIdsRef.current === null) {
+      previousIdsRef.current = currentIds;
+      return;
+    }
+
+    // Detectar IDs nuevos
+    const newOnes = appointments.filter(a => !previousIdsRef.current.has(a.id));
+
+    if (newOnes.length > 0) {
+      const pending = appointments.filter(a => a.status === 'pendiente').length;
+      newOnes.forEach(appt => notifyNewAppointment(appt, pending));
+    }
+
+    // Actualizar título con citas pendientes
+    const pendingCount = appointments.filter(a => a.status === 'pendiente').length;
+    updateTabTitle(pendingCount);
+
+    previousIdsRef.current = currentIds;
+  }, [appointments, isAuth, loading]);
+
+  // Limpiar título al salir
+  useEffect(() => {
+    return () => updateTabTitle(0);
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    await initNotifications();
+    setShowNotifBanner(false);
+  };
 
   // Mientras verifica auth
   if (authLoading) return (
@@ -64,6 +114,53 @@ export default function AdminView() {
     <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
       <Header userType="admin" navItems={navItems} />
       <Notifications />
+      {showNotifBanner && (
+        <div style={{
+          background: "linear-gradient(90deg, #1a150a, #1a1410)",
+          borderBottom: "1px solid #3d2e0a",
+          padding: "12px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+          flexWrap: "wrap"
+        }}>
+          <span style={{ fontSize: 20 }}>🔔</span>
+          <p style={{ fontSize: 13, color: "#c9a84c", flex: 1, minWidth: 200 }}>
+            <strong>Activa las notificaciones</strong> para recibir un aviso cada vez que alguien agende una cita
+          </p>
+          <button
+            onClick={handleEnableNotifications}
+            style={{
+              padding: "6px 14px",
+              background: "linear-gradient(135deg, #c9a84c, #e8c96a)",
+              color: "#0a0a0a",
+              border: "none",
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              textTransform: "uppercase"
+            }}
+          >
+            Activar
+          </button>
+          <button
+            onClick={() => setShowNotifBanner(false)}
+            style={{
+              padding: "6px 10px",
+              background: "transparent",
+              color: "#888",
+              border: "1px solid #2e2e2e",
+              borderRadius: 6,
+              fontSize: 12,
+              cursor: "pointer"
+            }}
+          >
+            Después
+          </button>
+        </div>
+      )}
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}>
         {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
