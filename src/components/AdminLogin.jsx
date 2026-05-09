@@ -1,28 +1,37 @@
 import { useState } from 'react';
-
-// ⚠️ CAMBIA ESTA CONTRASEÑA antes de entregar al cliente
-const ADMIN_PASSWORD = "barberia2026";
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
 
 export default function AdminLogin({ onLogin }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (!password) {
-      setError('Escribe la contraseña');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Completa todos los campos');
       return;
     }
+    setError('');
     setLoading(true);
-    setTimeout(() => {
-      if (password === ADMIN_PASSWORD) {
-        sessionStorage.setItem('admin_auth', 'true');
-        onLogin();
-      } else {
-        setError('Contraseña incorrecta');
-        setLoading(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onLogin();
+    } catch (err) {
+      let msg = 'Error al iniciar sesión';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        msg = 'Email o contraseña incorrectos';
+      } else if (err.code === 'auth/user-not-found') {
+        msg = 'Usuario no registrado';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Email inválido';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Demasiados intentos, espera un momento';
       }
-    }, 600);
+      setError(msg);
+      setLoading(false);
+    }
   };
 
   const handleKey = (e) => {
@@ -41,20 +50,12 @@ export default function AdminLogin({ onLogin }) {
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet" />
 
-      <div className="fade-in" style={{
-        width: '100%',
-        maxWidth: 400,
-        textAlign: 'center'
-      }}>
-        {/* Icono */}
+      <div className="fade-in" style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
         <div style={{
-          width: 72,
-          height: 72,
+          width: 72, height: 72,
           background: 'linear-gradient(135deg, #c9a84c, #e8c96a)',
           borderRadius: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 28px',
           boxShadow: '0 10px 40px rgba(201,168,76,0.3)'
         }}>
@@ -63,15 +64,10 @@ export default function AdminLogin({ onLogin }) {
           </svg>
         </div>
 
-        {/* Título */}
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
-          fontSize: 36,
-          fontWeight: 800,
-          letterSpacing: 2,
-          textTransform: 'uppercase',
-          color: '#f5f0eb',
-          marginBottom: 8
+          fontSize: 36, fontWeight: 800, letterSpacing: 2,
+          textTransform: 'uppercase', color: '#f5f0eb', marginBottom: 8
         }}>
           Acceso <span style={{ color: '#c9a84c' }}>Admin</span>
         </h1>
@@ -79,22 +75,43 @@ export default function AdminLogin({ onLogin }) {
           Solo el dueño puede entrar aquí
         </p>
 
-        {/* Card */}
         <div style={{
-          background: '#141414',
-          border: '1px solid #222',
-          borderRadius: 16,
-          padding: 32
+          background: '#141414', border: '1px solid #222',
+          borderRadius: 16, padding: 32
         }}>
+          {/* Email */}
+          <div style={{ marginBottom: 16, textAlign: 'left' }}>
+            <label style={{
+              fontSize: 11, color: '#888', display: 'block',
+              marginBottom: 8, fontWeight: 600,
+              textTransform: 'uppercase', letterSpacing: 0.5
+            }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setError(''); }}
+              onKeyDown={handleKey}
+              placeholder="tu@email.com"
+              autoFocus
+              autoComplete="email"
+              style={{
+                background: '#1a1a1a', color: '#f5f0eb',
+                border: `1px solid ${error ? '#dc2626' : '#2e2e2e'}`,
+                borderRadius: 8, padding: '12px 16px',
+                width: '100%', fontFamily: "'Barlow', sans-serif",
+                fontSize: 15, outline: 'none'
+              }}
+            />
+          </div>
+
+          {/* Password */}
           <div style={{ marginBottom: 20, textAlign: 'left' }}>
             <label style={{
-              fontSize: 11,
-              color: '#888',
-              display: 'block',
-              marginBottom: 8,
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: 0.5
+              fontSize: 11, color: '#888', display: 'block',
+              marginBottom: 8, fontWeight: 600,
+              textTransform: 'uppercase', letterSpacing: 0.5
             }}>
               Contraseña
             </label>
@@ -104,27 +121,17 @@ export default function AdminLogin({ onLogin }) {
               onChange={e => { setPassword(e.target.value); setError(''); }}
               onKeyDown={handleKey}
               placeholder="••••••••"
-              autoFocus
+              autoComplete="current-password"
               style={{
-                background: '#1a1a1a',
-                color: '#f5f0eb',
+                background: '#1a1a1a', color: '#f5f0eb',
                 border: `1px solid ${error ? '#dc2626' : '#2e2e2e'}`,
-                borderRadius: 8,
-                padding: '12px 16px',
-                width: '100%',
-                fontFamily: "'Barlow', sans-serif",
-                fontSize: 16,
-                outline: 'none',
-                letterSpacing: 4
+                borderRadius: 8, padding: '12px 16px',
+                width: '100%', fontFamily: "'Barlow', sans-serif",
+                fontSize: 15, outline: 'none', letterSpacing: 4
               }}
             />
             {error && (
-              <p style={{
-                color: '#f87171',
-                fontSize: 12,
-                marginTop: 8,
-                textAlign: 'left'
-              }}>
+              <p style={{ color: '#f87171', fontSize: 12, marginTop: 8 }}>
                 ⚠ {error}
               </p>
             )}
@@ -137,14 +144,11 @@ export default function AdminLogin({ onLogin }) {
               width: '100%',
               background: loading ? '#2e2e2e' : 'linear-gradient(135deg, #c9a84c, #e8c96a)',
               color: loading ? '#888' : '#0a0a0a',
-              border: 'none',
-              borderRadius: 8,
+              border: 'none', borderRadius: 8,
               padding: '14px 24px',
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 16,
-              fontWeight: 700,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
+              fontSize: 16, fontWeight: 700,
+              letterSpacing: 1, textTransform: 'uppercase',
               cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s'
             }}

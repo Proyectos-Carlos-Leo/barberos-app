@@ -1,4 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
 
 export default function Header({ userType, navItems = [] }) {
@@ -99,7 +101,7 @@ export default function Header({ userType, navItems = [] }) {
           {userType === 'admin' && (
             <button
               className="btn-ghost"
-              onClick={() => { sessionStorage.removeItem('admin_auth'); navigate('/admin'); window.location.reload(); }}
+              onClick={async () => { await signOut(auth); navigate('/'); }}
               style={{ padding: "6px 14px", fontSize: 12, color: "#f87171", borderColor: "#3f1111" }}
             >
               Cerrar sesión

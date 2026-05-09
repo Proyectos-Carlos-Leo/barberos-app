@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
@@ -14,11 +16,29 @@ import {
 } from '../utils/helpers';
 
 export default function AdminView() {
-  const [isAuth, setIsAuth] = useState(sessionStorage.getItem('admin_auth') === 'true');
+  const [isAuth, setIsAuth] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState("dashboard");
   const { appointments, barbers, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
-  // Login guard — DESPUÉS de todos los hooks
+  // Escuchar cambios de auth en Firebase
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsAuth(!!user);
+      setAuthLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  // Mientras verifica auth
+  if (authLoading) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
+      <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #c9a84c", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  // Si no está autenticado, mostrar login
   if (!isAuth) return <AdminLogin onLogin={() => setIsAuth(true)} />;
 
   if (loading) return (
