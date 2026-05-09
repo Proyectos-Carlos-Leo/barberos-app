@@ -7,6 +7,7 @@ import Notifications from './Notifications';
 import AdminLogin from './AdminLogin';
 import BlockSchedule from './BlockSchedule';
 import ReportsView from './ReportsView';
+import ConfirmModal from './ConfirmModal';
 import { STATUS_COLORS } from '../utils/data';
 import { initNotifications, notifyNewAppointment, updateTabTitle } from '../utils/notifications';
 import {
@@ -177,6 +178,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selected, setSelected] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
 
   const filtered = filterAppointments(appointments, { date: filterDate, barberId: filterBarber, status: filterStatus })
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -297,7 +299,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                     </div>
                   </div>
                   <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
-                    <button onClick={e => { e.stopPropagation(); if (confirm(`¿Eliminar la cita de ${appt.client}?`)) onDelete(appt.id); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid #2e2e2e", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗑 Eliminar</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid #2e2e2e", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗑 Eliminar</button>
                   </div>
                 </div>
               )}
@@ -305,6 +307,14 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           );
         })}
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="¿Eliminar cita?"
+        message={confirmDelete ? `Vas a eliminar la cita de ${confirmDelete.name}. Esta acción no se puede deshacer.` : ''}
+        confirmText="Sí, eliminar"
+        onConfirm={() => { onDelete(confirmDelete.id); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
@@ -313,6 +323,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) {
   const [showForm, setShowForm] = useState(false);
   const [showBlocks, setShowBlocks] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({ name: "", specialty: "" });
 
   const handleAdd = () => {
@@ -398,11 +409,19 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                   </div>
                 ))}
               </div>
-              <button onClick={() => { if (confirm(`¿Eliminar a ${b.name}?`)) onDelete(b.id); }} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid #2e2e2e", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
+              <button onClick={() => setConfirmDelete({ id: b.id, name: b.name })} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid #2e2e2e", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
             </div>
           );
         })}
       </div>
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="¿Eliminar barbero?"
+        message={confirmDelete ? `Vas a eliminar a ${confirmDelete.name} del equipo. Esta acción no se puede deshacer.` : ''}
+        confirmText="Sí, eliminar"
+        onConfirm={() => { onDelete(confirmDelete.id); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

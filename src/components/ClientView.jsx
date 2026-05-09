@@ -47,7 +47,7 @@ export default function ClientView() {
   const validateStep1 = () => {
     const errs = {};
     if (!validateName(form.client)) errs.client = "Ingresa tu nombre completo (mínimo 3 caracteres)";
-    if (form.phone && !validatePhone(form.phone)) errs.phone = "Teléfono inválido (mínimo 10 dígitos)";
+    if (!form.phone || !validatePhone(form.phone)) errs.phone = "Teléfono obligatorio (mínimo 10 dígitos)";
     if (!form.barberId) errs.barberId = "Selecciona un barbero";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -62,6 +62,20 @@ export default function ClientView() {
 
   // ✅ FIX #3: handleSubmit es async y espera el resultado real de Firebase
   const handleSubmit = async () => {
+    // ✅ Anti-spam: máximo 2 citas activas por teléfono al día
+    if (form.phone) {
+      const today = new Date().toISOString().split('T')[0];
+      const sameDayBookings = appointments.filter(a =>
+        a.phone === form.phone.trim() &&
+        a.date === today &&
+        a.status !== 'cancelada'
+      );
+      if (sameDayBookings.length >= 2) {
+        alert('⚠ Ya tienes 2 citas para hoy con este número. Si necesitas más, contacta directamente a la barbería.');
+        return;
+      }
+    }
+
     const newAppt = await addAppointment({
       client: form.client.trim(),
       phone: form.phone.trim(),
@@ -165,7 +179,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
         <FormField label="Nombre completo *" error={errors.client}>
           <input value={form.client} onChange={e => update("client", e.target.value)} placeholder="Ej. Juan García" />
         </FormField>
-        <FormField label="Teléfono" hint="Para confirmar tu cita por WhatsApp" error={errors.phone}>
+        <FormField label="Teléfono *" hint="Para confirmar tu cita por WhatsApp" error={errors.phone}>
           <input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="81 1234 5678" type="tel" />
         </FormField>
         <FormField label="Barbero *" error={errors.barberId}>
@@ -185,7 +199,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
         )}
       </div>
       <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
-        <button className="btn-gold" onClick={onNext} disabled={!form.client || !form.barberId}>Siguiente →</button>
+        <button className="btn-gold" onClick={onNext} disabled={!form.client || !form.phone || !form.barberId}>Siguiente →</button>
       </div>
     </div>
   );
@@ -266,7 +280,13 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
             {HOURS.map(h => {
               const taken = takenTimes.includes(h);
               const blocked = blockedHoursOnly.includes(h);
-              const unavailable = taken || blocked;
+              // ✅ Verificar si la hora ya pasó (solo si la fecha es hoy)
+              const today = new Date().toISOString().split('T')[0];
+              const isToday = form.date === today;
+              const now = new Date();
+              const [hh, mm] = h.split(':').map(Number);
+              const hourPassed = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
+              const unavailable = taken || blocked || hourPassed;
               const isSelected = form.time === h;
               return (
                 <div key={h} onClick={() => !unavailable && update("time", h)} style={{
