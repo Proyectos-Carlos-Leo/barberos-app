@@ -122,36 +122,119 @@ export default function ReportsView({ appointments, barbers }) {
       </div>
 
       {/* Gráfica de ingresos últimos 7 días */}
-      <Card title="Ingresos últimos 7 días" subtitle={`Total: ${formatCurrency(totalLast7)}`}>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 180, padding: "20px 0 8px" }}>
-          {last7Days.map(d => {
-            const heightPct = (d.revenue / maxRevenue) * 100;
-            const isToday = d.dateStr === getTodayStr();
-            return (
-              <div key={d.dateStr} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 10, color: "#666", fontWeight: 600, height: 14 }}>
-                  {d.revenue > 0 ? formatCurrency(d.revenue) : ""}
-                </span>
-                <div style={{
-                  width: "100%",
-                  height: `${Math.max(heightPct, 2)}%`,
-                  background: isToday
-                    ? "linear-gradient(180deg, #c9a84c, #8a6d2c)"
-                    : "linear-gradient(180deg, #2e2e2e, #1a1a1a)",
-                  borderRadius: "6px 6px 0 0",
-                  border: isToday ? "1px solid #e8c96a" : "1px solid #2e2e2e",
-                  minHeight: 4,
-                  transition: "all 0.3s",
-                  position: "relative"
-                }} />
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: 11, color: isToday ? "#c9a84c" : "#888", fontWeight: 600, textTransform: "uppercase" }}>{d.dayName}</p>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: isToday ? "#c9a84c" : "#aaa" }}>{d.num}</p>
-                </div>
+      <Card title="📊 Ingresos últimos 7 días" subtitle={`Total: ${formatCurrency(totalLast7)}`}>
+        {totalLast7 === 0 ? (
+          <EmptyState icon="📊" message="Aún no hay ingresos registrados" />
+        ) : (
+          <div style={{ padding: "16px 0 0" }}>
+            {/* Barras horizontales */}
+            <div style={{ display: "grid", gap: 10 }}>
+              {last7Days.map(d => {
+                const widthPct = (d.revenue / maxRevenue) * 100;
+                const isToday = d.dateStr === getTodayStr();
+                return (
+                  <div key={d.dateStr} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {/* Etiqueta día */}
+                    <div style={{ width: 48, textAlign: "right", flexShrink: 0 }}>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: isToday ? "#c9a84c" : "#666",
+                        textTransform: "uppercase"
+                      }}>
+                        {d.label}
+                      </span>
+                      <span style={{
+                        display: "block",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: isToday ? "#c9a84c" : "#aaa"
+                      }}>
+                        {d.num}
+                      </span>
+                    </div>
+                    {/* Barra */}
+                    <div style={{
+                      flex: 1,
+                      height: 36,
+                      background: "#1a1a1a",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      position: "relative"
+                    }}>
+                      <div style={{
+                        width: `${Math.max(widthPct, d.revenue > 0 ? 4 : 0)}%`,
+                        height: "100%",
+                        background: isToday
+                          ? "linear-gradient(90deg, #8a6d2c, #c9a84c, #e8c96a)"
+                          : "linear-gradient(90deg, #2a2a2a, #3d3d3d)",
+                        borderRadius: 8,
+                        transition: "width 0.6s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        paddingRight: 8,
+                        minWidth: d.revenue > 0 ? 50 : 0
+                      }}>
+                        {d.revenue > 0 && (
+                          <span style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: isToday ? "#0a0a0a" : "#888",
+                            whiteSpace: "nowrap"
+                          }}>
+                            {formatCurrency(d.revenue)}
+                          </span>
+                        )}
+                      </div>
+                      {d.revenue === 0 && (
+                        <span style={{
+                          position: "absolute",
+                          left: 10,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          fontSize: 11,
+                          color: "#444"
+                        }}>Sin ingresos</span>
+                      )}
+                    </div>
+                    {/* Citas del día */}
+                    {d.count > 0 && (
+                      <span style={{
+                        fontSize: 11,
+                        color: "#666",
+                        flexShrink: 0,
+                        width: 28,
+                        textAlign: "center"
+                      }}>
+                        {d.count}✓
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Leyenda */}
+            <div style={{
+              marginTop: 16,
+              paddingTop: 12,
+              borderTop: "1px solid #1e1e1e",
+              display: "flex",
+              gap: 16,
+              flexWrap: "wrap"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 12, height: 12, borderRadius: 3, background: "linear-gradient(90deg, #c9a84c, #e8c96a)" }} />
+                <span style={{ fontSize: 11, color: "#666" }}>Hoy</span>
               </div>
-            );
-          })}
-        </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 12, height: 12, borderRadius: 3, background: "#3d3d3d" }} />
+                <span style={{ fontSize: 11, color: "#666" }}>Días anteriores</span>
+              </div>
+              <span style={{ fontSize: 11, color: "#666", marginLeft: "auto" }}>✓ = citas completadas</span>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Top barberos */}
@@ -236,28 +319,112 @@ export default function ReportsView({ appointments, barbers }) {
       </Card>
 
       {/* Horarios pico */}
-      <Card title="⏰ Horarios pico" subtitle="Qué horas son las más solicitadas">
+      <Card title="⏰ Horarios pico" subtitle="Horas más solicitadas del día">
         {peakHours.length === 0 ? (
           <EmptyState icon="📊" message="Aún no hay datos suficientes" />
         ) : (
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 140, padding: "10px 0", flexWrap: "wrap" }}>
-            {peakHours.map(h => {
-              const heightPct = (h.count / maxHourCount) * 100;
-              return (
-                <div key={h.time} style={{ flex: "1 1 40px", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <span style={{ fontSize: 10, color: "#666", fontWeight: 600, height: 14 }}>{h.count}</span>
-                  <div style={{
-                    width: "100%",
-                    height: `${Math.max(heightPct, 2)}%`,
-                    background: "linear-gradient(180deg, #60a5fa, #1d4ed8)",
-                    borderRadius: "4px 4px 0 0",
-                    minHeight: 4,
-                    transition: "all 0.3s"
-                  }} />
-                  <span style={{ fontSize: 9, color: "#888", fontWeight: 600 }}>{h.time}</span>
+          <div style={{ padding: "8px 0 0" }}>
+            <div style={{ display: "grid", gap: 8 }}>
+              {peakHours.map(h => {
+                const widthPct = (h.count / maxHourCount) * 100;
+                const isPeak = h.count === maxHourCount;
+                // Color según popularidad
+                const getColor = () => {
+                  const pct = widthPct;
+                  if (pct >= 80) return "linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa)";
+                  if (pct >= 50) return "linear-gradient(90deg, #1e40af, #2563eb)";
+                  if (pct >= 25) return "linear-gradient(90deg, #1e3a8a, #1d4ed8)";
+                  return "linear-gradient(90deg, #172554, #1e3a8a)";
+                };
+                return (
+                  <div key={h.time} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {/* Hora */}
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: isPeak ? "#60a5fa" : "#666",
+                      width: 44,
+                      flexShrink: 0,
+                      textAlign: "right"
+                    }}>
+                      {h.time}
+                    </span>
+                    {/* Barra */}
+                    <div style={{
+                      flex: 1,
+                      height: 28,
+                      background: "#1a1a1a",
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      position: "relative"
+                    }}>
+                      <div style={{
+                        width: `${Math.max(widthPct, 6)}%`,
+                        height: "100%",
+                        background: getColor(),
+                        borderRadius: 6,
+                        transition: "width 0.6s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        paddingRight: 8
+                      }}>
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: "#fff",
+                          opacity: widthPct > 20 ? 1 : 0
+                        }}>
+                          {h.count} cita{h.count !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Contador */}
+                    <div style={{
+                      width: 56,
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4
+                    }}>
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: isPeak ? "#60a5fa" : "#555"
+                      }}>
+                        {h.count}
+                      </span>
+                      {isPeak && (
+                        <span style={{ fontSize: 10, color: "#60a5fa" }}>🔥</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Leyenda de colores */}
+            <div style={{
+              marginTop: 16,
+              paddingTop: 12,
+              borderTop: "1px solid #1e1e1e",
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              alignItems: "center"
+            }}>
+              <span style={{ fontSize: 11, color: "#555" }}>Popularidad:</span>
+              {[
+                { label: "Alta", color: "linear-gradient(90deg, #1d4ed8, #60a5fa)" },
+                { label: "Media", color: "linear-gradient(90deg, #1e40af, #2563eb)" },
+                { label: "Baja", color: "linear-gradient(90deg, #172554, #1e3a8a)" }
+              ].map(l => (
+                <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 20, height: 8, borderRadius: 3, background: l.color }} />
+                  <span style={{ fontSize: 11, color: "#666" }}>{l.label}</span>
                 </div>
-              );
-            })}
+              ))}
+              <span style={{ fontSize: 11, color: "#60a5fa", marginLeft: "auto" }}>🔥 Hora pico</span>
+            </div>
           </div>
         )}
       </Card>
