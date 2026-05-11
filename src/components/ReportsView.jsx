@@ -121,94 +121,116 @@ export default function ReportsView({ appointments, barbers }) {
         <KPI label="Últimos 7 días" value={formatCurrency(totalLast7)} color="#a78bfa" icon="📅" />
       </div>
 
-      {/* Gráfica de ingresos últimos 7 días */}
+      {/* HISTOGRAMA: Ingresos últimos 7 días */}
       <Card title="📊 Ingresos últimos 7 días" subtitle={`Total: ${formatCurrency(totalLast7)}`}>
         {totalLast7 === 0 ? (
           <EmptyState icon="📊" message="Aún no hay ingresos registrados" />
         ) : (
           <div style={{ padding: "16px 0 0" }}>
-            {/* Barras horizontales */}
-            <div style={{ display: "grid", gap: 10 }}>
+            {/* Área del histograma */}
+            <div style={{ position: "relative", height: 200, display: "flex", alignItems: "flex-end", gap: 0 }}>
+              {/* Líneas guía del eje Y */}
+              {[100, 75, 50, 25].map(pct => (
+                <div key={pct} style={{
+                  position: "absolute",
+                  left: 0, right: 0,
+                  bottom: `${pct}%`,
+                  borderTop: "1px dashed #1e1e1e",
+                  display: "flex",
+                  alignItems: "center"
+                }}>
+                  <span style={{
+                    position: "absolute",
+                    left: -8,
+                    transform: "translateX(-100%)",
+                    fontSize: 9,
+                    color: "#444",
+                    whiteSpace: "nowrap"
+                  }}>
+                    {formatCurrency(Math.round(maxRevenue * pct / 100))}
+                  </span>
+                </div>
+              ))}
+              {/* Barras */}
+              <div style={{ display: "flex", flex: 1, alignItems: "flex-end", gap: 6, paddingLeft: 48, height: "100%" }}>
+                {last7Days.map(d => {
+                  const heightPct = (d.revenue / maxRevenue) * 100;
+                  const isToday = d.dateStr === getTodayStr();
+                  return (
+                    <div key={d.dateStr} style={{
+                      flex: 1,
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      gap: 4
+                    }}>
+                      {/* Valor encima */}
+                      {d.revenue > 0 && (
+                        <span style={{
+                          fontSize: 9,
+                          color: isToday ? "#c9a84c" : "#555",
+                          fontWeight: 700,
+                          textAlign: "center",
+                          whiteSpace: "nowrap"
+                        }}>
+                          {formatCurrency(d.revenue)}
+                        </span>
+                      )}
+                      {/* Barra */}
+                      <div style={{
+                        width: "100%",
+                        height: `${Math.max(heightPct, d.revenue > 0 ? 3 : 0)}%`,
+                        background: isToday
+                          ? "linear-gradient(180deg, #e8c96a, #c9a84c, #8a6d2c)"
+                          : d.revenue > 0
+                            ? "linear-gradient(180deg, #555, #333)"
+                            : "#1a1a1a",
+                        borderRadius: "4px 4px 0 0",
+                        border: isToday ? "1px solid #e8c96a" : d.revenue > 0 ? "1px solid #444" : "1px dashed #222",
+                        minHeight: d.revenue > 0 ? 4 : 0,
+                        transition: "height 0.5s ease",
+                        position: "relative"
+                      }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Eje X */}
+            <div style={{
+              display: "flex",
+              paddingLeft: 48,
+              gap: 6,
+              marginTop: 6,
+              borderTop: "2px solid #2e2e2e"
+            }}>
               {last7Days.map(d => {
-                const widthPct = (d.revenue / maxRevenue) * 100;
                 const isToday = d.dateStr === getTodayStr();
                 return (
-                  <div key={d.dateStr} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {/* Etiqueta día */}
-                    <div style={{ width: 48, textAlign: "right", flexShrink: 0 }}>
-                      <span style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: isToday ? "#c9a84c" : "#666",
-                        textTransform: "uppercase"
-                      }}>
-                        {d.label}
-                      </span>
-                      <span style={{
-                        display: "block",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: isToday ? "#c9a84c" : "#aaa"
-                      }}>
-                        {d.num}
-                      </span>
-                    </div>
-                    {/* Barra */}
-                    <div style={{
-                      flex: 1,
-                      height: 36,
-                      background: "#1a1a1a",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      position: "relative"
+                  <div key={d.dateStr} style={{
+                    flex: 1,
+                    textAlign: "center",
+                    paddingTop: 6
+                  }}>
+                    <p style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: isToday ? "#c9a84c" : "#555",
+                      textTransform: "uppercase"
                     }}>
-                      <div style={{
-                        width: `${Math.max(widthPct, d.revenue > 0 ? 4 : 0)}%`,
-                        height: "100%",
-                        background: isToday
-                          ? "linear-gradient(90deg, #8a6d2c, #c9a84c, #e8c96a)"
-                          : "linear-gradient(90deg, #2a2a2a, #3d3d3d)",
-                        borderRadius: 8,
-                        transition: "width 0.6s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        paddingRight: 8,
-                        minWidth: d.revenue > 0 ? 50 : 0
-                      }}>
-                        {d.revenue > 0 && (
-                          <span style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: isToday ? "#0a0a0a" : "#888",
-                            whiteSpace: "nowrap"
-                          }}>
-                            {formatCurrency(d.revenue)}
-                          </span>
-                        )}
-                      </div>
-                      {d.revenue === 0 && (
-                        <span style={{
-                          position: "absolute",
-                          left: 10,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          fontSize: 11,
-                          color: "#444"
-                        }}>Sin ingresos</span>
-                      )}
-                    </div>
-                    {/* Citas del día */}
+                      {d.label}
+                    </p>
+                    <p style={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      color: isToday ? "#c9a84c" : "#888"
+                    }}>
+                      {d.num}
+                    </p>
                     {d.count > 0 && (
-                      <span style={{
-                        fontSize: 11,
-                        color: "#666",
-                        flexShrink: 0,
-                        width: 28,
-                        textAlign: "center"
-                      }}>
-                        {d.count}✓
-                      </span>
+                      <p style={{ fontSize: 9, color: "#555" }}>{d.count}✓</p>
                     )}
                   </div>
                 );
@@ -216,22 +238,22 @@ export default function ReportsView({ appointments, barbers }) {
             </div>
             {/* Leyenda */}
             <div style={{
-              marginTop: 16,
-              paddingTop: 12,
+              marginTop: 12,
+              paddingTop: 10,
               borderTop: "1px solid #1e1e1e",
               display: "flex",
               gap: 16,
               flexWrap: "wrap"
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 3, background: "linear-gradient(90deg, #c9a84c, #e8c96a)" }} />
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(180deg, #e8c96a, #c9a84c)" }} />
                 <span style={{ fontSize: 11, color: "#666" }}>Hoy</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 3, background: "#3d3d3d" }} />
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: "#444" }} />
                 <span style={{ fontSize: 11, color: "#666" }}>Días anteriores</span>
               </div>
-              <span style={{ fontSize: 11, color: "#666", marginLeft: "auto" }}>✓ = citas completadas</span>
+              <span style={{ fontSize: 11, color: "#555", marginLeft: "auto" }}>✓ = citas completadas</span>
             </div>
           </div>
         )}
@@ -318,115 +340,232 @@ export default function ReportsView({ appointments, barbers }) {
         )}
       </Card>
 
-      {/* Horarios pico */}
-      <Card title="⏰ Horarios pico" subtitle="Horas más solicitadas del día">
+      {/* HISTOGRAMA: Horarios pico con AM/PM */}
+      <Card title="⏰ Horarios pico" subtitle="Distribución de citas por hora del día">
         {peakHours.length === 0 ? (
           <EmptyState icon="📊" message="Aún no hay datos suficientes" />
-        ) : (
-          <div style={{ padding: "8px 0 0" }}>
-            <div style={{ display: "grid", gap: 8 }}>
-              {peakHours.map(h => {
-                const widthPct = (h.count / maxHourCount) * 100;
-                const isPeak = h.count === maxHourCount;
-                // Color según popularidad
-                const getColor = () => {
-                  const pct = widthPct;
-                  if (pct >= 80) return "linear-gradient(90deg, #1d4ed8, #3b82f6, #60a5fa)";
-                  if (pct >= 50) return "linear-gradient(90deg, #1e40af, #2563eb)";
-                  if (pct >= 25) return "linear-gradient(90deg, #1e3a8a, #1d4ed8)";
-                  return "linear-gradient(90deg, #172554, #1e3a8a)";
-                };
-                return (
-                  <div key={h.time} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {/* Hora */}
+        ) : (() => {
+          // Separar AM y PM
+          const amHours = peakHours.filter(h => parseInt(h.time) < 12);
+          const pmHours = peakHours.filter(h => parseInt(h.time) >= 12);
+          const allHours = [...amHours, ...pmHours];
+
+          return (
+            <div style={{ padding: "16px 0 0" }}>
+              {/* Histograma */}
+              <div style={{ position: "relative", height: 180, display: "flex", alignItems: "flex-end" }}>
+                {/* Líneas guía Y */}
+                {[100, 75, 50, 25].map(pct => (
+                  <div key={pct} style={{
+                    position: "absolute",
+                    left: 0, right: 0,
+                    bottom: `${pct}%`,
+                    borderTop: "1px dashed #1e1e1e"
+                  }}>
                     <span style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: isPeak ? "#60a5fa" : "#666",
-                      width: 44,
-                      flexShrink: 0,
-                      textAlign: "right"
+                      position: "absolute",
+                      left: -6,
+                      transform: "translateX(-100%)",
+                      fontSize: 9,
+                      color: "#444"
                     }}>
-                      {h.time}
+                      {Math.round(maxHourCount * pct / 100)}
                     </span>
-                    {/* Barra */}
-                    <div style={{
-                      flex: 1,
-                      height: 28,
-                      background: "#1a1a1a",
-                      borderRadius: 6,
-                      overflow: "hidden",
-                      position: "relative"
-                    }}>
-                      <div style={{
-                        width: `${Math.max(widthPct, 6)}%`,
-                        height: "100%",
-                        background: getColor(),
-                        borderRadius: 6,
-                        transition: "width 0.6s ease",
+                  </div>
+                ))}
+                {/* Barras */}
+                <div style={{
+                  display: "flex",
+                  flex: 1,
+                  alignItems: "flex-end",
+                  paddingLeft: 28,
+                  height: "100%",
+                  gap: 3
+                }}>
+                  {allHours.map((h, i) => {
+                    const isAM = parseInt(h.time) < 12;
+                    const heightPct = (h.count / maxHourCount) * 100;
+                    const isPeak = h.count === maxHourCount;
+                    // Separador visual entre AM y PM
+                    const prevIsAM = i > 0 ? parseInt(allHours[i - 1].time) < 12 : true;
+                    const showDivider = i > 0 && isAM !== prevIsAM;
+                    return (
+                      <div key={h.time} style={{
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        paddingRight: 8
+                        alignItems: "flex-end",
+                        height: "100%",
+                        gap: 3
                       }}>
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          color: "#fff",
-                          opacity: widthPct > 20 ? 1 : 0
+                        {/* Separador AM/PM */}
+                        {showDivider && (
+                          <div style={{
+                            width: 1,
+                            height: "100%",
+                            background: "#3d3d3d",
+                            marginRight: 4,
+                            position: "relative"
+                          }}>
+                            <span style={{
+                              position: "absolute",
+                              bottom: -20,
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              fontSize: 8,
+                              color: "#555",
+                              whiteSpace: "nowrap"
+                            }}>
+                              12PM
+                            </span>
+                          </div>
+                        )}
+                        <div style={{
+                          width: 28,
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: 2
                         }}>
-                          {h.count} cita{h.count !== 1 ? 's' : ''}
+                          {/* Valor */}
+                          {h.count > 0 && (
+                            <span style={{
+                              fontSize: 9,
+                              color: isPeak ? (isAM ? "#fbbf24" : "#818cf8") : "#555",
+                              fontWeight: 700
+                            }}>
+                              {h.count}
+                            </span>
+                          )}
+                          {/* Barra */}
+                          <div style={{
+                            width: "100%",
+                            height: `${Math.max(heightPct, 3)}%`,
+                            background: isAM
+                              ? isPeak
+                                ? "linear-gradient(180deg, #fef08a, #fbbf24, #d97706)"
+                                : "linear-gradient(180deg, #d97706, #92400e)"
+                              : isPeak
+                                ? "linear-gradient(180deg, #c7d2fe, #818cf8, #4f46e5)"
+                                : "linear-gradient(180deg, #4f46e5, #312e81)",
+                            borderRadius: "3px 3px 0 0",
+                            border: isPeak
+                              ? `1px solid ${isAM ? "#fbbf24" : "#818cf8"}`
+                              : "1px solid transparent",
+                            minHeight: 3,
+                            transition: "height 0.5s ease"
+                          }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Eje X con horas */}
+              <div style={{
+                display: "flex",
+                paddingLeft: 28,
+                gap: 3,
+                marginTop: 4,
+                borderTop: "2px solid #2e2e2e",
+                paddingTop: 6
+              }}>
+                {allHours.map((h, i) => {
+                  const isAM = parseInt(h.time) < 12;
+                  const prevIsAM = i > 0 ? parseInt(allHours[i - 1].time) < 12 : true;
+                  const showDivider = i > 0 && isAM !== prevIsAM;
+                  return (
+                    <div key={h.time} style={{ display: "flex", gap: 3 }}>
+                      {showDivider && <div style={{ width: 5 }} />}
+                      <div style={{ width: 28, textAlign: "center" }}>
+                        <span style={{
+                          fontSize: 8,
+                          fontWeight: 600,
+                          color: isAM ? "#d97706" : "#6366f1",
+                          display: "block"
+                        }}>
+                          {h.time.replace(":00", "").replace(":30", "³⁰")}
                         </span>
                       </div>
                     </div>
-                    {/* Contador */}
-                    <div style={{
-                      width: 56,
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4
-                    }}>
-                      <span style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: isPeak ? "#60a5fa" : "#555"
-                      }}>
-                        {h.count}
-                      </span>
-                      {isPeak && (
-                        <span style={{ fontSize: 10, color: "#60a5fa" }}>🔥</span>
-                      )}
-                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Bloques AM/PM */}
+              <div style={{
+                marginTop: 14,
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap"
+              }}>
+                {/* AM */}
+                <div style={{
+                  flex: 1,
+                  minWidth: 140,
+                  background: "#1a1200",
+                  border: "1px solid #92400e",
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10
+                }}>
+                  <div style={{ width: 10, height: 28, borderRadius: 2, background: "linear-gradient(180deg, #fbbf24, #d97706)" }} />
+                  <div>
+                    <p style={{ fontSize: 11, color: "#d97706", fontWeight: 700, textTransform: "uppercase" }}>
+                      ☀️ AM (9:00 - 13:30)
+                    </p>
+                    <p style={{ fontSize: 13, color: "#fbbf24", fontWeight: 800 }}>
+                      {amHours.reduce((s, h) => s + h.count, 0)} citas
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-            {/* Leyenda de colores */}
-            <div style={{
-              marginTop: 16,
-              paddingTop: 12,
-              borderTop: "1px solid #1e1e1e",
-              display: "flex",
-              gap: 12,
-              flexWrap: "wrap",
-              alignItems: "center"
-            }}>
-              <span style={{ fontSize: 11, color: "#555" }}>Popularidad:</span>
-              {[
-                { label: "Alta", color: "linear-gradient(90deg, #1d4ed8, #60a5fa)" },
-                { label: "Media", color: "linear-gradient(90deg, #1e40af, #2563eb)" },
-                { label: "Baja", color: "linear-gradient(90deg, #172554, #1e3a8a)" }
-              ].map(l => (
-                <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 20, height: 8, borderRadius: 3, background: l.color }} />
-                  <span style={{ fontSize: 11, color: "#666" }}>{l.label}</span>
                 </div>
-              ))}
-              <span style={{ fontSize: 11, color: "#60a5fa", marginLeft: "auto" }}>🔥 Hora pico</span>
+                {/* PM */}
+                <div style={{
+                  flex: 1,
+                  minWidth: 140,
+                  background: "#0f0f1a",
+                  border: "1px solid #312e81",
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10
+                }}>
+                  <div style={{ width: 10, height: 28, borderRadius: 2, background: "linear-gradient(180deg, #818cf8, #4f46e5)" }} />
+                  <div>
+                    <p style={{ fontSize: 11, color: "#6366f1", fontWeight: 700, textTransform: "uppercase" }}>
+                      🌙 PM (15:00 - 19:30)
+                    </p>
+                    <p style={{ fontSize: 13, color: "#818cf8", fontWeight: 800 }}>
+                      {pmHours.reduce((s, h) => s + h.count, 0)} citas
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Leyenda */}
+              <div style={{
+                marginTop: 10,
+                display: "flex",
+                gap: 14,
+                flexWrap: "wrap",
+                alignItems: "center"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#fbbf24" }} />
+                  <span style={{ fontSize: 11, color: "#666" }}>Hora AM pico</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#818cf8" }} />
+                  <span style={{ fontSize: 11, color: "#666" }}>Hora PM pico</span>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </Card>
 
       {/* Comparativa mensual */}
