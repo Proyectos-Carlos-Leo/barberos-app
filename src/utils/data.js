@@ -5,8 +5,8 @@ export const INITIAL_BARBERS = [
     name: "Carlos Mendoza", 
     specialty: "Degradados & Navaja", 
     avatar: "CM", 
-    color: "#b45309", 
-    bg: "#fef3c7", 
+    color: "#1A7FAB", 
+    bg: "#e0f4fc", 
     active: true 
   },
   { 

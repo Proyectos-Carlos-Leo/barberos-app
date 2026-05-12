@@ -158,12 +158,12 @@ function StepsIndicator({ currentStep, steps }) {
       {steps.map((s, i) => (
         <div key={s.num} style={{ flex: 1, display: "flex", alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: currentStep >= s.num ? "#c9a84c" : "#1e1e1e", border: `2px solid ${currentStep >= s.num ? "#c9a84c" : "#2e2e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: currentStep >= s.num ? "#0a0a0a" : "#555", transition: "all 0.3s" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: currentStep >= s.num ? "#36B1DF" : "#1e1e1e", border: `2px solid ${currentStep >= s.num ? "#36B1DF" : "#2e2e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: currentStep >= s.num ? "#0a0a0a" : "#555", transition: "all 0.3s" }}>
               {currentStep > s.num ? "✓" : s.num}
             </div>
-            <span style={{ fontSize: 11, color: currentStep === s.num ? "#c9a84c" : "#555", marginTop: 6, fontWeight: currentStep === s.num ? 600 : 400, textAlign: "center" }}>{s.label}</span>
+            <span style={{ fontSize: 11, color: currentStep === s.num ? "#36B1DF" : "#555", marginTop: 6, fontWeight: currentStep === s.num ? 600 : 400, textAlign: "center" }}>{s.label}</span>
           </div>
-          {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: currentStep > s.num ? "#c9a84c" : "#1e1e1e", marginBottom: 22, transition: "background 0.3s" }} />}
+          {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: currentStep > s.num ? "#36B1DF" : "#1e1e1e", marginBottom: 22, transition: "background 0.3s" }} />}
         </div>
       ))}
     </div>
@@ -214,10 +214,10 @@ function Step2Service({ form, update, onBack, onNext }) {
         {SERVICES.map(s => {
           const isSelected = form.serviceId === s.id;
           return (
-            <div key={s.id} onClick={() => update("serviceId", s.id)} style={{ padding: 16, borderRadius: 10, border: `2px solid ${isSelected ? "#c9a84c" : "#1e1e1e"}`, background: isSelected ? "#1a150a" : "#0f0f0f", cursor: "pointer", transition: "all 0.2s" }}>
+            <div key={s.id} onClick={() => update("serviceId", s.id)} style={{ padding: 16, borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "#1e1e1e"}`, background: isSelected ? "#051520" : "#0f0f0f", cursor: "pointer", transition: "all 0.2s" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <span style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</span>
-                <span style={{ color: "#c9a84c", fontWeight: 700, fontSize: 16 }}>${s.price}</span>
+                <span style={{ color: "#36B1DF", fontWeight: 700, fontSize: 16 }}>${s.price}</span>
               </div>
               <p style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>{s.description}</p>
               <span style={{ fontSize: 11, color: "#666" }}>⏱ {s.duration} min</span>
@@ -247,9 +247,9 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           {days.map(d => {
             const isSelected = form.date === d.date;
             return (
-              <div key={d.date} onClick={() => { update("date", d.date); update("time", ""); }} style={{ padding: "12px 14px", borderRadius: 10, border: `2px solid ${isSelected ? "#c9a84c" : "#1e1e1e"}`, background: isSelected ? "#1a150a" : "#0f0f0f", cursor: "pointer", textAlign: "center", minWidth: 64, transition: "all 0.2s" }}>
-                <p style={{ fontSize: 11, color: isSelected ? "#c9a84c" : "#888", fontWeight: 600, textTransform: "uppercase" }}>{d.label}</p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: isSelected ? "#c9a84c" : "#f5f0eb" }}>{d.num}</p>
+              <div key={d.date} onClick={() => { update("date", d.date); update("time", ""); }} style={{ padding: "12px 14px", borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "#1e1e1e"}`, background: isSelected ? "#051520" : "#0f0f0f", cursor: "pointer", textAlign: "center", minWidth: 64, transition: "all 0.2s" }}>
+                <p style={{ fontSize: 11, color: isSelected ? "#36B1DF" : "#888", fontWeight: 600, textTransform: "uppercase" }}>{d.label}</p>
+                <p style={{ fontSize: 20, fontWeight: 700, color: isSelected ? "#36B1DF" : "#f5f0eb" }}>{d.num}</p>
               </div>
             );
           })}
@@ -292,12 +292,12 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                 <div key={h} onClick={() => !unavailable && update("time", h)} style={{
                   padding: "10px 16px",
                   borderRadius: 8,
-                  border: `1.5px solid ${isSelected ? "#c9a84c" : unavailable ? "#1a1a1a" : "#1e1e1e"}`,
-                  background: isSelected ? "#1a150a" : unavailable ? "#0d0d0d" : "#0f0f0f",
+                  border: `1.5px solid ${isSelected ? "#36B1DF" : unavailable ? "#1a1a1a" : "#1e1e1e"}`,
+                  background: isSelected ? "#051520" : unavailable ? "#0d0d0d" : "#0f0f0f",
                   cursor: unavailable ? "not-allowed" : "pointer",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: isSelected ? "#c9a84c" : unavailable ? "#333" : "#f5f0eb",
+                  color: isSelected ? "#36B1DF" : unavailable ? "#333" : "#f5f0eb",
                   textDecoration: unavailable ? "line-through" : "none",
                   transition: "all 0.2s"
                 }}>{h}</div>
@@ -361,12 +361,12 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
           </div>
         )}
       </div>
-      <div style={{ background: "#1a150a", border: "1px solid #3d2e0a", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div style={{ background: "#051520", border: "1px solid #0a3d56", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
-          <p style={{ color: "#c9a84c", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
+          <p style={{ color: "#36B1DF", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
           <p style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
         </div>
-        <span style={{ color: "#c9a84c", fontSize: 28, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <span style={{ color: "#36B1DF", fontSize: 28, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
           {formatCurrency(selectedService?.price || 0)}
         </span>
       </div>
@@ -393,10 +393,10 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
       <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>¡<span className="gold">Cita</span> agendada!</h2>
       <p style={{ color: "#888", marginBottom: 32, fontSize: 16 }}>Te esperamos, <strong style={{ color: "#f5f0eb" }}>{appointment.client}</strong></p>
 
-      <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid #3d2e0a" }}>
+      <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid #0a3d56" }}>
         <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px dashed #2e2e2e" }}>
           <p style={{ fontSize: 11, color: "#666", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Comprobante</p>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#c9a84c", letterSpacing: 1 }}>#{folioId}</p>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#36B1DF", letterSpacing: 1 }}>#{folioId}</p>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
           <ReceiptRow label="Servicio" value={appointment.service?.name || "—"} />
@@ -407,7 +407,7 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
         </div>
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed #2e2e2e", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>Total</span>
-          <span style={{ color: "#c9a84c", fontSize: 22, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>{formatCurrency(appointment.service?.price || 0)}</span>
+          <span style={{ color: "#36B1DF", fontSize: 22, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>{formatCurrency(appointment.service?.price || 0)}</span>
         </div>
       </div>
 
@@ -450,7 +450,7 @@ function LoadingScreen() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #c9a84c", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
+        <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <p style={{ color: "#888", fontFamily: "'Barlow', sans-serif" }}>Conectando con Firebase...</p>
       </div>

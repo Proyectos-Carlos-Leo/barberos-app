@@ -86,7 +86,7 @@ export default function AdminView() {
   // Mientras verifica auth
   if (authLoading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
-      <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #c9a84c", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+      <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -97,7 +97,7 @@ export default function AdminView() {
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #c9a84c", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
+        <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <p style={{ color: "#888", fontFamily: "'Barlow', sans-serif" }}>Cargando datos...</p>
       </div>
@@ -117,8 +117,8 @@ export default function AdminView() {
       <Notifications />
       {showNotifBanner && (
         <div style={{
-          background: "linear-gradient(90deg, #1a150a, #1a1410)",
-          borderBottom: "1px solid #3d2e0a",
+          background: "linear-gradient(90deg, #051520, #051520)",
+          borderBottom: "1px solid #0a3d56",
           padding: "12px 24px",
           display: "flex",
           alignItems: "center",
@@ -127,14 +127,14 @@ export default function AdminView() {
           flexWrap: "wrap"
         }}>
           <span style={{ fontSize: 20 }}>🔔</span>
-          <p style={{ fontSize: 13, color: "#c9a84c", flex: 1, minWidth: 200 }}>
+          <p style={{ fontSize: 13, color: "#36B1DF", flex: 1, minWidth: 200 }}>
             <strong>Activa las notificaciones</strong> para recibir un aviso cada vez que alguien agende una cita
           </p>
           <button
             onClick={handleEnableNotifications}
             style={{
               padding: "6px 14px",
-              background: "linear-gradient(135deg, #c9a84c, #e8c96a)",
+              background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
               color: "#0a0a0a",
               border: "none",
               borderRadius: 6,
@@ -186,7 +186,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const stats = calculateStats(appointments);
 
   const statCards = [
-    { label: "Citas hoy", value: stats.todayTotal, color: "#c9a84c", icon: "📅" },
+    { label: "Citas hoy", value: stats.todayTotal, color: "#36B1DF", icon: "📅" },
     { label: "Pendientes", value: stats.pending, color: "#f87171", icon: "⏳" },
     { label: "Completadas hoy", value: stats.completedToday, color: "#4ade80", icon: "✓" },
     { label: "Ingresos hoy", value: formatCurrency(stats.revenueToday), color: "#60a5fa", icon: "💰" },
@@ -250,16 +250,16 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           const sc = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
           const isOpen = selected === appt.id;
           return (
-            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "#c9a84c33" : "#1e1e1e"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
+            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "#36B1DF33" : "#1e1e1e"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#c9a84c", minWidth: 56 }}>{appt.time}</div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#36B1DF", minWidth: 56 }}>{appt.time}</div>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "#333", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{appt.client}</p>
                   <p style={{ fontSize: 12, color: "#888" }}>{appt.service?.name} · {barber?.name || "Sin asignar"}</p>
                 </div>
                 <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                  <span style={{ fontWeight: 700, color: "#c9a84c", fontSize: 16 }}>{formatCurrency(appt.service?.price || 0)}</span>
+                  <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 16 }}>{formatCurrency(appt.service?.price || 0)}</span>
                   <span className="tag" style={{ background: sc.bg, color: sc.text }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot, display: "inline-block" }}></span>
                     {sc.label}
@@ -285,7 +285,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                     </div>
                   </div>
                   {appt.notes && (
-                    <div style={{ background: "#0f0f0f", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid #c9a84c" }}>
+                    <div style={{ background: "#0f0f0f", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid #36B1DF" }}>
                       <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
                       <p style={{ fontSize: 13, fontStyle: "italic", color: "#aaa" }}>"{appt.notes}"</p>
                     </div>
@@ -366,8 +366,8 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
       {showBlocks && <BlockSchedule barbers={barbers} blocks={blocks} onClose={() => setShowBlocks(false)} />}
 
       {showForm && (
-        <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid #3d2e0a" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "#c9a84c" }}>Nuevo barbero</h3>
+        <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid #0a3d56" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "#36B1DF" }}>Nuevo barbero</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             <div>
               <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Nombre *</label>
@@ -405,7 +405,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                 {[["Hoy", stats.today], ["Total", stats.completed], ["Ingresos", formatCurrency(stats.revenue)]].map(([label, val]) => (
                   <div key={label} style={{ background: "#0f0f0f", borderRadius: 8, padding: "12px 4px" }}>
                     <p style={{ fontSize: 10, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
-                    <p style={{ fontSize: 15, fontWeight: 800, color: "#c9a84c", fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
+                    <p style={{ fontSize: 15, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
                   </div>
                 ))}
               </div>
@@ -438,7 +438,7 @@ function HistoryView({ appointments, barbers }) {
         <p style={{ color: "#888", fontSize: 14 }}>Citas completadas y reportes</p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
-        {[["Total completadas", completed.length, "#4ade80"], ["Ingresos totales", formatCurrency(totalRevenue), "#c9a84c"], ["Ticket promedio", completed.length > 0 ? formatCurrency(Math.round(totalRevenue / completed.length)) : "$0", "#60a5fa"]].map(([label, value, color]) => (
+        {[["Total completadas", completed.length, "#4ade80"], ["Ingresos totales", formatCurrency(totalRevenue), "#36B1DF"], ["Ticket promedio", completed.length > 0 ? formatCurrency(Math.round(totalRevenue / completed.length)) : "$0", "#60a5fa"]].map(([label, value, color]) => (
           <div key={label} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: "18px 20px" }}>
             <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
             <p style={{ fontSize: 26, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
@@ -461,7 +461,7 @@ function HistoryView({ appointments, barbers }) {
                   <p style={{ fontWeight: 600, fontSize: 14 }}>{appt.client}</p>
                   <p style={{ fontSize: 12, color: "#888" }}>{appt.service?.name} · {formatDate(appt.date)} {appt.time}</p>
                 </div>
-                <span style={{ fontWeight: 700, color: "#c9a84c", fontSize: 15 }}>{formatCurrency(appt.service?.price || 0)}</span>
+                <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 15 }}>{formatCurrency(appt.service?.price || 0)}</span>
               </div>
             </div>
           );

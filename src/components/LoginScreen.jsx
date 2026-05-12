@@ -9,14 +9,14 @@ export default function LoginScreen() {
       alignItems: "center", 
       justifyContent: "center", 
       padding: "20px",
-      background: "radial-gradient(ellipse at center, #1a1410 0%, #0a0a0a 70%)"
+      background: "radial-gradient(ellipse at center, #051520 0%, #0a0a0a 70%)"
     }}>
       <div className="fade-in-up" style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
         {/* Logo */}
         <div style={{ 
           width: 80, 
           height: 80, 
-          background: "linear-gradient(135deg, #c9a84c, #e8c96a)", 
+          background: "linear-gradient(135deg, #36B1DF, #5FC8EC)", 
           borderRadius: 16, 
           display: "flex", 
           alignItems: "center", 
@@ -39,7 +39,7 @@ export default function LoginScreen() {
           marginBottom: 12,
           lineHeight: 1
         }}>
-          <span style={{ color: "#c9a84c" }}>Barber</span>OS
+          <span style={{ color: "#36B1DF" }}>Barber</span>OS
         </h1>
         <p style={{ 
           color: "#888", 

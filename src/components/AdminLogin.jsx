@@ -53,7 +53,7 @@ export default function AdminLogin({ onLogin }) {
       <div className="fade-in" style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
         <div style={{
           width: 72, height: 72,
-          background: 'linear-gradient(135deg, #c9a84c, #e8c96a)',
+          background: 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
           borderRadius: 16,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 28px',
@@ -69,7 +69,7 @@ export default function AdminLogin({ onLogin }) {
           fontSize: 36, fontWeight: 800, letterSpacing: 2,
           textTransform: 'uppercase', color: '#f5f0eb', marginBottom: 8
         }}>
-          Acceso <span style={{ color: '#c9a84c' }}>Admin</span>
+          Acceso <span style={{ color: '#36B1DF' }}>Admin</span>
         </h1>
         <p style={{ color: '#888', fontSize: 14, marginBottom: 36 }}>
           Solo el dueño puede entrar aquí
@@ -142,7 +142,7 @@ export default function AdminLogin({ onLogin }) {
             disabled={loading}
             style={{
               width: '100%',
-              background: loading ? '#2e2e2e' : 'linear-gradient(135deg, #c9a84c, #e8c96a)',
+              background: loading ? '#2e2e2e' : 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
               color: loading ? '#888' : '#0a0a0a',
               border: 'none', borderRadius: 8,
               padding: '14px 24px',
@@ -159,7 +159,7 @@ export default function AdminLogin({ onLogin }) {
 
         <p style={{ color: '#444', fontSize: 12, marginTop: 24 }}>
           ¿Eres cliente?{' '}
-          <a href="/cliente" style={{ color: '#c9a84c' }}>
+          <a href="/cliente" style={{ color: '#36B1DF' }}>
             Agenda tu cita aquí
           </a>
         </p>

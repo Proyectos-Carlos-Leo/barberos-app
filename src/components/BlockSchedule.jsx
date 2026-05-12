@@ -100,7 +100,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
               fontSize: 22, fontWeight: 800,
               letterSpacing: 1, textTransform: 'uppercase'
             }}>
-              🚫 <span style={{ color: '#c9a84c' }}>Bloqueo</span> de Horarios
+              🚫 <span style={{ color: '#36B1DF' }}>Bloqueo</span> de Horarios
             </h2>
             <p style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
               Bloquea horas, días completos o vacaciones
@@ -135,8 +135,8 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
                   style={{
                     padding: 14,
                     borderRadius: 10,
-                    border: `2px solid ${type === t.val ? '#c9a84c' : '#1e1e1e'}`,
-                    background: type === t.val ? '#1a150a' : '#141414',
+                    border: `2px solid ${type === t.val ? '#36B1DF' : '#1e1e1e'}`,
+                    background: type === t.val ? '#051520' : '#141414',
                     cursor: 'pointer',
                     textAlign: 'center',
                     transition: 'all 0.2s'
@@ -199,7 +199,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button onClick={selectAllHours} style={{
                     background: 'transparent', border: '1px solid #2e2e2e',
-                    color: '#c9a84c', fontSize: 11, padding: '4px 10px',
+                    color: '#36B1DF', fontSize: 11, padding: '4px 10px',
                     borderRadius: 4, cursor: 'pointer'
                   }}>Todos</button>
                   <button onClick={clearHours} style={{
@@ -310,7 +310,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
                           </span>
                         )}
                         {block.reason && (
-                          <span style={{ color: '#c9a84c', marginLeft: 8, fontSize: 11, fontStyle: 'italic' }}>
+                          <span style={{ color: '#36B1DF', marginLeft: 8, fontSize: 11, fontStyle: 'italic' }}>
                             · {block.reason}
                           </span>
                         )}

@@ -29,12 +29,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c9a84c;
+  background: #36B1DF;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #e8c96a;
+  background: #5FC8EC;
 }
 
 /* ==================== FORM ELEMENTS ==================== */
@@ -52,7 +52,7 @@ input, select, textarea {
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: #c9a84c;
+  border-color: #36B1DF;
 }
 
 select option {
@@ -66,7 +66,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ==================== BUTTONS ==================== */
 .btn-gold {
-  background: linear-gradient(135deg, #c9a84c, #e8c96a);
+  background: linear-gradient(135deg, #36B1DF, #5FC8EC);
   color: #0a0a0a;
   border: none;
   border-radius: 8px;
@@ -105,12 +105,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .btn-ghost:hover {
-  border-color: #c9a84c;
+  border-color: #36B1DF;
   background: #1a1a1a;
 }
 
 .btn-large {
-  background: linear-gradient(135deg, #c9a84c, #e8c96a);
+  background: linear-gradient(135deg, #36B1DF, #5FC8EC);
   color: #0a0a0a;
   border: none;
   border-radius: 12px;
@@ -171,7 +171,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .nav-btn.active {
-  color: #c9a84c;
+  color: #36B1DF;
   background: #1a1010;
 }
 
@@ -218,7 +218,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .gold {
-  color: #c9a84c;
+  color: #36B1DF;
 }
 
 .divider {
@@ -255,7 +255,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ==================== LINKS ==================== */
 a {
-  color: #c9a84c;
+  color: #36B1DF;
   text-decoration: none;
 }
 
@@ -268,7 +268,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #c9a84c;
+  outline: 2px solid #36B1DF;
   outline-offset: 2px;
 }
 

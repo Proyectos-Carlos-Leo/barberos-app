@@ -118,7 +118,7 @@ export function AppProvider({ children }) {
     try {
       const initials = barber.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
       const colors = [
-        { color: '#b45309', bg: '#fef3c7' },
+        { color: '#1A7FAB', bg: '#e0f4fc' },
         { color: '#1d4ed8', bg: '#dbeafe' },
         { color: '#065f46', bg: '#d1fae5' },
         { color: '#7e22ce', bg: '#ede9fe' },

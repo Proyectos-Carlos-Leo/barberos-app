@@ -15,7 +15,7 @@ export default function Header({ userType, navItems = [] }) {
         <div style={{
           width: 32,
           height: 32,
-          background: "linear-gradient(135deg, #c9a84c, #e8c96a)",
+          background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
           borderRadius: 6,
           display: "flex",
           alignItems: "center",
@@ -50,10 +50,10 @@ export default function Header({ userType, navItems = [] }) {
           fontWeight: 600,
           textTransform: "uppercase",
           letterSpacing: 0.5,
-          background: userType === 'admin' ? "#1a1410" : "#0f1a0f",
+          background: userType === 'admin' ? "#051520" : "#0f1a0f",
           padding: "4px 8px",
           borderRadius: 4,
-          border: `1px solid ${userType === 'admin' ? "#3d2e0a" : "#0f2e0f"}`,
+          border: `1px solid ${userType === 'admin' ? "#0a3d56" : "#0f2e0f"}`,
           whiteSpace: "nowrap"
         }}>
           {userType === 'admin' ? '⚙️' : '👤'}
@@ -96,7 +96,7 @@ export default function Header({ userType, navItems = [] }) {
               {item.label}
               {item.key === 'dashboard' && pendingCount > 0 && (
                 <span style={{
-                  background: "#c9a84c",
+                  background: "#36B1DF",
                   color: "#0a0a0a",
                   borderRadius: "50%",
                   width: 18,
