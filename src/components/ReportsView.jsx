@@ -1,6 +1,83 @@
 import { useMemo } from 'react';
 import { formatCurrency, getTodayStr } from '../utils/helpers';
 
+// ==================== EXPORTAR CSV ====================
+const downloadCSV = (filename, rows) => {
+  const csvContent = rows.map(row =>
+    row.map(cell => {
+      const str = String(cell ?? '');
+      // Escapar comillas y comas
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }).join(',')
+  ).join('\n');
+
+  // BOM para que Excel abra UTF-8 bien (acentos)
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const exportBarberStats = (topBarbers, completed) => {
+  const headers = ['Barbero', 'Especialidad', 'Total cortes', 'Ingresos totales', 'Ticket promedio'];
+  const rows = [headers];
+
+  topBarbers.forEach(b => {
+    const ticketAvg = b.count > 0 ? Math.round(b.revenue / b.count) : 0;
+    rows.push([
+      b.name,
+      b.specialty || '',
+      b.count,
+      b.revenue,
+      ticketAvg
+    ]);
+  });
+
+  // Totales
+  const totalCount = topBarbers.reduce((s, b) => s + b.count, 0);
+  const totalRev = topBarbers.reduce((s, b) => s + b.revenue, 0);
+  rows.push([]);
+  rows.push(['TOTAL', '', totalCount, totalRev, totalCount > 0 ? Math.round(totalRev / totalCount) : 0]);
+
+  const today = new Date().toISOString().split('T')[0];
+  downloadCSV(`estadisticas_barberos_${today}.csv`, rows);
+};
+
+const exportFullReport = (appointments, barbers) => {
+  const headers = ['Fecha', 'Hora', 'Cliente', 'Teléfono', 'Barbero', 'Servicio', 'Precio', 'Estado', 'Notas'];
+  const rows = [headers];
+
+  const sorted = [...appointments].sort((a, b) =>
+    new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time)
+  );
+
+  sorted.forEach(a => {
+    const barber = barbers.find(b => b.id === a.barberId);
+    rows.push([
+      a.date || '',
+      a.time || '',
+      a.client || '',
+      a.phone || '',
+      barber?.name || 'Sin asignar',
+      a.service?.name || '',
+      a.service?.price || 0,
+      a.status || '',
+      a.notes || ''
+    ]);
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  downloadCSV(`reporte_completo_${today}.csv`, rows);
+};
+
 export default function ReportsView({ appointments, barbers }) {
   // Solo citas completadas tienen ingresos reales
   const completed = useMemo(
@@ -106,11 +183,55 @@ export default function ReportsView({ appointments, barbers }) {
 
   return (
     <div className="fade-in">
-      <div style={{ marginBottom: 28 }}>
-        <h1 className="section-title" style={{ marginBottom: 4 }}>
-          <span className="gold">Reportes</span> & análisis
-        </h1>
-        <p style={{ color: "#888", fontSize: 14 }}>Métricas del negocio en tiempo real</p>
+      <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 className="section-title" style={{ marginBottom: 4 }}>
+            <span className="gold">Reportes</span> & análisis
+          </h1>
+          <p style={{ color: "#888", fontSize: 14 }}>Métricas del negocio en tiempo real</p>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            onClick={() => exportBarberStats(topBarbers, completed)}
+            disabled={completed.length === 0}
+            style={{
+              padding: "10px 16px",
+              background: "transparent",
+              border: "1px solid #36B1DF",
+              color: "#36B1DF",
+              borderRadius: 8,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              cursor: completed.length === 0 ? "not-allowed" : "pointer",
+              opacity: completed.length === 0 ? 0.4 : 1
+            }}
+          >
+            📊 Exportar barberos
+          </button>
+          <button
+            onClick={() => exportFullReport(appointments, barbers)}
+            disabled={appointments.length === 0}
+            style={{
+              padding: "10px 16px",
+              background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+              border: "none",
+              color: "#0a0a0a",
+              borderRadius: 8,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              cursor: appointments.length === 0 ? "not-allowed" : "pointer",
+              opacity: appointments.length === 0 ? 0.4 : 1
+            }}
+          >
+            📥 Exportar todo
+          </button>
+        </div>
       </div>
 
       {/* Resumen general */}

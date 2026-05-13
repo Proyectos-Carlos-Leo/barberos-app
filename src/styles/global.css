@@ -1,3 +1,63 @@
+/* ==================== VARIABLES DE TEMA ==================== */
+:root,
+[data-theme="dark"] {
+  --bg-main: #0a0a0a;
+  --bg-elevated: #141414;
+  --bg-elevated-2: #0f0f0f;
+  --bg-input: #1a1a1a;
+  --bg-track: #1a1a1a;
+  --border: #1e1e1e;
+  --border-strong: #2e2e2e;
+  --text-primary: #f5f0eb;
+  --text-secondary: #aaa;
+  --text-tertiary: #888;
+  --text-muted: #666;
+  --text-dim: #555;
+  --text-faint: #444;
+  --accent: #36B1DF;
+  --accent-light: #5FC8EC;
+  --accent-dark: #1A7FAB;
+  --accent-bg: #051520;
+  --accent-border: #0a3d56;
+  --danger: #f87171;
+  --danger-bg: #3f1111;
+  --danger-border: #dc2626;
+  --success: #4ade80;
+  --success-bg: #14532d;
+  --info: #60a5fa;
+  --scrollbar-track: #1a1a1a;
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+[data-theme="light"] {
+  --bg-main: #f4f6f8;
+  --bg-elevated: #ffffff;
+  --bg-elevated-2: #f9fafb;
+  --bg-input: #ffffff;
+  --bg-track: #e5e7eb;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-tertiary: #6b7280;
+  --text-muted: #9ca3af;
+  --text-dim: #9ca3af;
+  --text-faint: #d1d5db;
+  --accent: #1A7FAB;
+  --accent-light: #36B1DF;
+  --accent-dark: #0a3d56;
+  --accent-bg: #e0f4fc;
+  --accent-border: #36B1DF;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --danger-border: #ef4444;
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --info: #2563eb;
+  --scrollbar-track: #f3f4f6;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
 /* ==================== RESET & BASE ==================== */
 * {
   box-sizing: border-box;
@@ -7,11 +67,12 @@
 
 html, body {
   font-family: 'Barlow', sans-serif;
-  background: #0a0a0a;
-  color: #f5f0eb;
+  background: var(--bg-main);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  transition: background 0.3s, color 0.3s;
 }
 
 #root {
@@ -19,55 +80,42 @@ html, body {
 }
 
 /* ==================== SCROLLBARS ==================== */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #36B1DF;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #5FC8EC;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-light); }
 
 /* ==================== FORM ELEMENTS ==================== */
 input, select, textarea {
-  background: #1a1a1a;
-  color: #f5f0eb;
-  border: 1px solid #2e2e2e;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 10px 14px;
   width: 100%;
   font-family: 'Barlow', sans-serif;
-  font-size: 16px; /* 16px en móvil para evitar zoom automático en iOS */
+  font-size: 16px;
   outline: none;
   transition: border-color 0.2s;
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: #36B1DF;
-}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
-select option {
-  background: #1a1a1a;
-}
+select option { background: var(--bg-input); color: var(--text-primary); }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
+  filter: var(--input-icon-filter, invert(0.7));
   cursor: pointer;
+}
+
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
 }
 
 /* ==================== BUTTONS ==================== */
 .btn-gold {
-  background: linear-gradient(135deg, #36B1DF, #5FC8EC);
-  color: #0a0a0a;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: var(--bg-main);
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -78,23 +126,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
   text-transform: uppercase;
-  min-height: 44px; /* Touch target mínimo */
+  min-height: 44px;
 }
 
-.btn-gold:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-1px);
+[data-theme="light"] .btn-gold {
+  color: #ffffff;
 }
 
-.btn-gold:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.btn-gold:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.btn-gold:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-ghost {
   background: transparent;
-  color: #f5f0eb;
-  border: 1px solid #2e2e2e;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 10px 20px;
   font-family: 'Barlow', sans-serif;
@@ -104,14 +149,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-height: 44px;
 }
 
-.btn-ghost:hover {
-  border-color: #36B1DF;
-  background: #1a1a1a;
-}
+.btn-ghost:hover { border-color: var(--accent); background: var(--bg-elevated); }
 
 .btn-large {
-  background: linear-gradient(135deg, #36B1DF, #5FC8EC);
-  color: #0a0a0a;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: var(--bg-main);
   border: none;
   border-radius: 12px;
   padding: 18px 32px;
@@ -125,21 +167,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 100%;
 }
 
-.btn-large:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
+[data-theme="light"] .btn-large {
+  color: #ffffff;
 }
 
-.btn-large.gray {
-  background: linear-gradient(135deg, #64748b, #94a3b8);
-}
+.btn-large:hover { opacity: 0.9; transform: translateY(-2px); }
+.btn-large.gray { background: linear-gradient(135deg, #64748b, #94a3b8); color: #ffffff; }
 
 /* ==================== CARDS ==================== */
-.card {
-  background: #141414;
-  border: 1px solid #222;
-  border-radius: 12px;
-}
+.card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; }
 
 /* ==================== TAGS ==================== */
 .tag {
@@ -157,7 +193,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .nav-btn {
   background: transparent;
   border: none;
-  color: #888;
+  color: var(--text-tertiary);
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 13px;
   font-weight: 700;
@@ -170,39 +206,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   white-space: nowrap;
 }
 
-.nav-btn.active {
-  color: #36B1DF;
-  background: #1a1010;
-}
-
-.nav-btn:hover:not(.active) {
-  color: #f5f0eb;
-}
+.nav-btn.active { color: var(--accent); background: var(--accent-bg); }
+.nav-btn:hover:not(.active) { color: var(--text-primary); }
 
 /* ==================== HEADER ==================== */
 .app-header {
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid var(--border);
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 60px;
-  background: #0a0a0a;
+  background: var(--bg-main);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.app-nav {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
+.app-nav { display: flex; gap: 4px; align-items: center; }
 .app-nav-section {
   margin-left: 16px;
   padding-left: 16px;
-  border-left: 1px solid #2e2e2e;
+  border-left: 1px solid var(--border-strong);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -217,36 +242,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-transform: uppercase;
 }
 
-.gold {
-  color: #36B1DF;
+.gold { color: var(--accent); }
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* ==================== THEME TOGGLE ==================== */
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
 }
 
-.divider {
-  height: 1px;
-  background: #222;
-  margin: 20px 0;
-}
+.theme-toggle:hover { border-color: var(--accent); }
 
 /* ==================== ANIMATIONS ==================== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 .fade-in { animation: fadeIn 0.3s ease; }
 .fade-in-up { animation: fadeInUp 0.5s ease; }
@@ -254,133 +275,49 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .pulse { animation: pulse 2s ease infinite; }
 
 /* ==================== LINKS ==================== */
-a {
-  color: #36B1DF;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
 /* ==================== ACCESSIBILITY ==================== */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #36B1DF;
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 /* ==================== TABLET (768px y menos) ==================== */
 @media (max-width: 768px) {
-  .section-title {
-    font-size: 24px;
-  }
-
-  .btn-gold, .btn-ghost {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-
-  .app-header {
-    padding: 0 14px;
-    height: auto;
-    min-height: 56px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .app-nav {
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    gap: 2px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .app-nav::-webkit-scrollbar {
-    height: 0;
-  }
-
-  .nav-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-
-  .app-nav-section {
-    margin-left: auto;
-    padding-left: 8px;
-    gap: 6px;
-  }
+  .section-title { font-size: 24px; }
+  .btn-gold, .btn-ghost { padding: 10px 16px; font-size: 13px; }
+  .app-header { padding: 0 14px; height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px; }
+  .app-nav { width: 100%; overflow-x: auto; padding-bottom: 6px; gap: 2px; -webkit-overflow-scrolling: touch; }
+  .app-nav::-webkit-scrollbar { height: 0; }
+  .nav-btn { padding: 8px 12px; font-size: 12px; flex-shrink: 0; }
+  .app-nav-section { margin-left: auto; padding-left: 8px; gap: 6px; }
 }
 
 /* ==================== MÓVIL (480px y menos) ==================== */
 @media (max-width: 480px) {
-  .section-title {
-    font-size: 22px;
-  }
-
-  .nav-btn {
-    padding: 6px 10px;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-  }
-
-  .btn-large {
-    padding: 14px 20px;
-    font-size: 15px;
-  }
+  .section-title { font-size: 22px; }
+  .nav-btn { padding: 6px 10px; font-size: 11px; letter-spacing: 0.5px; }
+  .btn-large { padding: 14px 20px; font-size: 15px; }
 }
 
-/* ==================== MEJORAS GENERALES MÓVIL ==================== */
+/* ==================== TÁCTILES ==================== */
 @media (hover: none) {
-  /* En dispositivos táctiles, quitar efectos hover */
-  .btn-gold:hover, .btn-ghost:hover {
-    transform: none;
-  }
+  .btn-gold:hover, .btn-ghost:hover { transform: none; }
 }
 
-/* Prevenir overflow horizontal */
-body {
-  overflow-x: hidden;
-}
-
-main {
-  max-width: 100%;
-  overflow-x: hidden;
-}
+body { overflow-x: hidden; }
+main { max-width: 100%; overflow-x: hidden; }
 
 /* ==================== BOOKING CARDS ==================== */
-.booking-card {
-  padding: 28px;
-}
-
-@media (max-width: 600px) {
-  .booking-card {
-    padding: 18px 16px;
-  }
-}
+.booking-card { padding: 28px; }
+@media (max-width: 600px) { .booking-card { padding: 18px 16px; } }
 
 /* ==================== APPOINTMENT CARDS ==================== */
-.appt-card {
-  padding: 18px 22px;
-}
-
-@media (max-width: 600px) {
-  .appt-card {
-    padding: 14px 14px;
-  }
-}
+.appt-card { padding: 18px 22px; }
+@media (max-width: 600px) { .appt-card { padding: 14px 14px; } }
 
 /* ==================== MODAL BODIES ==================== */
-.modal-body {
-  padding: 24px;
-}
-
-@media (max-width: 600px) {
-  .modal-body {
-    padding: 16px 14px;
-  }
-}
+.modal-body { padding: 24px; }
+@media (max-width: 600px) { .modal-body { padding: 16px 14px; } }

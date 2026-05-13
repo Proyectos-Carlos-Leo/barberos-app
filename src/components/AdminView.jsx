@@ -85,7 +85,7 @@ export default function AdminView() {
 
   // Mientras verifica auth
   if (authLoading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
       <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -95,7 +95,7 @@ export default function AdminView() {
   if (!isAuth) return <AdminLogin onLogin={() => setIsAuth(true)} />;
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -112,7 +112,7 @@ export default function AdminView() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-main)" }}>
       <Header userType="admin" navItems={navItems} />
       <Notifications />
       {showNotifBanner && (
@@ -459,7 +459,10 @@ function HistoryView({ appointments, barbers }) {
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: barber?.bg || "#333", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: barber?.color || "#fff" }}>{barber?.avatar || "?"}</div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 600, fontSize: 14 }}>{appt.client}</p>
-                  <p style={{ fontSize: 12, color: "#888" }}>{appt.service?.name} · {formatDate(appt.date)} {appt.time}</p>
+                  <p style={{ fontSize: 12, color: "#888" }}>
+                    {appt.service?.name} · <strong style={{ color: "#aaa" }}>{barber?.name || "Sin asignar"}</strong>
+                  </p>
+                  <p style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{formatDate(appt.date)} · {appt.time}</p>
                 </div>
                 <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 15 }}>{formatCurrency(appt.service?.price || 0)}</span>
               </div>

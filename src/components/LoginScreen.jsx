@@ -1,16 +1,29 @@
 import { Link } from 'react-router-dom';
 import { BARBERSHOP_INFO } from '../utils/data';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LoginScreen() {
+  const { theme, toggleTheme } = useTheme();
   return (
     <div style={{ 
       minHeight: "100vh", 
       display: "flex", 
       alignItems: "center", 
       justifyContent: "center", 
+      position: "relative",
       padding: "20px",
-      background: "radial-gradient(ellipse at center, #051520 0%, #0a0a0a 70%)"
+      background: theme === 'dark' 
+        ? "radial-gradient(ellipse at center, #051520 0%, #0a0a0a 70%)"
+        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)"
     }}>
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+        style={{ position: "absolute", top: 20, right: 20 }}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
       <div className="fade-in-up" style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
         {/* Logo */}
         <div style={{ 

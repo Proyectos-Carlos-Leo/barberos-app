@@ -41,7 +41,7 @@ export default function AdminLogin({ onLogin }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0a0a0a',
+      background: 'var(--bg-main)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

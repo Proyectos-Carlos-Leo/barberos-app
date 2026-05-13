@@ -2,10 +2,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Header({ userType, navItems = [] }) {
   const navigate = useNavigate();
   const { appointments } = useApp();
+  const { theme, toggleTheme } = useTheme();
   const pendingCount = appointments.filter(a => a.status === "pendiente").length;
 
   return (
@@ -44,16 +46,24 @@ export default function Header({ userType, navItems = [] }) {
         gap: 8,
         flexShrink: 0
       }}>
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          aria-label="Cambiar tema"
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
         <span style={{
           fontSize: 11,
-          color: "#888",
+          color: "var(--text-tertiary)",
           fontWeight: 600,
           textTransform: "uppercase",
           letterSpacing: 0.5,
-          background: userType === 'admin' ? "#051520" : "#0f1a0f",
+          background: userType === 'admin' ? "var(--accent-bg)" : "var(--bg-elevated)",
           padding: "4px 8px",
           borderRadius: 4,
-          border: `1px solid ${userType === 'admin' ? "#0a3d56" : "#0f2e0f"}`,
+          border: `1px solid ${userType === 'admin' ? "var(--accent-border)" : "var(--border)"}`,
           whiteSpace: "nowrap"
         }}>
           {userType === 'admin' ? '⚙️' : '👤'}

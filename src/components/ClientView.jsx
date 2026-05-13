@@ -99,7 +99,7 @@ export default function ClientView() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-main)" }}>
       <Header userType="client" />
       <Notifications />
       <main style={{ maxWidth: 700, margin: "0 auto", padding: "24px 14px" }}>
@@ -391,7 +391,51 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>¡<span className="gold">Cita</span> agendada!</h2>
-      <p style={{ color: "#888", marginBottom: 32, fontSize: 16 }}>Te esperamos, <strong style={{ color: "#f5f0eb" }}>{appointment.client}</strong></p>
+      <p style={{ color: "#888", marginBottom: 28, fontSize: 16 }}>Te esperamos, <strong style={{ color: "#f5f0eb" }}>{appointment.client}</strong></p>
+
+      {/* Tarjeta destacada del barbero asignado */}
+      {appointment.barber && (
+        <div style={{
+          background: "linear-gradient(135deg, #051520, #0a3d56)",
+          border: "1px solid #36B1DF",
+          borderRadius: 12,
+          padding: "16px 20px",
+          maxWidth: 480,
+          margin: "0 auto 24px",
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          textAlign: "left"
+        }}>
+          <div style={{
+            width: 52,
+            height: 52,
+            borderRadius: "50%",
+            background: appointment.barber.bg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 700,
+            fontSize: 17,
+            color: appointment.barber.color,
+            flexShrink: 0,
+            border: "2px solid #36B1DF"
+          }}>
+            {appointment.barber.avatar}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 11, color: "#5FC8EC", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>
+              Te atenderá
+            </p>
+            <p style={{ fontWeight: 700, fontSize: 18, color: "#f5f0eb" }}>
+              {appointment.barber.name}
+            </p>
+            <p style={{ fontSize: 12, color: "#aaa" }}>
+              {appointment.barber.specialty}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid #0a3d56" }}>
         <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px dashed #2e2e2e" }}>
@@ -448,7 +492,7 @@ function ReceiptRow({ label, value }) {
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
