@@ -188,7 +188,7 @@ export default function ReportsView({ appointments, barbers }) {
           <h1 className="section-title" style={{ marginBottom: 4 }}>
             <span className="gold">Reportes</span> & análisis
           </h1>
-          <p style={{ color: "#888", fontSize: 14 }}>Métricas del negocio en tiempo real</p>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Métricas del negocio en tiempo real</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
@@ -218,7 +218,7 @@ export default function ReportsView({ appointments, barbers }) {
               padding: "10px 16px",
               background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
               border: "none",
-              color: "#0a0a0a",
+              color: "var(--bg-main)",
               borderRadius: 8,
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: 13,
@@ -256,7 +256,7 @@ export default function ReportsView({ appointments, barbers }) {
                   position: "absolute",
                   left: 0, right: 0,
                   bottom: `${pct}%`,
-                  borderTop: "1px dashed #1e1e1e",
+                  borderTop: "1px dashed var(--border)",
                   display: "flex",
                   alignItems: "center"
                 }}>
@@ -265,7 +265,7 @@ export default function ReportsView({ appointments, barbers }) {
                     left: -8,
                     transform: "translateX(-100%)",
                     fontSize: 9,
-                    color: "#444",
+                    color: "var(--text-faint)",
                     whiteSpace: "nowrap"
                   }}>
                     {formatCurrency(Math.round(maxRevenue * pct / 100))}
@@ -291,7 +291,7 @@ export default function ReportsView({ appointments, barbers }) {
                       {d.revenue > 0 && (
                         <span style={{
                           fontSize: 9,
-                          color: isToday ? "#36B1DF" : "#555",
+                          color: isToday ? "#36B1DF" : "var(--text-dim)",
                           fontWeight: 700,
                           textAlign: "center",
                           whiteSpace: "nowrap"
@@ -307,7 +307,7 @@ export default function ReportsView({ appointments, barbers }) {
                           ? "linear-gradient(180deg, #5FC8EC, #36B1DF, #1A7FAB)"
                           : d.revenue > 0
                             ? "linear-gradient(180deg, #555, #333)"
-                            : "#1a1a1a",
+                            : "var(--bg-track)",
                         borderRadius: "4px 4px 0 0",
                         border: isToday ? "1px solid #5FC8EC" : d.revenue > 0 ? "1px solid #444" : "1px dashed #222",
                         minHeight: d.revenue > 0 ? 4 : 0,
@@ -325,7 +325,7 @@ export default function ReportsView({ appointments, barbers }) {
               paddingLeft: 48,
               gap: 6,
               marginTop: 6,
-              borderTop: "2px solid #2e2e2e"
+              borderTop: "2px solid var(--border-strong)"
             }}>
               {last7Days.map(d => {
                 const isToday = d.dateStr === getTodayStr();
@@ -338,7 +338,7 @@ export default function ReportsView({ appointments, barbers }) {
                     <p style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      color: isToday ? "#36B1DF" : "#555",
+                      color: isToday ? "#36B1DF" : "var(--text-dim)",
                       textTransform: "uppercase"
                     }}>
                       {d.label}
@@ -346,12 +346,12 @@ export default function ReportsView({ appointments, barbers }) {
                     <p style={{
                       fontSize: 12,
                       fontWeight: 800,
-                      color: isToday ? "#36B1DF" : "#888"
+                      color: isToday ? "#36B1DF" : "var(--text-tertiary)"
                     }}>
                       {d.num}
                     </p>
                     {d.count > 0 && (
-                      <p style={{ fontSize: 9, color: "#555" }}>{d.count}✓</p>
+                      <p style={{ fontSize: 9, color: "var(--text-dim)" }}>{d.count}✓</p>
                     )}
                   </div>
                 );
@@ -361,20 +361,20 @@ export default function ReportsView({ appointments, barbers }) {
             <div style={{
               marginTop: 12,
               paddingTop: 10,
-              borderTop: "1px solid #1e1e1e",
+              borderTop: "1px solid var(--border)",
               display: "flex",
               gap: 16,
               flexWrap: "wrap"
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(180deg, #5FC8EC, #36B1DF)" }} />
-                <span style={{ fontSize: 11, color: "#666" }}>Hoy</span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hoy</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, background: "#444" }} />
-                <span style={{ fontSize: 11, color: "#666" }}>Días anteriores</span>
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: "var(--text-faint)" }} />
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Días anteriores</span>
               </div>
-              <span style={{ fontSize: 11, color: "#555", marginLeft: "auto" }}>✓ = citas completadas</span>
+              <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: "auto" }}>✓ = citas completadas</span>
             </div>
           </div>
         )}
@@ -408,7 +408,7 @@ export default function ReportsView({ appointments, barbers }) {
                         {formatCurrency(b.revenue)}
                       </span>
                     </div>
-                    <div style={{ height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ height: 6, background: "var(--bg-track)", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{
                         width: `${widthPct}%`,
                         height: "100%",
@@ -418,7 +418,7 @@ export default function ReportsView({ appointments, barbers }) {
                         transition: "width 0.5s"
                       }} />
                     </div>
-                    <p style={{ fontSize: 11, color: "#666", marginTop: 4 }}>{b.count} corte{b.count !== 1 ? 's' : ''}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{b.count} corte{b.count !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
               );
@@ -440,13 +440,13 @@ export default function ReportsView({ appointments, barbers }) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
                     <span style={{ fontWeight: 600, fontSize: 13 }}>{s.name}</span>
                     <div style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
-                      <span style={{ fontSize: 11, color: "#666" }}>{s.count} corte{s.count !== 1 ? 's' : ''}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.count} corte{s.count !== 1 ? 's' : ''}</span>
                       <span style={{ color: "#36B1DF", fontWeight: 700, fontSize: 13 }}>
                         {formatCurrency(s.revenue)}
                       </span>
                     </div>
                   </div>
-                  <div style={{ height: 8, background: "#1a1a1a", borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ height: 8, background: "var(--bg-track)", borderRadius: 4, overflow: "hidden" }}>
                     <div style={{
                       width: `${widthPct}%`,
                       height: "100%",
@@ -481,14 +481,14 @@ export default function ReportsView({ appointments, barbers }) {
                     position: "absolute",
                     left: 0, right: 0,
                     bottom: `${pct}%`,
-                    borderTop: "1px dashed #1e1e1e"
+                    borderTop: "1px dashed var(--border)"
                   }}>
                     <span style={{
                       position: "absolute",
                       left: -6,
                       transform: "translateX(-100%)",
                       fontSize: 9,
-                      color: "#444"
+                      color: "var(--text-faint)"
                     }}>
                       {Math.round(maxHourCount * pct / 100)}
                     </span>
@@ -532,7 +532,7 @@ export default function ReportsView({ appointments, barbers }) {
                               left: "50%",
                               transform: "translateX(-50%)",
                               fontSize: 8,
-                              color: "#555",
+                              color: "var(--text-dim)",
                               whiteSpace: "nowrap"
                             }}>
                               12PM
@@ -552,7 +552,7 @@ export default function ReportsView({ appointments, barbers }) {
                           {h.count > 0 && (
                             <span style={{
                               fontSize: 9,
-                              color: isPeak ? (isAM ? "#5FC8EC" : "#818cf8") : "#555",
+                              color: isPeak ? (isAM ? "#5FC8EC" : "#818cf8") : "var(--text-dim)",
                               fontWeight: 700
                             }}>
                               {h.count}
@@ -589,7 +589,7 @@ export default function ReportsView({ appointments, barbers }) {
                 paddingLeft: 28,
                 gap: 3,
                 marginTop: 4,
-                borderTop: "2px solid #2e2e2e",
+                borderTop: "2px solid var(--border-strong)",
                 paddingTop: 6
               }}>
                 {allHours.map((h, i) => {
@@ -625,7 +625,7 @@ export default function ReportsView({ appointments, barbers }) {
                 <div style={{
                   flex: 1,
                   minWidth: 140,
-                  background: "#051520",
+                  background: "var(--accent-bg)",
                   border: "1px solid #0a3d56",
                   borderRadius: 8,
                   padding: "10px 14px",
@@ -677,11 +677,11 @@ export default function ReportsView({ appointments, barbers }) {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <div style={{ width: 10, height: 10, borderRadius: 2, background: "#5FC8EC" }} />
-                  <span style={{ fontSize: 11, color: "#666" }}>Hora AM pico</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hora AM pico</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <div style={{ width: 10, height: 10, borderRadius: 2, background: "#818cf8" }} />
-                  <span style={{ fontSize: 11, color: "#666" }}>Hora PM pico</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hora PM pico</span>
                 </div>
               </div>
             </div>
@@ -693,23 +693,23 @@ export default function ReportsView({ appointments, barbers }) {
       <Card title="📆 Comparativa mensual" subtitle="Este mes vs mes anterior">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{
-            background: "#0f0f0f",
-            border: "1px solid #1e1e1e",
+            background: "var(--bg-elevated-2)",
+            border: "1px solid var(--border)",
             borderRadius: 10,
             padding: 18
           }}>
-            <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
               Mes anterior
             </p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: "#888", fontFamily: "'Barlow Condensed', sans-serif" }}>
+            <p style={{ fontSize: 22, fontWeight: 800, color: "var(--text-tertiary)", fontFamily: "'Barlow Condensed', sans-serif" }}>
               {formatCurrency(monthComparison.lastMonth.revenue)}
             </p>
-            <p style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
               {monthComparison.lastMonth.count} corte{monthComparison.lastMonth.count !== 1 ? 's' : ''}
             </p>
           </div>
           <div style={{
-            background: "#051520",
+            background: "var(--accent-bg)",
             border: "1px solid #0a3d56",
             borderRadius: 10,
             padding: 18
@@ -720,7 +720,7 @@ export default function ReportsView({ appointments, barbers }) {
             <p style={{ fontSize: 22, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>
               {formatCurrency(monthComparison.thisMonth.revenue)}
             </p>
-            <p style={{ fontSize: 12, color: "#888", marginTop: 4 }}>
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
               {monthComparison.thisMonth.count} corte{monthComparison.thisMonth.count !== 1 ? 's' : ''}
             </p>
           </div>
@@ -753,15 +753,15 @@ export default function ReportsView({ appointments, barbers }) {
 function KPI({ label, value, color, icon }) {
   return (
     <div style={{
-      background: "#141414",
-      border: "1px solid #1e1e1e",
+      background: "var(--bg-elevated)",
+      border: "1px solid var(--border)",
       borderRadius: 12,
       padding: "18px 20px",
       position: "relative",
       overflow: "hidden"
     }}>
       <span style={{ position: "absolute", top: 12, right: 14, fontSize: 18, opacity: 0.4 }}>{icon}</span>
-      <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
       <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
     </div>
   );
@@ -770,8 +770,8 @@ function KPI({ label, value, color, icon }) {
 function Card({ title, subtitle, children }) {
   return (
     <div style={{
-      background: "#141414",
-      border: "1px solid #1e1e1e",
+      background: "var(--bg-elevated)",
+      border: "1px solid var(--border)",
       borderRadius: 12,
       padding: 22,
       marginBottom: 20
@@ -783,7 +783,7 @@ function Card({ title, subtitle, children }) {
           letterSpacing: 1, textTransform: "uppercase",
           marginBottom: 2
         }}>{title}</h2>
-        {subtitle && <p style={{ fontSize: 12, color: "#666" }}>{subtitle}</p>}
+        {subtitle && <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -792,7 +792,7 @@ function Card({ title, subtitle, children }) {
 
 function EmptyState({ icon, message }) {
   return (
-    <div style={{ textAlign: "center", padding: 30, color: "#555" }}>
+    <div style={{ textAlign: "center", padding: 30, color: "var(--text-dim)" }}>
       <p style={{ fontSize: 32, marginBottom: 8 }}>{icon}</p>
       <p style={{ fontSize: 13 }}>{message}</p>
     </div>

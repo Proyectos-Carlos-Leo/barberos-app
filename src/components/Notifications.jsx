@@ -21,7 +21,7 @@ export default function Notifications() {
           success: { bg: "#14532d", border: "#16a34a", icon: "✓" },
           new: { bg: "#1e3a5f", border: "#3b82f6", icon: "🔔" },
           error: { bg: "#7f1d1d", border: "#dc2626", icon: "✕" },
-          info: { bg: "#051520", border: "#36B1DF", icon: "ℹ" }
+          info: { bg: "var(--accent-bg)", border: "#36B1DF", icon: "ℹ" }
         };
         const c = colors[n.type] || colors.info;
 
@@ -47,7 +47,7 @@ export default function Notifications() {
             <button style={{
               background: "transparent",
               border: "none",
-              color: "#aaa",
+              color: "var(--text-secondary)",
               cursor: "pointer",
               fontSize: 16,
               padding: 0

@@ -19,8 +19,8 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
         onClick={e => e.stopPropagation()}
         className="fade-in"
         style={{
-          background: "#141414",
-          border: "1px solid #2e2e2e",
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border-strong)",
           borderRadius: 16,
           width: "100%",
           maxWidth: 420,
@@ -30,7 +30,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
       >
         <div style={{
           width: 64, height: 64,
-          background: danger ? "#3f1111" : "#051520",
+          background: danger ? "#3f1111" : "var(--accent-bg)",
           border: `2px solid ${danger ? "#dc2626" : "#36B1DF"}`,
           borderRadius: "50%",
           display: "flex",
@@ -52,7 +52,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
         }}>{title}</h3>
 
         <p style={{
-          color: "#aaa",
+          color: "var(--text-secondary)",
           fontSize: 14,
           marginBottom: 24,
           lineHeight: 1.5
@@ -64,8 +64,8 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
             style={{
               padding: "12px 24px",
               background: "transparent",
-              color: "#f5f0eb",
-              border: "1px solid #2e2e2e",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border-strong)",
               borderRadius: 8,
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: 14,
@@ -83,7 +83,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
             style={{
               padding: "12px 24px",
               background: danger ? "#dc2626" : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
-              color: danger ? "#fff" : "#0a0a0a",
+              color: danger ? "#fff" : "var(--bg-main)",
               border: "none",
               borderRadius: 8,
               fontFamily: "'Barlow Condensed', sans-serif",

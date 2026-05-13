@@ -99,7 +99,7 @@ export default function AdminView() {
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ color: "#888", fontFamily: "'Barlow', sans-serif" }}>Cargando datos...</p>
+        <p style={{ color: "var(--text-tertiary)", fontFamily: "'Barlow', sans-serif" }}>Cargando datos...</p>
       </div>
     </div>
   );
@@ -135,7 +135,7 @@ export default function AdminView() {
             style={{
               padding: "6px 14px",
               background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
-              color: "#0a0a0a",
+              color: "var(--bg-main)",
               border: "none",
               borderRadius: 6,
               fontSize: 12,
@@ -151,8 +151,8 @@ export default function AdminView() {
             style={{
               padding: "6px 10px",
               background: "transparent",
-              color: "#888",
-              border: "1px solid #2e2e2e",
+              color: "var(--text-tertiary)",
+              border: "1px solid var(--border-strong)",
               borderRadius: 6,
               fontSize: 12,
               cursor: "pointer"
@@ -196,35 +196,35 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
     <div className="fade-in">
       <div style={{ marginBottom: 28 }}>
         <h1 className="section-title" style={{ marginBottom: 4 }}>Panel del <span className="gold">dueño</span></h1>
-        <p style={{ color: "#888", fontSize: 14 }}>Administra todas las citas en tiempo real</p>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Administra todas las citas en tiempo real</p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
         {statCards.map(s => (
-          <div key={s.label} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
+          <div key={s.label} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
             <span style={{ position: "absolute", top: 12, right: 14, fontSize: 18, opacity: 0.4 }}>{s.icon}</span>
-            <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{s.label}</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{s.label}</p>
             <p style={{ fontSize: 28, fontWeight: 800, color: s.color, fontFamily: "'Barlow Condensed', sans-serif" }}>{s.value}</p>
           </div>
         ))}
       </div>
 
-      <div style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: 16, marginBottom: 20 }}>
-        <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>Filtros</p>
+      <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>Filtros</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
           <div>
-            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600 }}>Fecha</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>Fecha</label>
             <input type="date" value={filterDate === "all" ? "" : filterDate} onChange={e => setFilterDate(e.target.value || "all")} />
           </div>
           <div>
-            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600 }}>Barbero</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>Barbero</label>
             <select value={filterBarber} onChange={e => setFilterBarber(e.target.value)}>
               <option value="all">Todos</option>
               {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600 }}>Estado</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>Estado</label>
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
               <option value="all">Todos</option>
               <option value="pendiente">Pendiente</option>
@@ -236,11 +236,11 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         </div>
       </div>
 
-      <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{filtered.length} cita{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}</p>
+      <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16 }}>{filtered.length} cita{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}</p>
 
       <div style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign: "center", padding: 60, color: "#555", background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12 }}>
+          <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <p style={{ fontSize: 36, marginBottom: 8 }}>📭</p>
             <p style={{ fontSize: 14 }}>No hay citas con estos filtros</p>
           </div>
@@ -250,13 +250,13 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           const sc = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
           const isOpen = selected === appt.id;
           return (
-            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "#36B1DF33" : "#1e1e1e"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
+            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "#36B1DF33" : "var(--border)"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#36B1DF", minWidth: 56 }}>{appt.time}</div>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "#333", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "var(--text-faint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{appt.client}</p>
-                  <p style={{ fontSize: 12, color: "#888" }}>{appt.service?.name} · {barber?.name || "Sin asignar"}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{appt.service?.name} · {barber?.name || "Sin asignar"}</p>
                 </div>
                 <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                   <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 16 }}>{formatCurrency(appt.service?.price || 0)}</span>
@@ -267,39 +267,39 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                 </div>
               </div>
               {isOpen && (
-                <div className="fade-in" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid #1e1e1e" }}>
+                <div className="fade-in" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 16 }}>
                     <div>
-                      <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Fecha</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Fecha</p>
                       <p style={{ fontSize: 13, fontWeight: 600 }}>{formatDate(appt.date)}</p>
                     </div>
                     {appt.phone && (
                       <div>
-                        <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Teléfono</p>
+                        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Teléfono</p>
                         <a href={`tel:${appt.phone}`} onClick={e => e.stopPropagation()} style={{ fontSize: 13, fontWeight: 600 }}>📞 {appt.phone}</a>
                       </div>
                     )}
                     <div>
-                      <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Duración</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Duración</p>
                       <p style={{ fontSize: 13, fontWeight: 600 }}>{appt.service?.duration} min</p>
                     </div>
                   </div>
                   {appt.notes && (
-                    <div style={{ background: "#0f0f0f", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid #36B1DF" }}>
-                      <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
-                      <p style={{ fontSize: 13, fontStyle: "italic", color: "#aaa" }}>"{appt.notes}"</p>
+                    <div style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid #36B1DF" }}>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
+                      <p style={{ fontSize: 13, fontStyle: "italic", color: "var(--text-secondary)" }}>"{appt.notes}"</p>
                     </div>
                   )}
                   <div>
-                    <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>Cambiar estado</p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>Cambiar estado</p>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {Object.entries(STATUS_COLORS).map(([key, s]) => (
-                        <button key={key} onClick={e => { e.stopPropagation(); onStatusChange(appt.id, key); }} style={{ padding: "6px 14px", borderRadius: 6, border: `1.5px solid ${appt.status === key ? s.dot : "#2e2e2e"}`, background: appt.status === key ? s.bg : "transparent", color: appt.status === key ? s.text : "#888", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>{s.label}</button>
+                        <button key={key} onClick={e => { e.stopPropagation(); onStatusChange(appt.id, key); }} style={{ padding: "6px 14px", borderRadius: 6, border: `1.5px solid ${appt.status === key ? s.dot : "var(--border-strong)"}`, background: appt.status === key ? s.bg : "transparent", color: appt.status === key ? s.text : "var(--text-tertiary)", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>{s.label}</button>
                       ))}
                     </div>
                   </div>
                   <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid #2e2e2e", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗑 Eliminar</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗑 Eliminar</button>
                   </div>
                 </div>
               )}
@@ -338,7 +338,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>Tu <span className="gold">equipo</span></h1>
-          <p style={{ color: "#888", fontSize: 14 }}>Gestiona barberos y horarios</p>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Gestiona barberos y horarios</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
@@ -370,11 +370,11 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "#36B1DF" }}>Nuevo barbero</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Nombre *</label>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Nombre *</label>
               <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej. Juan Pérez" />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Especialidad *</label>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Especialidad *</label>
               <input value={form.specialty} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Ej. Degradados" />
             </div>
           </div>
@@ -394,7 +394,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: b.bg, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, color: b.color, flexShrink: 0 }}>{b.avatar}</div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{b.name}</p>
-                  <p style={{ fontSize: 12, color: "#888" }}>{b.specialty}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{b.specialty}</p>
                 </div>
                 <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "#14532d" : "#3f1111", border: `1px solid ${b.active ? "#16a34a" : "#dc2626"}`, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: b.active ? "#4ade80" : "#f87171", position: "absolute", top: 2, left: b.active ? 21 : 2, transition: "left 0.2s" }} />
@@ -403,13 +403,13 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
               <div className="divider" style={{ margin: "0 0 16px" }} />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, textAlign: "center", marginBottom: 14 }}>
                 {[["Hoy", stats.today], ["Total", stats.completed], ["Ingresos", formatCurrency(stats.revenue)]].map(([label, val]) => (
-                  <div key={label} style={{ background: "#0f0f0f", borderRadius: 8, padding: "12px 4px" }}>
-                    <p style={{ fontSize: 10, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
+                  <div key={label} style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: "12px 4px" }}>
+                    <p style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
                     <p style={{ fontSize: 15, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
                   </div>
                 ))}
               </div>
-              <button onClick={() => setConfirmDelete({ id: b.id, name: b.name })} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid #2e2e2e", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
+              <button onClick={() => setConfirmDelete({ id: b.id, name: b.name })} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
             </div>
           );
         })}
@@ -435,19 +435,19 @@ function HistoryView({ appointments, barbers }) {
     <div className="fade-in">
       <div style={{ marginBottom: 28 }}>
         <h1 className="section-title" style={{ marginBottom: 4 }}><span className="gold">Historial</span> de citas</h1>
-        <p style={{ color: "#888", fontSize: 14 }}>Citas completadas y reportes</p>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Citas completadas y reportes</p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
         {[["Total completadas", completed.length, "#4ade80"], ["Ingresos totales", formatCurrency(totalRevenue), "#36B1DF"], ["Ticket promedio", completed.length > 0 ? formatCurrency(Math.round(totalRevenue / completed.length)) : "$0", "#60a5fa"]].map(([label, value, color]) => (
-          <div key={label} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: "18px 20px" }}>
-            <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
+          <div key={label} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
             <p style={{ fontSize: 26, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
           </div>
         ))}
       </div>
       <div style={{ display: "grid", gap: 10 }}>
         {completed.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#555", background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12 }}>
+          <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <p style={{ fontSize: 36, marginBottom: 8 }}>📋</p>
             <p style={{ fontSize: 14 }}>Aún no hay citas completadas</p>
           </div>
@@ -456,13 +456,13 @@ function HistoryView({ appointments, barbers }) {
           return (
             <div key={appt.id} className="card" style={{ padding: "14px 18px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: barber?.bg || "#333", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: barber?.color || "#fff" }}>{barber?.avatar || "?"}</div>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: barber?.bg || "var(--text-faint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: barber?.color || "#fff" }}>{barber?.avatar || "?"}</div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 600, fontSize: 14 }}>{appt.client}</p>
-                  <p style={{ fontSize: 12, color: "#888" }}>
-                    {appt.service?.name} · <strong style={{ color: "#aaa" }}>{barber?.name || "Sin asignar"}</strong>
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                    {appt.service?.name} · <strong style={{ color: "var(--text-secondary)" }}>{barber?.name || "Sin asignar"}</strong>
                   </p>
-                  <p style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{formatDate(appt.date)} · {appt.time}</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{formatDate(appt.date)} · {appt.time}</p>
                 </div>
                 <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 15 }}>{formatCurrency(appt.service?.price || 0)}</span>
               </div>

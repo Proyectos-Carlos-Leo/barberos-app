@@ -27,6 +27,8 @@
   --info: #60a5fa;
   --scrollbar-track: #1a1a1a;
   --shadow: 0 4px 20px rgba(0,0,0,0.3);
+
+  color-scheme: dark;
 }
 
 [data-theme="light"] {
@@ -56,6 +58,8 @@
   --info: #2563eb;
   --scrollbar-track: #f3f4f6;
   --shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+  color-scheme: light;
 }
 
 /* ==================== RESET & BASE ==================== */
@@ -75,8 +79,100 @@ html, body {
   transition: background 0.3s, color 0.3s;
 }
 
-#root {
-  min-height: 100vh;
+#root { min-height: 100vh; }
+
+/* ==================== FIX MODO CLARO: Remap automático de colores oscuros ==================== */
+/* Cuando estamos en modo claro, los fondos negros y grises oscuros se vuelven claros */
+[data-theme="light"] [style*="background: #0a0a0a"],
+[data-theme="light"] [style*="background:#0a0a0a"] {
+  background: var(--bg-main) !important;
+}
+
+[data-theme="light"] [style*="background: \"#0a0a0a\""],
+[data-theme="light"] [style*="background:#141414"],
+[data-theme="light"] [style*="background: #141414"] {
+  background: var(--bg-elevated) !important;
+}
+
+[data-theme="light"] [style*="background: #0f0f0f"],
+[data-theme="light"] [style*="background:#0f0f0f"] {
+  background: var(--bg-elevated-2) !important;
+}
+
+[data-theme="light"] [style*="background: #1a1a1a"],
+[data-theme="light"] [style*="background:#1a1a1a"] {
+  background: var(--bg-track) !important;
+}
+
+[data-theme="light"] [style*="background: #1e1e1e"],
+[data-theme="light"] [style*="background:#1e1e1e"] {
+  background: var(--border) !important;
+}
+
+/* Fondos azul oscuro (cards accent) → fondo claro accent */
+[data-theme="light"] [style*="background: #051520"],
+[data-theme="light"] [style*="background:#051520"] {
+  background: var(--accent-bg) !important;
+}
+
+[data-theme="light"] [style*="background: \"#1a1410\""],
+[data-theme="light"] [style*="background: #1a1410"] {
+  background: var(--accent-bg) !important;
+}
+
+/* Bordes oscuros → bordes claros */
+[data-theme="light"] [style*="border: 1px solid #1e1e1e"],
+[data-theme="light"] [style*="border: \"1px solid #1e1e1e\""] {
+  border-color: var(--border) !important;
+}
+
+[data-theme="light"] [style*="border: 1px solid #2e2e2e"],
+[data-theme="light"] [style*="border: \"1px solid #2e2e2e\""] {
+  border-color: var(--border-strong) !important;
+}
+
+[data-theme="light"] [style*="border: 1px solid #222"] {
+  border-color: var(--border) !important;
+}
+
+[data-theme="light"] [style*="border: 1px solid #0a3d56"] {
+  border-color: var(--accent-border) !important;
+}
+
+/* Textos grises oscuros → textos grises legibles */
+[data-theme="light"] [style*="color: \"#f5f0eb\""],
+[data-theme="light"] [style*="color: #f5f0eb"] {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] [style*="color: \"#aaa\""],
+[data-theme="light"] [style*="color: #aaa"] {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="light"] [style*="color: \"#888\""],
+[data-theme="light"] [style*="color: #888"] {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="light"] [style*="color: \"#666\""],
+[data-theme="light"] [style*="color: #666"] {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] [style*="color: \"#555\""],
+[data-theme="light"] [style*="color: #555"] {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] [style*="color: \"#444\""],
+[data-theme="light"] [style*="color: #444"] {
+  color: var(--text-dim) !important;
+}
+
+[data-theme="light"] [style*="color: \"#333\""],
+[data-theme="light"] [style*="color: #333"] {
+  color: var(--text-dim) !important;
 }
 
 /* ==================== SCROLLBARS ==================== */
@@ -99,23 +195,22 @@ input, select, textarea {
   transition: border-color 0.2s;
 }
 
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
 input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-
 select option { background: var(--bg-input); color: var(--text-primary); }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: var(--input-icon-filter, invert(0.7));
   cursor: pointer;
 }
 
-[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: none;
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
 }
 
 /* ==================== BUTTONS ==================== */
 .btn-gold {
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
-  color: var(--bg-main);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -129,9 +224,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-height: 44px;
 }
 
-[data-theme="light"] .btn-gold {
-  color: #ffffff;
-}
+[data-theme="dark"] .btn-gold { color: #0a0a0a; }
 
 .btn-gold:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
 .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -153,7 +246,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .btn-large {
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
-  color: var(--bg-main);
+  color: #ffffff;
   border: none;
   border-radius: 12px;
   padding: 18px 32px;
@@ -167,15 +260,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 100%;
 }
 
-[data-theme="light"] .btn-large {
-  color: #ffffff;
-}
+[data-theme="dark"] .btn-large { color: #0a0a0a; }
 
 .btn-large:hover { opacity: 0.9; transform: translateY(-2px); }
 .btn-large.gray { background: linear-gradient(135deg, #64748b, #94a3b8); color: #ffffff; }
 
 /* ==================== CARDS ==================== */
-.card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; }
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+[data-theme="light"] .card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
 
 /* ==================== TAGS ==================== */
 .tag {
@@ -223,6 +322,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   z-index: 100;
 }
 
+[data-theme="light"] .app-header {
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
 .app-nav { display: flex; gap: 4px; align-items: center; }
 .app-nav-section {
   margin-left: 16px;
@@ -240,6 +344,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
+  color: var(--text-primary);
 }
 
 .gold { color: var(--accent); }
@@ -247,7 +352,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ==================== THEME TOGGLE ==================== */
 .theme-toggle {
-  background: transparent;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
   border-radius: 50%;
@@ -261,7 +366,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: all 0.2s;
 }
 
-.theme-toggle:hover { border-color: var(--accent); }
+.theme-toggle:hover {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -311,13 +419,45 @@ body { overflow-x: hidden; }
 main { max-width: 100%; overflow-x: hidden; }
 
 /* ==================== BOOKING CARDS ==================== */
-.booking-card { padding: 28px; }
+.booking-card {
+  padding: 28px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
 @media (max-width: 600px) { .booking-card { padding: 18px 16px; } }
 
 /* ==================== APPOINTMENT CARDS ==================== */
-.appt-card { padding: 18px 22px; }
+.appt-card {
+  padding: 18px 22px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
 @media (max-width: 600px) { .appt-card { padding: 14px 14px; } }
 
 /* ==================== MODAL BODIES ==================== */
 .modal-body { padding: 24px; }
 @media (max-width: 600px) { .modal-body { padding: 16px 14px; } }
+
+/* ==================== ARREGLOS ESPECÍFICOS MODO CLARO ==================== */
+[data-theme="light"] body {
+  background: #f4f6f8;
+}
+
+/* Hacer las tarjetas de citas con sombra suave en modo claro */
+[data-theme="light"] .card,
+[data-theme="light"] .appt-card,
+[data-theme="light"] .booking-card {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Botones gold con texto blanco en modo claro para mejor contraste */
+[data-theme="light"] .btn-gold,
+[data-theme="light"] .btn-large {
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(26, 127, 171, 0.15);
+}
+
+/* Las tags de estado mantienen sus colores claros */
+.tag { border: 1px solid transparent; }

@@ -59,7 +59,7 @@ export default function AdminLogin({ onLogin }) {
           margin: '0 auto 28px',
           boxShadow: '0 10px 40px rgba(201,168,76,0.3)'
         }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="#0a0a0a">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--bg-main)">
             <path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 110 4 2 2 0 010-4z"/>
           </svg>
         </div>
@@ -67,22 +67,22 @@ export default function AdminLogin({ onLogin }) {
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
           fontSize: 36, fontWeight: 800, letterSpacing: 2,
-          textTransform: 'uppercase', color: '#f5f0eb', marginBottom: 8
+          textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: 8
         }}>
           Acceso <span style={{ color: '#36B1DF' }}>Admin</span>
         </h1>
-        <p style={{ color: '#888', fontSize: 14, marginBottom: 36 }}>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 36 }}>
           Solo el dueño puede entrar aquí
         </p>
 
         <div style={{
-          background: '#141414', border: '1px solid #222',
+          background: 'var(--bg-elevated)', border: '1px solid #222',
           borderRadius: 16, padding: 32
         }}>
           {/* Email */}
           <div style={{ marginBottom: 16, textAlign: 'left' }}>
             <label style={{
-              fontSize: 11, color: '#888', display: 'block',
+              fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
               marginBottom: 8, fontWeight: 600,
               textTransform: 'uppercase', letterSpacing: 0.5
             }}>
@@ -97,8 +97,8 @@ export default function AdminLogin({ onLogin }) {
               autoFocus
               autoComplete="email"
               style={{
-                background: '#1a1a1a', color: '#f5f0eb',
-                border: `1px solid ${error ? '#dc2626' : '#2e2e2e'}`,
+                background: 'var(--bg-track)', color: 'var(--text-primary)',
+                border: `1px solid ${error ? '#dc2626' : 'var(--border-strong)'}`,
                 borderRadius: 8, padding: '12px 16px',
                 width: '100%', fontFamily: "'Barlow', sans-serif",
                 fontSize: 15, outline: 'none'
@@ -109,7 +109,7 @@ export default function AdminLogin({ onLogin }) {
           {/* Password */}
           <div style={{ marginBottom: 20, textAlign: 'left' }}>
             <label style={{
-              fontSize: 11, color: '#888', display: 'block',
+              fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
               marginBottom: 8, fontWeight: 600,
               textTransform: 'uppercase', letterSpacing: 0.5
             }}>
@@ -123,8 +123,8 @@ export default function AdminLogin({ onLogin }) {
               placeholder="••••••••"
               autoComplete="current-password"
               style={{
-                background: '#1a1a1a', color: '#f5f0eb',
-                border: `1px solid ${error ? '#dc2626' : '#2e2e2e'}`,
+                background: 'var(--bg-track)', color: 'var(--text-primary)',
+                border: `1px solid ${error ? '#dc2626' : 'var(--border-strong)'}`,
                 borderRadius: 8, padding: '12px 16px',
                 width: '100%', fontFamily: "'Barlow', sans-serif",
                 fontSize: 15, outline: 'none', letterSpacing: 4
@@ -142,8 +142,8 @@ export default function AdminLogin({ onLogin }) {
             disabled={loading}
             style={{
               width: '100%',
-              background: loading ? '#2e2e2e' : 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
-              color: loading ? '#888' : '#0a0a0a',
+              background: loading ? 'var(--border-strong)' : 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
+              color: loading ? 'var(--text-tertiary)' : 'var(--bg-main)',
               border: 'none', borderRadius: 8,
               padding: '14px 24px',
               fontFamily: "'Barlow Condensed', sans-serif",
@@ -157,7 +157,7 @@ export default function AdminLogin({ onLogin }) {
           </button>
         </div>
 
-        <p style={{ color: '#444', fontSize: 12, marginTop: 24 }}>
+        <p style={{ color: 'var(--text-faint)', fontSize: 12, marginTop: 24 }}>
           ¿Eres cliente?{' '}
           <a href="/cliente" style={{ color: '#36B1DF' }}>
             Agenda tu cita aquí

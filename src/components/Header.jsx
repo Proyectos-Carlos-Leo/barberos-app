@@ -23,7 +23,7 @@ export default function Header({ userType, navItems = [] }) {
           alignItems: "center",
           justifyContent: "center"
         }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0a0a">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--bg-main)">
             <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
           </svg>
         </div>
@@ -33,7 +33,7 @@ export default function Header({ userType, navItems = [] }) {
           fontSize: 20,
           letterSpacing: 2,
           textTransform: "uppercase",
-          color: "#f5f0eb"
+          color: "var(--text-primary)"
         }}>
           BarberOS
         </span>
@@ -107,7 +107,7 @@ export default function Header({ userType, navItems = [] }) {
               {item.key === 'dashboard' && pendingCount > 0 && (
                 <span style={{
                   background: "#36B1DF",
-                  color: "#0a0a0a",
+                  color: "var(--bg-main)",
                   borderRadius: "50%",
                   width: 18,
                   height: 18,

@@ -83,16 +83,16 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
       padding: 20, zIndex: 1000
     }}>
       <div className="fade-in" style={{
-        background: '#0f0f0f', border: '1px solid #2e2e2e',
+        background: 'var(--bg-elevated-2)', border: '1px solid var(--border-strong)',
         borderRadius: 16, width: '100%', maxWidth: 700,
         maxHeight: '92vh', overflowY: 'auto'
       }}>
         {/* Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid #1e1e1e',
+          borderBottom: '1px solid var(--border)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, background: '#0f0f0f', zIndex: 1
+          position: 'sticky', top: 0, background: 'var(--bg-elevated-2)', zIndex: 1
         }}>
           <div>
             <h2 style={{
@@ -102,13 +102,13 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
             }}>
               🚫 <span style={{ color: '#36B1DF' }}>Bloqueo</span> de Horarios
             </h2>
-            <p style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 4 }}>
               Bloquea horas, días completos o vacaciones
             </p>
           </div>
           <button onClick={onClose} style={{
-            background: 'transparent', border: '1px solid #2e2e2e',
-            color: '#888', borderRadius: 6, padding: '6px 12px',
+            background: 'transparent', border: '1px solid var(--border-strong)',
+            color: 'var(--text-tertiary)', borderRadius: 6, padding: '6px 12px',
             cursor: 'pointer', fontSize: 18, lineHeight: 1
           }}>×</button>
         </div>
@@ -117,7 +117,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           {/* Tipo de bloqueo */}
           <div style={{ marginBottom: 20 }}>
             <label style={{
-              fontSize: 11, color: '#888', display: 'block',
+              fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
               marginBottom: 8, fontWeight: 600,
               textTransform: 'uppercase', letterSpacing: 0.5
             }}>
@@ -135,15 +135,15 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
                   style={{
                     padding: 14,
                     borderRadius: 10,
-                    border: `2px solid ${type === t.val ? '#36B1DF' : '#1e1e1e'}`,
-                    background: type === t.val ? '#051520' : '#141414',
+                    border: `2px solid ${type === t.val ? '#36B1DF' : 'var(--border)'}`,
+                    background: type === t.val ? 'var(--accent-bg)' : 'var(--bg-elevated)',
                     cursor: 'pointer',
                     textAlign: 'center',
                     transition: 'all 0.2s'
                   }}
                 >
                   <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{t.label}</p>
-                  <p style={{ fontSize: 11, color: '#666' }}>{t.desc}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.desc}</p>
                 </div>
               ))}
             </div>
@@ -152,7 +152,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           {/* Barbero */}
           <div style={{ marginBottom: 16 }}>
             <label style={{
-              fontSize: 11, color: '#888', display: 'block',
+              fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
               marginBottom: 6, fontWeight: 600, textTransform: 'uppercase'
             }}>
               Barbero
@@ -169,7 +169,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           <div style={{ display: 'grid', gridTemplateColumns: type === 'range' ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <label style={{
-                fontSize: 11, color: '#888', display: 'block',
+                fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
                 marginBottom: 6, fontWeight: 600, textTransform: 'uppercase'
               }}>
                 {type === 'range' ? 'Desde' : 'Fecha'}
@@ -179,7 +179,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
             {type === 'range' && (
               <div>
                 <label style={{
-                  fontSize: 11, color: '#888', display: 'block',
+                  fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
                   marginBottom: 6, fontWeight: 600, textTransform: 'uppercase'
                 }}>
                   Hasta
@@ -193,18 +193,18 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           {type === 'hours' && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 11, color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>
+                <label style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase' }}>
                   Horarios a bloquear ({selectedHours.length})
                 </label>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button onClick={selectAllHours} style={{
-                    background: 'transparent', border: '1px solid #2e2e2e',
+                    background: 'transparent', border: '1px solid var(--border-strong)',
                     color: '#36B1DF', fontSize: 11, padding: '4px 10px',
                     borderRadius: 4, cursor: 'pointer'
                   }}>Todos</button>
                   <button onClick={clearHours} style={{
-                    background: 'transparent', border: '1px solid #2e2e2e',
-                    color: '#888', fontSize: 11, padding: '4px 10px',
+                    background: 'transparent', border: '1px solid var(--border-strong)',
+                    color: 'var(--text-tertiary)', fontSize: 11, padding: '4px 10px',
                     borderRadius: 4, cursor: 'pointer'
                   }}>Limpiar</button>
                 </div>
@@ -219,10 +219,10 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
                       style={{
                         padding: '8px 12px',
                         borderRadius: 6,
-                        border: `1.5px solid ${sel ? '#dc2626' : '#1e1e1e'}`,
-                        background: sel ? '#3f1111' : '#141414',
+                        border: `1.5px solid ${sel ? '#dc2626' : 'var(--border)'}`,
+                        background: sel ? '#3f1111' : 'var(--bg-elevated)',
                         cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                        color: sel ? '#fca5a5' : '#888',
+                        color: sel ? '#fca5a5' : 'var(--text-tertiary)',
                         transition: 'all 0.15s'
                       }}
                     >
@@ -237,7 +237,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           {/* Razón */}
           <div style={{ marginBottom: 20 }}>
             <label style={{
-              fontSize: 11, color: '#888', display: 'block',
+              fontSize: 11, color: 'var(--text-tertiary)', display: 'block',
               marginBottom: 6, fontWeight: 600, textTransform: 'uppercase'
             }}>
               Razón (opcional)
@@ -262,18 +262,18 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
           </div>
 
           {/* Lista de bloqueos activos */}
-          <div style={{ borderTop: '1px solid #1e1e1e', paddingTop: 20 }}>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
             <h3 style={{
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: 16, fontWeight: 700,
               letterSpacing: 1, textTransform: 'uppercase',
-              marginBottom: 12, color: '#aaa'
+              marginBottom: 12, color: 'var(--text-secondary)'
             }}>
               Bloqueos activos ({sortedBlocks.length})
             </h3>
 
             {sortedBlocks.length === 0 ? (
-              <p style={{ color: '#555', fontSize: 13, textAlign: 'center', padding: 20 }}>
+              <p style={{ color: 'var(--text-dim)', fontSize: 13, textAlign: 'center', padding: 20 }}>
                 No hay bloqueos activos
               </p>
             ) : (
@@ -287,8 +287,8 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
 
                   return (
                     <div key={block.id} style={{
-                      background: '#141414',
-                      border: '1px solid #1e1e1e',
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
                       borderRadius: 8,
                       padding: '10px 14px',
                       display: 'flex',
@@ -299,13 +299,13 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
                       <span style={{ fontSize: 13, fontWeight: 600 }}>{typeLabel}</span>
                       <span style={{ flex: 1, fontSize: 13 }}>
                         <strong>{getBarberName(block.barberId)}</strong>
-                        <span style={{ color: '#888', marginLeft: 8 }}>
+                        <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>
                           {block.type === 'range'
                             ? `${formatDate(block.date)} → ${formatDate(block.endDate)}`
                             : formatDate(block.date)}
                         </span>
                         {block.type === 'hours' && block.hours && (
-                          <span style={{ color: '#666', marginLeft: 8, fontSize: 11 }}>
+                          <span style={{ color: 'var(--text-muted)', marginLeft: 8, fontSize: 11 }}>
                             ({block.hours.length} horarios)
                           </span>
                         )}

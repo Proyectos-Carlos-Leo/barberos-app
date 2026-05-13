@@ -140,7 +140,7 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
         <h1 className="section-title" style={{ marginBottom: 6 }}>
           Agenda tu <span className="gold">cita</span>
         </h1>
-        <p style={{ color: "#888", fontSize: 14 }}>Reserva en línea de forma rápida y sencilla</p>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Reserva en línea de forma rápida y sencilla</p>
       </div>
       <StepsIndicator currentStep={step} steps={STEPS} />
       {step === 1 && <Step1ClientInfo form={form} update={update} errors={errors} barbers={barbers} selectedBarber={selectedBarber} onNext={handleNext} />}
@@ -158,12 +158,12 @@ function StepsIndicator({ currentStep, steps }) {
       {steps.map((s, i) => (
         <div key={s.num} style={{ flex: 1, display: "flex", alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: currentStep >= s.num ? "#36B1DF" : "#1e1e1e", border: `2px solid ${currentStep >= s.num ? "#36B1DF" : "#2e2e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: currentStep >= s.num ? "#0a0a0a" : "#555", transition: "all 0.3s" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: currentStep >= s.num ? "#36B1DF" : "var(--border)", border: `2px solid ${currentStep >= s.num ? "#36B1DF" : "var(--border-strong)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: currentStep >= s.num ? "var(--bg-main)" : "var(--text-dim)", transition: "all 0.3s" }}>
               {currentStep > s.num ? "✓" : s.num}
             </div>
-            <span style={{ fontSize: 11, color: currentStep === s.num ? "#36B1DF" : "#555", marginTop: 6, fontWeight: currentStep === s.num ? 600 : 400, textAlign: "center" }}>{s.label}</span>
+            <span style={{ fontSize: 11, color: currentStep === s.num ? "#36B1DF" : "var(--text-dim)", marginTop: 6, fontWeight: currentStep === s.num ? 600 : 400, textAlign: "center" }}>{s.label}</span>
           </div>
-          {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: currentStep > s.num ? "#36B1DF" : "#1e1e1e", marginBottom: 22, transition: "background 0.3s" }} />}
+          {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: currentStep > s.num ? "#36B1DF" : "var(--border)", marginBottom: 22, transition: "background 0.3s" }} />}
         </div>
       ))}
     </div>
@@ -174,7 +174,7 @@ function StepsIndicator({ currentStep, steps }) {
 function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext }) {
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "#aaa" }}>Ingresa tus datos</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "var(--text-secondary)" }}>Ingresa tus datos</h3>
       <div style={{ display: "grid", gap: 18 }}>
         <FormField label="Nombre completo *" error={errors.client}>
           <input value={form.client} onChange={e => update("client", e.target.value)} placeholder="Ej. Juan García" />
@@ -189,11 +189,11 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
           </select>
         </FormField>
         {selectedBarber && (
-          <div className="fade-in" style={{ background: "#0f0f0f", borderRadius: 10, padding: 16, display: "flex", alignItems: "center", gap: 14, border: "1px solid #1e1e1e" }}>
+          <div className="fade-in" style={{ background: "var(--bg-elevated-2)", borderRadius: 10, padding: 16, display: "flex", alignItems: "center", gap: 14, border: "1px solid var(--border)" }}>
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: selectedBarber.bg, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, color: selectedBarber.color, flexShrink: 0 }}>{selectedBarber.avatar}</div>
             <div>
               <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{selectedBarber.name}</p>
-              <p style={{ fontSize: 13, color: "#888" }}>{selectedBarber.specialty}</p>
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)" }}>{selectedBarber.specialty}</p>
             </div>
           </div>
         )}
@@ -209,18 +209,18 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 function Step2Service({ form, update, onBack, onNext }) {
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "#aaa" }}>Elige tu servicio</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "var(--text-secondary)" }}>Elige tu servicio</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
         {SERVICES.map(s => {
           const isSelected = form.serviceId === s.id;
           return (
-            <div key={s.id} onClick={() => update("serviceId", s.id)} style={{ padding: 16, borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "#1e1e1e"}`, background: isSelected ? "#051520" : "#0f0f0f", cursor: "pointer", transition: "all 0.2s" }}>
+            <div key={s.id} onClick={() => update("serviceId", s.id)} style={{ padding: 16, borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "var(--border)"}`, background: isSelected ? "var(--accent-bg)" : "var(--bg-elevated-2)", cursor: "pointer", transition: "all 0.2s" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                 <span style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</span>
                 <span style={{ color: "#36B1DF", fontWeight: 700, fontSize: 16 }}>${s.price}</span>
               </div>
-              <p style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>{s.description}</p>
-              <span style={{ fontSize: 11, color: "#666" }}>⏱ {s.duration} min</span>
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>{s.description}</p>
+              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>⏱ {s.duration} min</span>
             </div>
           );
         })}
@@ -240,16 +240,16 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
 
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#aaa" }}>Elige fecha y hora</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "var(--text-secondary)" }}>Elige fecha y hora</h3>
       <div style={{ marginBottom: 24 }}>
-        <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Fecha</label>
+        <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Fecha</label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {days.map(d => {
             const isSelected = form.date === d.date;
             return (
-              <div key={d.date} onClick={() => { update("date", d.date); update("time", ""); }} style={{ padding: "12px 14px", borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "#1e1e1e"}`, background: isSelected ? "#051520" : "#0f0f0f", cursor: "pointer", textAlign: "center", minWidth: 64, transition: "all 0.2s" }}>
-                <p style={{ fontSize: 11, color: isSelected ? "#36B1DF" : "#888", fontWeight: 600, textTransform: "uppercase" }}>{d.label}</p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: isSelected ? "#36B1DF" : "#f5f0eb" }}>{d.num}</p>
+              <div key={d.date} onClick={() => { update("date", d.date); update("time", ""); }} style={{ padding: "12px 14px", borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "var(--border)"}`, background: isSelected ? "var(--accent-bg)" : "var(--bg-elevated-2)", cursor: "pointer", textAlign: "center", minWidth: 64, transition: "all 0.2s" }}>
+                <p style={{ fontSize: 11, color: isSelected ? "#36B1DF" : "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase" }}>{d.label}</p>
+                <p style={{ fontSize: 20, fontWeight: 700, color: isSelected ? "#36B1DF" : "var(--text-primary)" }}>{d.num}</p>
               </div>
             );
           })}
@@ -268,14 +268,14 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           <p style={{ color: "#fca5a5", fontWeight: 600, fontSize: 14 }}>
             Este día no está disponible
           </p>
-          <p style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 12, marginTop: 4 }}>
             Por favor elige otra fecha
           </p>
         </div>
       )}
       {form.date && !isFullDayBlocked && (
         <div className="fade-in" style={{ marginBottom: 24 }}>
-          <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Hora disponible</label>
+          <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Hora disponible</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {HOURS.map(h => {
               const taken = takenTimes.includes(h);
@@ -292,12 +292,12 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                 <div key={h} onClick={() => !unavailable && update("time", h)} style={{
                   padding: "10px 16px",
                   borderRadius: 8,
-                  border: `1.5px solid ${isSelected ? "#36B1DF" : unavailable ? "#1a1a1a" : "#1e1e1e"}`,
-                  background: isSelected ? "#051520" : unavailable ? "#0d0d0d" : "#0f0f0f",
+                  border: `1.5px solid ${isSelected ? "#36B1DF" : unavailable ? "var(--bg-track)" : "var(--border)"}`,
+                  background: isSelected ? "var(--accent-bg)" : unavailable ? "#0d0d0d" : "var(--bg-elevated-2)",
                   cursor: unavailable ? "not-allowed" : "pointer",
                   fontSize: 13,
                   fontWeight: 600,
-                  color: isSelected ? "#36B1DF" : unavailable ? "#333" : "#f5f0eb",
+                  color: isSelected ? "#36B1DF" : unavailable ? "var(--text-faint)" : "var(--text-primary)",
                   textDecoration: unavailable ? "line-through" : "none",
                   transition: "all 0.2s"
                 }}>{h}</div>
@@ -305,7 +305,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
             })}
           </div>
           {(takenTimes.length > 0 || blockedHoursOnly.length > 0) && (
-            <p style={{ fontSize: 11, color: "#666", marginTop: 10 }}>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>
               Los horarios tachados no están disponibles
             </p>
           )}
@@ -344,27 +344,27 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
 
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#aaa" }}>Confirma tu cita</h3>
-      <div style={{ background: "#0f0f0f", borderRadius: 12, padding: 22, marginBottom: 20, border: "1px solid #1e1e1e" }}>
+      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "var(--text-secondary)" }}>Confirma tu cita</h3>
+      <div style={{ background: "var(--bg-elevated-2)", borderRadius: 12, padding: 22, marginBottom: 20, border: "1px solid var(--border)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
           {summary.map(([label, val]) => (
             <div key={label}>
-              <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{label}</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{label}</p>
               <p style={{ fontSize: 14, fontWeight: 600 }}>{val}</p>
             </div>
           ))}
         </div>
         {form.notes && (
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #1e1e1e" }}>
-            <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
             <p style={{ fontSize: 14, fontStyle: "italic" }}>"{form.notes}"</p>
           </div>
         )}
       </div>
-      <div style={{ background: "#051520", border: "1px solid #0a3d56", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div style={{ background: "var(--accent-bg)", border: "1px solid #0a3d56", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <p style={{ color: "#36B1DF", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
-          <p style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
         </div>
         <span style={{ color: "#36B1DF", fontSize: 28, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
           {formatCurrency(selectedService?.price || 0)}
@@ -391,7 +391,7 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>¡<span className="gold">Cita</span> agendada!</h2>
-      <p style={{ color: "#888", marginBottom: 28, fontSize: 16 }}>Te esperamos, <strong style={{ color: "#f5f0eb" }}>{appointment.client}</strong></p>
+      <p style={{ color: "var(--text-tertiary)", marginBottom: 28, fontSize: 16 }}>Te esperamos, <strong style={{ color: "var(--text-primary)" }}>{appointment.client}</strong></p>
 
       {/* Tarjeta destacada del barbero asignado */}
       {appointment.barber && (
@@ -427,10 +427,10 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
             <p style={{ fontSize: 11, color: "#5FC8EC", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>
               Te atenderá
             </p>
-            <p style={{ fontWeight: 700, fontSize: 18, color: "#f5f0eb" }}>
+            <p style={{ fontWeight: 700, fontSize: 18, color: "var(--text-primary)" }}>
               {appointment.barber.name}
             </p>
-            <p style={{ fontSize: 12, color: "#aaa" }}>
+            <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
               {appointment.barber.specialty}
             </p>
           </div>
@@ -438,8 +438,8 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
       )}
 
       <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid #0a3d56" }}>
-        <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px dashed #2e2e2e" }}>
-          <p style={{ fontSize: 11, color: "#666", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Comprobante</p>
+        <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px dashed var(--border-strong)" }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Comprobante</p>
           <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#36B1DF", letterSpacing: 1 }}>#{folioId}</p>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
@@ -449,7 +449,7 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
           <ReceiptRow label="Hora" value={appointment.time} />
           <ReceiptRow label="Duración" value={`${appointment.service?.duration || 0} min`} />
         </div>
-        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed #2e2e2e", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--border-strong)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>Total</span>
           <span style={{ color: "#36B1DF", fontSize: 22, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>{formatCurrency(appointment.service?.price || 0)}</span>
         </div>
@@ -457,8 +457,8 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
 
       <div style={{ background: "#0f1a2e", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16, maxWidth: 480, margin: "0 auto 28px", textAlign: "left" }}>
         <p style={{ fontSize: 13, color: "#60a5fa", fontWeight: 600, marginBottom: 6 }}>📍 Ubicación</p>
-        <p style={{ fontSize: 13, color: "#aaa" }}>{barbershop.address}</p>
-        <p style={{ fontSize: 13, color: "#aaa", marginTop: 4 }}>📞 {barbershop.phone}</p>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{barbershop.address}</p>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>📞 {barbershop.phone}</p>
       </div>
 
       <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -473,9 +473,9 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
 function FormField({ label, hint, error, children }) {
   return (
     <div>
-      <label style={{ fontSize: 12, color: "#888", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</label>
+      <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</label>
       {children}
-      {hint && !error && <p style={{ fontSize: 11, color: "#666", marginTop: 4 }}>{hint}</p>}
+      {hint && !error && <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{hint}</p>}
       {error && <p style={{ fontSize: 11, color: "#f87171", marginTop: 4 }}>⚠ {error}</p>}
     </div>
   );
@@ -484,7 +484,7 @@ function FormField({ label, hint, error, children }) {
 function ReceiptRow({ label, value }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
-      <span style={{ fontSize: 13, color: "#888" }}>{label}</span>
+      <span style={{ fontSize: 13, color: "var(--text-tertiary)" }}>{label}</span>
       <span style={{ fontSize: 13, fontWeight: 600 }}>{value}</span>
     </div>
   );
@@ -496,7 +496,7 @@ function LoadingScreen() {
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ color: "#888", fontFamily: "'Barlow', sans-serif" }}>Conectando con Firebase...</p>
+        <p style={{ color: "var(--text-tertiary)", fontFamily: "'Barlow', sans-serif" }}>Conectando con Firebase...</p>
       </div>
     </div>
   );
