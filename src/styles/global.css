@@ -461,3 +461,46 @@ main { max-width: 100%; overflow-x: hidden; }
 
 /* Las tags de estado mantienen sus colores claros */
 .tag { border: 1px solid transparent; }
+
+/* ==================== MOBILE NAV ==================== */
+.mobile-nav {
+  display: none; /* Oculto en desktop */
+}
+
+@media (max-width: 768px) {
+  /* Ocultar nav del centro en móvil */
+  header nav {
+    display: none !important;
+  }
+
+  /* Mostrar fila de nav abajo */
+  .mobile-nav {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    padding: 6px 14px 8px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-main);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-nav::-webkit-scrollbar { height: 0; }
+
+  /* Header fila principal en móvil */
+  header > div:first-child {
+    padding: 0 14px;
+    height: 52px;
+  }
+
+  /* Logo texto oculto en móvil muy pequeño */
+  @media (max-width: 360px) {
+    header .logo-text {
+      display: none;
+    }
+  }
+}
+
+[data-theme="light"] .mobile-nav {
+  background: var(--bg-elevated);
+  border-top-color: var(--border);
+}
