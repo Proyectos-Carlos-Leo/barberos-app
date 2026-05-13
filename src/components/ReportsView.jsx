@@ -52,29 +52,170 @@ const exportBarberStats = (topBarbers, completed) => {
 };
 
 const exportFullReport = (appointments, barbers) => {
-  const headers = ['Fecha', 'Hora', 'Cliente', 'Teléfono', 'Barbero', 'Servicio', 'Precio', 'Estado', 'Notas'];
-  const rows = [headers];
+  const completed = appointments.filter(a => a.status === 'completada');
+  const today = new Date().toISOString().split('T')[0];
+  const rows = [];
 
-  const sorted = [...appointments].sort((a, b) =>
-    new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time)
-  );
+  // ========== ENCABEZADO DEL REPORTE ==========
+  rows.push(['REPORTE COMPLETO - BarberOS']);
+  rows.push([`Generado el: ${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`]);
+  rows.push([`Total de citas completadas: ${completed.length}`]);
+  rows.push([]);
 
-  sorted.forEach(a => {
-    const barber = barbers.find(b => b.id === a.barberId);
-    rows.push([
-      a.date || '',
-      a.time || '',
-      a.client || '',
-      a.phone || '',
-      barber?.name || 'Sin asignar',
-      a.service?.name || '',
-      a.service?.price || 0,
-      a.status || '',
-      a.notes || ''
-    ]);
+  // ========== SECCIÓN 1: INGRESOS ÚLTIMOS 7 DÍAS ==========
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['INGRESOS ÚLTIMOS 7 DÍAS']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['Fecha', 'Día', 'Citas completadas', 'Ingresos']);
+
+  let totalLast7 = 0;
+  let citasLast7 = 0;
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dayName = i === 0 ? 'Hoy' : dayNames[d.getDay()];
+    const dayAppts = completed.filter(a => a.date === dateStr);
+    const revenue = dayAppts.reduce((s, a) => s + (a.service?.price || 0), 0);
+    totalLast7 += revenue;
+    citasLast7 += dayAppts.length;
+    rows.push([dateStr, dayName, dayAppts.length, `$${revenue}`]);
+  }
+
+  rows.push(['', 'TOTAL', citasLast7, `$${totalLast7}`]);
+  rows.push([]);
+
+  // ========== SECCIÓN 2: TOP BARBEROS ==========
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['TOP BARBEROS']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['Posición', 'Barbero', 'Especialidad', 'Total cortes', 'Ingresos totales', 'Ticket promedio']);
+
+  const barberStats = barbers.map(b => {
+    const appts = completed.filter(a => String(a.barberId) === String(b.id));
+    const revenue = appts.reduce((s, a) => s + (a.service?.price || 0), 0);
+    return { name: b.name, specialty: b.specialty || '', count: appts.length, revenue };
+  }).sort((a, b) => b.revenue - a.revenue);
+
+  barberStats.forEach((b, i) => {
+    const avg = b.count > 0 ? Math.round(b.revenue / b.count) : 0;
+    const medal = ['🥇', '🥈', '🥉'][i] || `#${i + 1}`;
+    rows.push([medal, b.name, b.specialty, b.count, `$${b.revenue}`, `$${avg}`]);
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const totalBarberRevenue = barberStats.reduce((s, b) => s + b.revenue, 0);
+  const totalBarberCount = barberStats.reduce((s, b) => s + b.count, 0);
+  rows.push(['', 'TOTAL', '', totalBarberCount, `$${totalBarberRevenue}`, '']);
+  rows.push([]);
+
+  // ========== SECCIÓN 3: SERVICIOS MÁS VENDIDOS ==========
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['SERVICIOS MÁS VENDIDOS']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['Posición', 'Servicio', 'Veces vendido', 'Ingresos generados', '% del total']);
+
+  const serviceMap = new Map();
+  completed.forEach(a => {
+    const name = a.service?.name || 'Sin servicio';
+    const price = a.service?.price || 0;
+    if (!serviceMap.has(name)) serviceMap.set(name, { count: 0, revenue: 0 });
+    const s = serviceMap.get(name);
+    s.count++;
+    s.revenue += price;
+  });
+
+  const serviceStats = Array.from(serviceMap.entries())
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.count - a.count);
+
+  const totalRevenue = serviceStats.reduce((s, x) => s + x.revenue, 0);
+
+  serviceStats.forEach((s, i) => {
+    const pct = totalRevenue > 0 ? ((s.revenue / totalRevenue) * 100).toFixed(1) : '0';
+    rows.push([`#${i + 1}`, s.name, s.count, `$${s.revenue}`, `${pct}%`]);
+  });
+
+  rows.push([]);
+
+  // ========== SECCIÓN 4: HORARIOS PICO ==========
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['HORARIOS PICO']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['Hora', 'Período', 'Citas', 'Popularidad']);
+
+  const hourMap = new Map();
+  completed.forEach(a => {
+    if (!a.time) return;
+    if (!hourMap.has(a.time)) hourMap.set(a.time, 0);
+    hourMap.set(a.time, hourMap.get(a.time) + 1);
+  });
+
+  const hourStats = Array.from(hourMap.entries())
+    .map(([time, count]) => ({ time, count }))
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const maxCount = Math.max(...hourStats.map(h => h.count), 1);
+  const amTotal = hourStats.filter(h => parseInt(h.time) < 12).reduce((s, h) => s + h.count, 0);
+  const pmTotal = hourStats.filter(h => parseInt(h.time) >= 12).reduce((s, h) => s + h.count, 0);
+
+  hourStats.forEach(h => {
+    const isAM = parseInt(h.time) < 12;
+    const isPeak = h.count === maxCount;
+    const bars = '█'.repeat(Math.round((h.count / maxCount) * 10));
+    rows.push([h.time, isAM ? '☀️ AM' : '🌙 PM', h.count, isPeak ? `${bars} 🔥 HORA PICO` : bars]);
+  });
+
+  rows.push(['', 'Total AM', amTotal, '']);
+  rows.push(['', 'Total PM', pmTotal, '']);
+  rows.push([]);
+
+  // ========== SECCIÓN 5: COMPARATIVA MENSUAL ==========
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['COMPARATIVA MENSUAL']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['Período', 'Citas completadas', 'Ingresos', 'Ticket promedio']);
+
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  const thisMonth = completed.filter(a => {
+    const d = new Date(a.date + 'T00:00:00');
+    return d >= thisMonthStart && d <= now;
+  });
+  const lastMonth = completed.filter(a => {
+    const d = new Date(a.date + 'T00:00:00');
+    return d >= lastMonthStart && d <= lastMonthEnd;
+  });
+
+  const thisRev = thisMonth.reduce((s, a) => s + (a.service?.price || 0), 0);
+  const lastRev = lastMonth.reduce((s, a) => s + (a.service?.price || 0), 0);
+  const thisAvg = thisMonth.length > 0 ? Math.round(thisRev / thisMonth.length) : 0;
+  const lastAvg = lastMonth.length > 0 ? Math.round(lastRev / lastMonth.length) : 0;
+  const change = lastRev > 0 ? (((thisRev - lastRev) / lastRev) * 100).toFixed(1) : 'N/A';
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  rows.push([`${monthNames[now.getMonth() - 1] || 'Mes anterior'}`, lastMonth.length, `$${lastRev}`, `$${lastAvg}`]);
+  rows.push([`${monthNames[now.getMonth()]} (actual)`, thisMonth.length, `$${thisRev}`, `$${thisAvg}`]);
+  rows.push(['Variación', '', lastRev > 0 ? `${change > 0 ? '+' : ''}${change}%` : 'N/A', '']);
+  rows.push([]);
+
+  // ========== RESUMEN EJECUTIVO ==========
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['RESUMEN EJECUTIVO']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['Indicador', 'Valor']);
+  rows.push(['Ingresos totales históricos', `$${totalRevenue}`]);
+  rows.push(['Total citas completadas', completed.length]);
+  rows.push(['Ticket promedio general', `$${completed.length > 0 ? Math.round(totalRevenue / completed.length) : 0}`]);
+  rows.push(['Mejor barbero', barberStats[0]?.name || 'N/A']);
+  rows.push(['Servicio más vendido', serviceStats[0]?.name || 'N/A']);
+  rows.push(['Hora más popular', hourStats.sort((a, b) => b.count - a.count)[0]?.time || 'N/A']);
+  rows.push(['Ingresos últimos 7 días', `$${totalLast7}`]);
+
   downloadCSV(`reporte_completo_${today}.csv`, rows);
 };
 
