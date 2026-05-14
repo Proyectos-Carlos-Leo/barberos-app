@@ -36,12 +36,9 @@ function SlugGuard({ children }) {
 export default function SlugWrapper({ children }) {
   const { slug } = useParams();
   if (!slug) return <NotFound />;
-
   return (
     <AppProvider slug={slug}>
-      <SlugGuard>
-        {children}
-      </SlugGuard>
+      <SlugGuard>{children}</SlugGuard>
     </AppProvider>
   );
 }
