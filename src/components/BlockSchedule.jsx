@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { ref, push, remove } from 'firebase/database';
 import { db } from '../firebase';
+import { useApp } from '../context/AppContext';
 import { HOURS } from '../utils/data';
 import { formatDate, getTodayStr } from '../utils/helpers';
 
 export default function BlockSchedule({ barbers, blocks, onClose }) {
+  const { basePath } = useApp();
   const [type, setType] = useState('hours'); // 'hours' | 'fullDay' | 'range'
   const [barberId, setBarberId] = useState('all');
   const [date, setDate] = useState(getTodayStr());
@@ -49,7 +51,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
       if (type === 'hours') blockData.hours = selectedHours;
       if (type === 'range') blockData.endDate = endDate;
 
-      await push(ref(db, 'bloqueos'), blockData);
+      await push(ref(db, `${basePath}/bloqueos`), blockData);
       onClose();
     } catch (err) {
       console.error(err);
@@ -61,7 +63,7 @@ export default function BlockSchedule({ barbers, blocks, onClose }) {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este bloqueo?')) return;
     try {
-      await remove(ref(db, `bloqueos/${id}`));
+      await remove(ref(db, `${basePath}/bloqueos/${id}`));
     } catch (err) {
       console.error(err);
     }
