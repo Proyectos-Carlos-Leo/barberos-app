@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
@@ -22,19 +22,49 @@ import {
 export default function AdminView() {
   const [isAuth, setIsAuth] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [view, setView] = useState("dashboard");
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const previousIdsRef = useRef(null);
-  const { appointments, barbers, blocks, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
+  const { appointments, barbers, blocks, barbershopConfig, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
-  // Escuchar cambios de auth en Firebase
+  // Escuchar cambios de auth y verificar que el email corresponde a ESTA barbería
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setIsAuth(!!user);
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setIsAuth(false);
+        setAccessDenied(false);
+        setAuthLoading(false);
+        return;
+      }
+
+      // Esperar a que cargue el config de la barbería
+      if (loading) return;
+
+      // Soporta lista de admins o email único
+      // En Firebase puede ser:
+      // admins: { "0": "email1@gmail.com", "1": "email2@gmail.com" }
+      // o el campo legacy: email_admin: "email@gmail.com"
+      const adminsList = barbershopConfig?.admins
+        ? Object.values(barbershopConfig.admins)
+        : barbershopConfig?.email_admin
+          ? [barbershopConfig.email_admin]
+          : [];
+
+      if (adminsList.length > 0 && !adminsList.includes(user.email)) {
+        // Email no corresponde a esta barbería — cerrar sesión y denegar
+        await signOut(auth);
+        setIsAuth(false);
+        setAccessDenied(true);
+      } else {
+        setIsAuth(true);
+        setAccessDenied(false);
+      }
+
       setAuthLoading(false);
     });
     return () => unsub();
-  }, []);
+  }, [loading, barbershopConfig]);
 
   // Pedir permisos de notificación al entrar al admin
   useEffect(() => {
@@ -83,26 +113,39 @@ export default function AdminView() {
     setShowNotifBanner(false);
   };
 
-  // Mientras verifica auth
-  if (authLoading) return (
+  // Mientras verifica auth o carga config
+  if (authLoading || loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
-      <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+      <div style={{ width: 56, height: 56, border: "3px solid var(--border)", borderTop: "3px solid var(--accent)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  // Email no corresponde a esta barbería
+  if (accessDenied) return (
+    <div style={{ minHeight: "100vh", background: "var(--bg-main)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, textAlign: "center" }}>
+      <div className="fade-in">
+        <div style={{ width: 80, height: 80, background: "var(--danger-bg)", border: "2px solid var(--danger-border)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 36 }}>
+          🔒
+        </div>
+        <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "var(--danger)", marginBottom: 12 }}>
+          Acceso Denegado
+        </h2>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 15, marginBottom: 8, maxWidth: 380 }}>
+          Tu cuenta no tiene permiso para administrar esta barbería.
+        </p>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 32 }}>
+          Verifica que estés usando el correo correcto.
+        </p>
+        <button className="btn-gold" onClick={() => setAccessDenied(false)} style={{ minWidth: 200 }}>
+          Intentar con otra cuenta
+        </button>
+      </div>
     </div>
   );
 
   // Si no está autenticado, mostrar login
   if (!isAuth) return <AdminLogin onLogin={() => setIsAuth(true)} />;
-
-  if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ color: "var(--text-tertiary)", fontFamily: "'Barlow', sans-serif" }}>Cargando datos...</p>
-      </div>
-    </div>
-  );
 
   const navItems = [
     { key: "dashboard", label: "Panel", active: view === "dashboard", onClick: () => setView("dashboard") },
