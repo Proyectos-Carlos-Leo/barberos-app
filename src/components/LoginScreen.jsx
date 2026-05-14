@@ -61,7 +61,7 @@ function LoginContent({ slug }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360, margin: "0 auto" }}>
           <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
-            <button className="btn-large" style={{ width: "100%" }}>✂️ Soy Cliente</button>
+            <button className="btn-large" style={{ width: "100%" }}>👤 Soy Cliente</button>
           </Link>
           <Link to={`/${slug}/admin`} style={{ textDecoration: "none" }}>
             <button className="btn-large gray" style={{ width: "100%" }}>⚙️ Soy Dueño</button>
