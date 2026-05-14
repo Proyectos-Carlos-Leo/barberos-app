@@ -55,9 +55,18 @@ function LoginContent({ slug }) {
         }}>
           {isBarberOS ? <><span className="gold">Barber</span>OS</> : nombre}
         </h1>
-        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 56, letterSpacing: 1 }}>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 32, letterSpacing: 1 }}>
           {eslogan}
         </p>
+
+        {/* Línea divisora azul */}
+        <div style={{
+          width: 40, height: 3,
+          background: "var(--accent)",
+          borderRadius: 2,
+          margin: "0 auto 36px",
+          opacity: 0.6
+        }} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360, margin: "0 auto" }}>
           <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
