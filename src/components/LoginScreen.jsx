@@ -7,7 +7,7 @@ function LoginContent({ slug }) {
   const { barbershopConfig } = useApp();
 
   const nombre = barbershopConfig?.nombre || 'BarberOS';
-  const eslogan = barbershopConfig?.eslogan || 'Tu barbería digital';
+  const eslogan = barbershopConfig?.eslogan || 'Tu Barbería Digital';
 
   return (
     <div style={{
@@ -23,42 +23,45 @@ function LoginContent({ slug }) {
       <button
         className="theme-toggle"
         onClick={toggleTheme}
-        style={{ position: "absolute", top: 20, right: 20 }}
         title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+        style={{ position: "absolute", top: 20, right: 20 }}
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
 
-      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px", maxWidth: 500, width: "100%" }}>
+      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px" }}>
+        {/* Logo */}
         <div style={{
           width: 80, height: 80,
           background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
           borderRadius: 20,
           display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 28px",
-          boxShadow: "0 10px 40px rgba(54,177,223,0.25)"
+          margin: "0 auto 32px",
+          boxShadow: "0 10px 40px rgba(54,177,223,0.3)"
         }}>
           <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
             <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
           </svg>
         </div>
 
+        {/* Título */}
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
-          fontSize: "clamp(36px, 10vw, 56px)",
+          fontSize: "clamp(40px, 12vw, 56px)",
           fontWeight: 800,
-          letterSpacing: 3,
+          letterSpacing: 4,
           textTransform: "uppercase",
           color: "var(--text-primary)",
           marginBottom: 8
         }}>
           {nombre}
         </h1>
-        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 48 }}>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 56, letterSpacing: 1 }}>
           {eslogan}
         </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 340, margin: "0 auto" }}>
+        {/* Botones */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360, margin: "0 auto" }}>
           <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
             <button className="btn-large" style={{ width: "100%" }}>
               ✂️ Agendar mi cita
@@ -69,6 +72,11 @@ function LoginContent({ slug }) {
               ⚙️ Panel de administrador
             </button>
           </Link>
+        </div>
+
+        {/* Footer */}
+        <div style={{ marginTop: 56, color: "var(--text-dim)", fontSize: 12 }}>
+          <p>💈 Powered by BarberOS</p>
         </div>
       </div>
     </div>
@@ -94,6 +102,7 @@ function GlobalLogin() {
         className="theme-toggle"
         onClick={toggleTheme}
         style={{ position: "absolute", top: 20, right: 20 }}
+        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
@@ -104,8 +113,8 @@ function GlobalLogin() {
           background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
           borderRadius: 20,
           display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 28px",
-          boxShadow: "0 10px 40px rgba(54,177,223,0.25)"
+          margin: "0 auto 32px",
+          boxShadow: "0 10px 40px rgba(54,177,223,0.3)"
         }}>
           <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
             <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
@@ -114,16 +123,16 @@ function GlobalLogin() {
 
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
-          fontSize: "clamp(36px, 10vw, 56px)",
+          fontSize: "clamp(40px, 12vw, 56px)",
           fontWeight: 800,
-          letterSpacing: 3,
+          letterSpacing: 4,
           textTransform: "uppercase",
           color: "var(--text-primary)",
           marginBottom: 8
         }}>
           BarberOS
         </h1>
-        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 48 }}>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 48, letterSpacing: 1 }}>
           Plataforma de agendamiento para barberías
         </p>
 
