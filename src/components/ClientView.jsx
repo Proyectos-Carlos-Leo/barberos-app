@@ -25,7 +25,7 @@ export default function ClientView() {
     client: "", phone: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
 
-  const { appointments, barbers, blocks, addAppointment, loading } = useApp();
+  const { appointments, barbers, blocks, addAppointment, loading, slug, barbershopConfig } = useApp();
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
   if (loading) return <LoadingScreen />;
@@ -108,7 +108,7 @@ export default function ClientView() {
             appointment={completedAppointment}
             barbershop={BARBERSHOP_INFO}
             onReset={reset}
-            onExit={() => navigate('/')}
+            onExit={() => navigate(`/${slug}`)}
           />
         ) : (
           <BookingFlow
@@ -382,22 +382,25 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
 
 // ==================== SUCCESS VIEW ====================
 function SuccessView({ appointment, barbershop, onReset, onExit }) {
-  // ✅ FIX: id puede ser string de Firebase, usamos slice sin toString() forzado
   const folioId = appointment?.id ? String(appointment.id).slice(-6) : "------";
 
   return (
     <div className="fade-in" style={{ textAlign: "center", padding: "40px 20px" }}>
-      <div style={{ width: 80, height: 80, background: "#1a2e1a", border: "2px solid #16a34a", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px" }}>
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      {/* Ícono de éxito */}
+      <div style={{ width: 80, height: 80, background: "var(--success-bg)", border: "2px solid var(--success)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px" }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>¡<span className="gold">Cita</span> agendada!</h2>
-      <p style={{ color: "var(--text-tertiary)", marginBottom: 28, fontSize: 16 }}>Te esperamos, <strong style={{ color: "var(--text-primary)" }}>{appointment.client}</strong></p>
 
-      {/* Tarjeta destacada del barbero asignado */}
+      <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>¡<span className="gold">Cita</span> agendada!</h2>
+      <p style={{ color: "var(--text-tertiary)", marginBottom: 28, fontSize: 16 }}>
+        Te esperamos, <strong style={{ color: "var(--text-primary)" }}>{appointment.client}</strong>
+      </p>
+
+      {/* Tarjeta del barbero */}
       {appointment.barber && (
         <div style={{
-          background: "linear-gradient(135deg, #051520, #0a3d56)",
-          border: "1px solid #36B1DF",
+          background: "var(--accent-bg)",
+          border: "1px solid var(--accent-border)",
           borderRadius: 12,
           padding: "16px 20px",
           maxWidth: 480,
@@ -408,23 +411,18 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
           textAlign: "left"
         }}>
           <div style={{
-            width: 52,
-            height: 52,
-            borderRadius: "50%",
+            width: 52, height: 52, borderRadius: "50%",
             background: appointment.barber.bg,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 700,
-            fontSize: 17,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: 700, fontSize: 17,
             color: appointment.barber.color,
             flexShrink: 0,
-            border: "2px solid #36B1DF"
+            border: "2px solid var(--accent)"
           }}>
             {appointment.barber.avatar}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 11, color: "#5FC8EC", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>
+            <p style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>
               Te atenderá
             </p>
             <p style={{ fontWeight: 700, fontSize: 18, color: "var(--text-primary)" }}>
@@ -437,10 +435,11 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
         </div>
       )}
 
-      <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid #0a3d56" }}>
+      {/* Comprobante */}
+      <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid var(--accent-border)" }}>
         <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px dashed var(--border-strong)" }}>
           <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Comprobante</p>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#36B1DF", letterSpacing: 1 }}>#{folioId}</p>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "var(--accent)", letterSpacing: 1 }}>#{folioId}</p>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
           <ReceiptRow label="Servicio" value={appointment.service?.name || "—"} />
@@ -450,16 +449,25 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
           <ReceiptRow label="Duración" value={`${appointment.service?.duration || 0} min`} />
         </div>
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--border-strong)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Total</span>
-          <span style={{ color: "#36B1DF", fontSize: 22, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>{formatCurrency(appointment.service?.price || 0)}</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Total</span>
+          <span style={{ color: "var(--accent)", fontSize: 22, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>{formatCurrency(appointment.service?.price || 0)}</span>
         </div>
       </div>
 
-      <div style={{ background: "#0f1a2e", border: "1px solid #1e3a5f", borderRadius: 10, padding: 16, maxWidth: 480, margin: "0 auto 28px", textAlign: "left" }}>
-        <p style={{ fontSize: 13, color: "#60a5fa", fontWeight: 600, marginBottom: 6 }}>📍 Ubicación</p>
-        <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{barbershop.address}</p>
-        <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>📞 {barbershop.phone}</p>
-      </div>
+      {/* Ubicación */}
+      {(barbershop?.direccion || barbershop?.telefono) && (
+        <div style={{
+          background: "var(--accent-bg)",
+          border: "1px solid var(--accent-border)",
+          borderRadius: 10, padding: 16,
+          maxWidth: 480, margin: "0 auto 28px",
+          textAlign: "left"
+        }}>
+          <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 6 }}>📍 Ubicación</p>
+          {barbershop.direccion && <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{barbershop.direccion}</p>}
+          {barbershop.telefono && <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>📞 {barbershop.telefono}</p>}
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
         <button className="btn-ghost" onClick={onExit}>Volver al inicio</button>
