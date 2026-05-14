@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
@@ -6,11 +6,9 @@ import { useTheme } from '../context/ThemeContext';
 
 export default function Header({ userType, navItems = [] }) {
   const navigate = useNavigate();
-  const { slug } = useParams();
   const { appointments } = useApp();
   const { theme, toggleTheme } = useTheme();
   const pendingCount = appointments.filter(a => a.status === "pendiente").length;
-  const home = slug ? `/${slug}` : '/';
 
   return (
     <header style={{
@@ -20,7 +18,6 @@ export default function Header({ userType, navItems = [] }) {
       top: 0,
       zIndex: 100,
     }}>
-      {/* Fila principal: Logo | Nav | Controles */}
       <div style={{
         display: "flex",
         alignItems: "center",
@@ -30,7 +27,7 @@ export default function Header({ userType, navItems = [] }) {
         gap: 12,
       }}>
         {/* Logo */}
-        <Link to={home} style={{
+        <Link to="/" style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -62,7 +59,7 @@ export default function Header({ userType, navItems = [] }) {
           </span>
         </Link>
 
-        {/* Navegación centrada (desktop) */}
+        {/* Navegación centrada */}
         {navItems.length > 0 && (
           <nav style={{
             display: "flex",
@@ -101,7 +98,7 @@ export default function Header({ userType, navItems = [] }) {
           </nav>
         )}
 
-        {/* Controles: siempre en esquina superior derecha */}
+        {/* Controles esquina derecha */}
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -109,17 +106,14 @@ export default function Header({ userType, navItems = [] }) {
           flexShrink: 0,
           marginLeft: navItems.length === 0 ? "auto" : 0,
         }}>
-          {/* Toggle tema */}
           <button
             className="theme-toggle"
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-            aria-label="Cambiar tema"
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          {/* Badge rol */}
           <span style={{
             fontSize: 11,
             color: "var(--text-tertiary)",
@@ -135,11 +129,10 @@ export default function Header({ userType, navItems = [] }) {
             {userType === 'admin' ? '⚙️' : '👤'}
           </span>
 
-          {/* Botón salir */}
           {userType === 'admin' ? (
             <button
               className="btn-ghost"
-              onClick={async () => { await signOut(auth); navigate(home); }}
+              onClick={async () => { await signOut(auth); navigate('/'); }}
               style={{
                 padding: "6px 12px",
                 fontSize: 12,
@@ -153,7 +146,7 @@ export default function Header({ userType, navItems = [] }) {
           ) : (
             <button
               className="btn-ghost"
-              onClick={() => navigate(home)}
+              onClick={() => navigate('/')}
               style={{ padding: "6px 12px", fontSize: 12, minHeight: "auto" }}
             >
               Inicio
@@ -162,7 +155,6 @@ export default function Header({ userType, navItems = [] }) {
         </div>
       </div>
 
-      {/* Fila de navegación móvil (solo cuando hay nav y pantalla pequeña) */}
       {navItems.length > 0 && (
         <div className="mobile-nav">
           {navItems.map(item => (

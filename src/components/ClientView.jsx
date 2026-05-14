@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
-import { SERVICES, HOURS } from '../utils/data';
+import { SERVICES, HOURS, BARBERSHOP_INFO } from '../utils/data';
 import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone, getBlockedTimes } from '../utils/helpers';
 
 const STEPS = [
@@ -25,7 +25,7 @@ export default function ClientView() {
     client: "", phone: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
 
-  const { appointments, barbers, blocks, addAppointment, loading, slug, barbershopConfig } = useApp();
+  const { appointments, barbers, blocks, addAppointment, loading } = useApp();
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
   if (loading) return <LoadingScreen />;
@@ -106,9 +106,9 @@ export default function ClientView() {
         {done && completedAppointment ? (
           <SuccessView
             appointment={completedAppointment}
-            barbershop={barbershopConfig}
+            barbershop={BARBERSHOP_INFO}
             onReset={reset}
-            onExit={() => navigate(`/${slug}`)}
+            onExit={() => navigate('/')}
           />
         ) : (
           <BookingFlow
