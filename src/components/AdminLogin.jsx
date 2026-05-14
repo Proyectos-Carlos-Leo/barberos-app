@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
+import { useApp } from '../context/AppContext';
 
 export default function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { slug } = useApp();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -159,7 +161,7 @@ export default function AdminLogin({ onLogin }) {
 
         <p style={{ color: 'var(--text-faint)', fontSize: 12, marginTop: 24 }}>
           ¿Eres cliente?{' '}
-          <a href="/cliente" style={{ color: '#36B1DF' }}>
+          <a href={`/${slug}/cliente`} style={{ color: '#36B1DF' }}>
             Agenda tu cita aquí
           </a>
         </p>

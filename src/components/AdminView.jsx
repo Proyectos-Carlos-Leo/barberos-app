@@ -28,43 +28,41 @@ export default function AdminView() {
   const previousIdsRef = useRef(null);
   const { appointments, barbers, blocks, barbershopConfig, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
-  // Escuchar cambios de auth y verificar que el email corresponde a ESTA barbería
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Escuchar cambios de auth (solo una vez)
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
       if (!user) {
         setIsAuth(false);
         setAccessDenied(false);
         setAuthLoading(false);
-        return;
       }
-
-      // Esperar a que cargue el config de la barbería
-      if (loading) return;
-
-      // Soporta lista de admins o email único
-      // En Firebase puede ser:
-      // admins: { "0": "email1@gmail.com", "1": "email2@gmail.com" }
-      // o el campo legacy: email_admin: "email@gmail.com"
-      const adminsList = barbershopConfig?.admins
-        ? Object.values(barbershopConfig.admins)
-        : barbershopConfig?.email_admin
-          ? [barbershopConfig.email_admin]
-          : [];
-
-      if (adminsList.length > 0 && !adminsList.includes(user.email)) {
-        // Email no corresponde a esta barbería — cerrar sesión y denegar
-        await signOut(auth);
-        setIsAuth(false);
-        setAccessDenied(true);
-      } else {
-        setIsAuth(true);
-        setAccessDenied(false);
-      }
-
-      setAuthLoading(false);
     });
     return () => unsub();
-  }, [loading, barbershopConfig]);
+  }, []);
+
+  // Validar acceso cuando tengamos tanto el usuario como el config
+  useEffect(() => {
+    if (!currentUser || loading || !barbershopConfig) return;
+
+    const adminsList = barbershopConfig?.admins
+      ? Object.values(barbershopConfig.admins)
+      : barbershopConfig?.email_admin
+        ? [barbershopConfig.email_admin]
+        : [];
+
+    if (adminsList.length > 0 && !adminsList.includes(currentUser.email)) {
+      signOut(auth);
+      setIsAuth(false);
+      setAccessDenied(true);
+    } else {
+      setIsAuth(true);
+      setAccessDenied(false);
+    }
+    setAuthLoading(false);
+  }, [currentUser, barbershopConfig, loading]);
 
   // Pedir permisos de notificación al entrar al admin
   useEffect(() => {
