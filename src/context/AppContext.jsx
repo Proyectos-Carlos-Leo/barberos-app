@@ -1,66 +1,95 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ref, onValue, push, update, remove, set } from 'firebase/database';
 import { db } from '../firebase';
-import { INITIAL_BARBERS } from '../utils/data';
 import { generateId } from '../utils/helpers';
 
 const AppContext = createContext(null);
 
-export function AppProvider({ children }) {
+// Colores para barberos nuevos
+const BARBER_COLORS = [
+  { color: '#1A7FAB', bg: '#e0f4fc' },
+  { color: '#1d4ed8', bg: '#dbeafe' },
+  { color: '#065f46', bg: '#d1fae5' },
+  { color: '#7e22ce', bg: '#ede9fe' },
+  { color: '#be123c', bg: '#fce7f3' },
+];
+
+export function AppProvider({ children, slug }) {
   const [appointments, setAppointments] = useState([]);
   const [barbers, setBarbers] = useState([]);
   const [blocks, setBlocks] = useState([]);
+  const [barbershopConfig, setBarbershopConfig] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  // ========== ESCUCHAR CITAS EN TIEMPO REAL ==========
+  // Ruta base según el slug
+  const basePath = slug ? `barberias/${slug}` : null;
+
+  // ========== CARGAR CONFIG DE LA BARBERÍA ==========
   useEffect(() => {
-    const citasRef = ref(db, 'citas');
-    const unsub = onValue(citasRef, (snapshot) => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    const configRef = ref(db, `${basePath}/config`);
+    const unsub = onValue(configRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const lista = Object.entries(data).map(([id, val]) => ({ ...val, id }));
-        setAppointments(lista);
+        setBarbershopConfig({ ...data, slug });
+        setNotFound(false);
       } else {
-        setAppointments([]);
+        setNotFound(true);
+        setBarbershopConfig(null);
       }
       setLoading(false);
     });
     return () => unsub();
-  }, []);
+  }, [slug, basePath]);
 
-  // ========== ESCUCHAR BLOQUEOS EN TIEMPO REAL ==========
+  // ========== ESCUCHAR CITAS ==========
   useEffect(() => {
-    const blocksRef = ref(db, 'bloqueos');
-    const unsub = onValue(blocksRef, (snapshot) => {
+    if (!basePath || notFound) return;
+    const citasRef = ref(db, `${basePath}/citas`);
+    const unsub = onValue(citasRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        const lista = Object.entries(data).map(([id, val]) => ({ ...val, id }));
-        setBlocks(lista);
-      } else {
-        setBlocks([]);
-      }
+      setAppointments(data
+        ? Object.entries(data).map(([id, val]) => ({ ...val, id }))
+        : []
+      );
     });
     return () => unsub();
-  }, []);
+  }, [basePath, notFound]);
 
-  // ========== ESCUCHAR BARBEROS EN TIEMPO REAL ==========
+  // ========== ESCUCHAR BLOQUEOS ==========
   useEffect(() => {
-    const barberosRef = ref(db, 'barberos');
+    if (!basePath || notFound) return;
+    const blocksRef = ref(db, `${basePath}/bloqueos`);
+    const unsub = onValue(blocksRef, (snapshot) => {
+      const data = snapshot.val();
+      setBlocks(data
+        ? Object.entries(data).map(([id, val]) => ({ ...val, id }))
+        : []
+      );
+    });
+    return () => unsub();
+  }, [basePath, notFound]);
+
+  // ========== ESCUCHAR BARBEROS ==========
+  useEffect(() => {
+    if (!basePath || notFound) return;
+    const barberosRef = ref(db, `${basePath}/barberos`);
     const unsub = onValue(barberosRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const lista = Object.entries(data).map(([id, val]) => ({ ...val, id }));
-        setBarbers(lista);
+        setBarbers(Object.entries(data).map(([id, val]) => ({ ...val, id })));
       } else {
-        // Primera vez: guardar barberos iniciales
-        INITIAL_BARBERS.forEach(b => {
-          push(ref(db, 'barberos'), b);
-        });
+        setBarbers([]);
       }
     });
     return () => unsub();
-  }, []);
+  }, [basePath, notFound]);
 
   // ========== NOTIFICACIONES ==========
   const addNotification = useCallback((notification) => {
@@ -75,8 +104,9 @@ export function AppProvider({ children }) {
 
   // ========== CITAS: AGREGAR ==========
   const addAppointment = useCallback(async (appointment) => {
+    if (!basePath) return;
     try {
-      const nuevaRef = push(ref(db, 'citas'));
+      const nuevaRef = push(ref(db, `${basePath}/citas`));
       await set(nuevaRef, {
         ...appointment,
         status: 'pendiente',
@@ -88,12 +118,13 @@ export function AppProvider({ children }) {
       console.error('Error al agendar:', error);
       addNotification({ type: 'error', message: 'Error al agendar la cita' });
     }
-  }, [addNotification]);
+  }, [basePath, addNotification]);
 
   // ========== CITAS: CAMBIAR ESTADO ==========
   const updateAppointmentStatus = useCallback(async (id, status) => {
+    if (!basePath) return;
     try {
-      await update(ref(db, `citas/${id}`), {
+      await update(ref(db, `${basePath}/citas/${id}`), {
         status,
         updatedAt: new Date().toISOString()
       });
@@ -101,31 +132,26 @@ export function AppProvider({ children }) {
     } catch (error) {
       console.error('Error al actualizar:', error);
     }
-  }, [addNotification]);
+  }, [basePath, addNotification]);
 
   // ========== CITAS: ELIMINAR ==========
   const deleteAppointment = useCallback(async (id) => {
+    if (!basePath) return;
     try {
-      await remove(ref(db, `citas/${id}`));
+      await remove(ref(db, `${basePath}/citas/${id}`));
       addNotification({ type: 'info', message: 'Cita eliminada' });
     } catch (error) {
       console.error('Error al eliminar:', error);
     }
-  }, [addNotification]);
+  }, [basePath, addNotification]);
 
   // ========== BARBEROS: AGREGAR ==========
   const addBarber = useCallback(async (barber) => {
+    if (!basePath) return;
     try {
       const initials = barber.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-      const colors = [
-        { color: '#1A7FAB', bg: '#e0f4fc' },
-        { color: '#1d4ed8', bg: '#dbeafe' },
-        { color: '#065f46', bg: '#d1fae5' },
-        { color: '#7e22ce', bg: '#ede9fe' },
-        { color: '#be123c', bg: '#fce7f3' },
-      ];
-      const colorScheme = colors[Math.floor(Math.random() * colors.length)];
-      await push(ref(db, 'barberos'), {
+      const colorScheme = BARBER_COLORS[Math.floor(Math.random() * BARBER_COLORS.length)];
+      await push(ref(db, `${basePath}/barberos`), {
         ...barber,
         avatar: initials,
         ...colorScheme,
@@ -135,34 +161,49 @@ export function AppProvider({ children }) {
     } catch (error) {
       console.error('Error al agregar barbero:', error);
     }
-  }, [addNotification]);
+  }, [basePath, addNotification]);
 
   // ========== BARBEROS: TOGGLE ACTIVO ==========
   const toggleBarber = useCallback(async (id) => {
+    if (!basePath) return;
     try {
       const barber = barbers.find(b => b.id === id);
       if (!barber) return;
-      await update(ref(db, `barberos/${id}`), { active: !barber.active });
+      await update(ref(db, `${basePath}/barberos/${id}`), { active: !barber.active });
     } catch (error) {
       console.error('Error al toggle barbero:', error);
     }
-  }, [barbers]);
+  }, [basePath, barbers]);
 
   // ========== BARBEROS: ELIMINAR ==========
   const deleteBarber = useCallback(async (id) => {
+    if (!basePath) return;
     try {
-      await remove(ref(db, `barberos/${id}`));
+      await remove(ref(db, `${basePath}/barberos/${id}`));
       addNotification({ type: 'info', message: 'Barbero eliminado' });
     } catch (error) {
       console.error('Error al eliminar barbero:', error);
     }
-  }, [addNotification]);
+  }, [basePath, addNotification]);
 
   const value = {
-    appointments, barbers, blocks, notifications, loading,
-    addAppointment, updateAppointmentStatus, deleteAppointment,
-    addBarber, toggleBarber, deleteBarber,
-    addNotification, removeNotification,
+    slug,
+    basePath,
+    barbershopConfig,
+    appointments,
+    barbers,
+    blocks,
+    notifications,
+    loading,
+    notFound,
+    addAppointment,
+    updateAppointmentStatus,
+    deleteAppointment,
+    addBarber,
+    toggleBarber,
+    deleteBarber,
+    addNotification,
+    removeNotification,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

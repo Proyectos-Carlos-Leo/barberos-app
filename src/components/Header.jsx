@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
@@ -6,9 +6,11 @@ import { useTheme } from '../context/ThemeContext';
 
 export default function Header({ userType, navItems = [] }) {
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { appointments } = useApp();
   const { theme, toggleTheme } = useTheme();
   const pendingCount = appointments.filter(a => a.status === "pendiente").length;
+  const home = slug ? `/${slug}` : '/';
 
   return (
     <header style={{
@@ -28,7 +30,7 @@ export default function Header({ userType, navItems = [] }) {
         gap: 12,
       }}>
         {/* Logo */}
-        <Link to="/" style={{
+        <Link to={home} style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -137,7 +139,7 @@ export default function Header({ userType, navItems = [] }) {
           {userType === 'admin' ? (
             <button
               className="btn-ghost"
-              onClick={async () => { await signOut(auth); navigate('/'); }}
+              onClick={async () => { await signOut(auth); navigate(home); }}
               style={{
                 padding: "6px 12px",
                 fontSize: 12,
@@ -151,7 +153,7 @@ export default function Header({ userType, navItems = [] }) {
           ) : (
             <button
               className="btn-ghost"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(home)}
               style={{ padding: "6px 12px", fontSize: 12, minHeight: "auto" }}
             >
               Inicio

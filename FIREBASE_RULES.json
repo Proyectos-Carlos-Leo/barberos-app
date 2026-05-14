@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "barberias": {
+      "$slug": {
+        "config": {
+          ".read": true,
+          ".write": "auth != null && data.child('email_admin').val() == auth.token.email"
+        },
+        "citas": {
+          ".read": true,
+          ".write": true
+        },
+        "barberos": {
+          ".read": true,
+          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+        },
+        "bloqueos": {
+          ".read": true,
+          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+        }
+      }
+    }
+  }
+}
