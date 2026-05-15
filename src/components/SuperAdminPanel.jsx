@@ -3,8 +3,6 @@ import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebas
 import { ref, onValue } from 'firebase/database';
 import { auth, db } from '../firebase';
 
-// ⚠️ REEMPLAZA ESTOS UIDs con los de tus cuentas de Firebase Auth
-// Ve a Firebase Console > Authentication > Users y copia el UID de cada fundador
 const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
   'DFOJycimNmTyxBWVoMgESgXkP5p1',
@@ -48,10 +46,9 @@ function SuperLogin({ onLogin }) {
       minHeight: '100vh',
       background: '#0a0a0a',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 20, fontFamily: "'Inter', -apple-system, sans-serif"
+      padding: 20, fontFamily: "'Barlow', sans-serif"
     }}>
       <div style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
-        {/* Logo */}
         <div style={{
           width: 72, height: 72,
           background: 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
@@ -64,13 +61,14 @@ function SuperLogin({ onLogin }) {
         </div>
 
         <h1 style={{
-          fontSize: 28, fontWeight: 800, letterSpacing: -0.5,
-          color: '#fff', marginBottom: 8
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 28, fontWeight: 800, letterSpacing: 1,
+          color: '#fff', marginBottom: 8, textTransform: 'uppercase'
         }}>
           BarberOS <span style={{ color: '#36B1DF' }}>Admin</span>
         </h1>
         <p style={{ color: '#666', fontSize: 14, marginBottom: 36 }}>
-          Panel exclusivo para fundadores
+          Panel de fundadores
         </p>
 
         <div style={{
@@ -93,7 +91,7 @@ function SuperLogin({ onLogin }) {
                 border: `1px solid ${error ? '#dc2626' : '#2a2a2a'}`,
                 borderRadius: 8, padding: '12px 16px',
                 width: '100%', fontSize: 15, outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box', fontFamily: "'Barlow', sans-serif"
               }}
             />
           </div>
@@ -113,7 +111,7 @@ function SuperLogin({ onLogin }) {
                 border: `1px solid ${error ? '#dc2626' : '#2a2a2a'}`,
                 borderRadius: 8, padding: '12px 16px',
                 width: '100%', fontSize: 15, outline: 'none', letterSpacing: 4,
-                boxSizing: 'border-box'
+                boxSizing: 'border-box', fontFamily: "'Barlow', sans-serif"
               }}
             />
             {error && <p style={{ color: '#f87171', fontSize: 12, marginTop: 8 }}>⚠ {error}</p>}
@@ -128,10 +126,11 @@ function SuperLogin({ onLogin }) {
               color: loading ? '#555' : '#0a0a0a',
               border: 'none', borderRadius: 8, padding: '14px 24px',
               fontSize: 15, fontWeight: 700, letterSpacing: 0.5,
-              cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s'
+              cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+              fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase'
             }}
           >
-            {loading ? 'Verificando...' : 'Entrar al Panel'}
+            {loading ? 'Verificando...' : 'Entrar'}
           </button>
         </div>
       </div>
@@ -140,282 +139,51 @@ function SuperLogin({ onLogin }) {
 }
 
 // =========================================================
-// TARJETA DE BARBERÍA
-// =========================================================
-function BarbershopCard({ slug, data }) {
-  const [expanded, setExpanded] = useState(false);
-  const [citas, setCitas] = useState([]);
-  const [barberos, setBarberos] = useState([]);
-  const [loadingData, setLoadingData] = useState(false);
-
-  const cfg = data.config || {};
-
-  const loadDetails = () => {
-    if (expanded) { setExpanded(false); return; }
-    setExpanded(true);
-    setLoadingData(true);
-
-    let citasDone = false, barberosDone = false;
-    const checkDone = () => {
-      if (citasDone && barberosDone) setLoadingData(false);
-    };
-
-    const unsubCitas = onValue(ref(db, `barberias/${slug}/citas`), snap => {
-      const d = snap.val();
-      setCitas(d ? Object.values(d) : []);
-      citasDone = true;
-      checkDone();
-    }, { onlyOnce: true });
-
-    const unsubBarberos = onValue(ref(db, `barberias/${slug}/barberos`), snap => {
-      const d = snap.val();
-      setBarberos(d ? Object.values(d) : []);
-      barberosDone = true;
-      checkDone();
-    }, { onlyOnce: true });
-  };
-
-  // Stats rápidas de citas
-  const hoy = new Date().toISOString().slice(0, 10);
-  const citasHoy = citas.filter(c => c.date === hoy);
-  const citasPendientes = citas.filter(c => c.status === 'pendiente');
-  const citasConfirmadas = citas.filter(c => c.status === 'confirmada');
-  const citasCompletadas = citas.filter(c => c.status === 'completada');
-  const ingresosTotal = citasCompletadas.reduce((sum, c) => sum + (c.service?.price || 0), 0);
-
-  return (
-    <div style={{
-      background: '#141414', border: '1px solid #222',
-      borderRadius: 16, overflow: 'hidden', transition: 'border-color 0.2s'
-    }}>
-      {/* Header de la tarjeta */}
-      <div
-        onClick={loadDetails}
-        style={{
-          padding: '20px 24px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          transition: 'background 0.15s'
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {/* Avatar */}
-          <div style={{
-            width: 48, height: 48,
-            background: 'linear-gradient(135deg, #36B1DF22, #36B1DF44)',
-            border: '1px solid #36B1DF44',
-            borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, fontWeight: 800, color: '#36B1DF', flexShrink: 0
-          }}>
-            {(cfg.nombre || slug).charAt(0).toUpperCase()}
-          </div>
-
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>
-              {cfg.nombre || slug}
-            </div>
-            <div style={{ color: '#555', fontSize: 13, marginTop: 2 }}>
-              /{slug} · {cfg.direccion || 'Sin dirección'}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Badge email admin */}
-          {cfg.email_admin && (
-            <span style={{
-              fontSize: 11, color: '#36B1DF', background: '#36B1DF15',
-              border: '1px solid #36B1DF30', borderRadius: 6, padding: '3px 8px'
-            }}>
-              {cfg.email_admin}
-            </span>
-          )}
-          {/* Flecha */}
-          <span style={{
-            color: '#555', fontSize: 18,
-            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s'
-          }}>▾</span>
-        </div>
-      </div>
-
-      {/* Panel expandido */}
-      {expanded && (
-        <div style={{ borderTop: '1px solid #1f1f1f', padding: '20px 24px' }}>
-          {loadingData ? (
-            <div style={{ color: '#555', textAlign: 'center', padding: '20px 0', fontSize: 14 }}>
-              Cargando datos...
-            </div>
-          ) : (
-            <>
-              {/* Stats grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 20 }}>
-                {[
-                  { label: 'Citas hoy', value: citasHoy.length, color: '#36B1DF' },
-                  { label: 'Pendientes', value: citasPendientes.length, color: '#f59e0b' },
-                  { label: 'Confirmadas', value: citasConfirmadas.length, color: '#22c55e' },
-                  { label: 'Completadas', value: citasCompletadas.length, color: '#8b5cf6' },
-                  { label: 'Total citas', value: citas.length, color: '#ec4899' },
-                  { label: 'Ingresos', value: `$${ingresosTotal.toLocaleString()}`, color: '#36B1DF' },
-                ].map(stat => (
-                  <div key={stat.label} style={{
-                    background: '#0a0a0a', border: '1px solid #1f1f1f',
-                    borderRadius: 10, padding: '14px 16px'
-                  }}>
-                    <div style={{ fontSize: 11, color: '#555', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      {stat.label}
-                    </div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: stat.color }}>
-                      {stat.value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Barberos */}
-              {barberos.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 12, color: '#555', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
-                    Barberos ({barberos.length})
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {barberos.map((b, i) => (
-                      <div key={i} style={{
-                        background: '#0a0a0a', border: '1px solid #1f1f1f',
-                        borderRadius: 8, padding: '6px 12px',
-                        display: 'flex', alignItems: 'center', gap: 8
-                      }}>
-                        <div style={{
-                          width: 24, height: 24, borderRadius: '50%',
-                          background: b.bg || '#222', color: b.color || '#fff',
-                          fontSize: 10, fontWeight: 700,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                          {b.avatar || b.name?.charAt(0)}
-                        </div>
-                        <span style={{ color: b.active ? '#ccc' : '#444', fontSize: 13 }}>
-                          {b.name}
-                        </span>
-                        {!b.active && <span style={{ fontSize: 10, color: '#555' }}>(inactivo)</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Citas recientes */}
-              {citas.length > 0 && (
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ fontSize: 12, color: '#555', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
-                    Últimas 5 citas
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {[...citas]
-                      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-                      .slice(0, 5)
-                      .map((c, i) => {
-                        const statusColors = {
-                          pendiente: '#f59e0b', confirmada: '#22c55e',
-                          completada: '#8b5cf6', cancelada: '#ef4444'
-                        };
-                        return (
-                          <div key={i} style={{
-                            background: '#0a0a0a', border: '1px solid #1f1f1f',
-                            borderRadius: 8, padding: '10px 14px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                          }}>
-                            <div>
-                              <span style={{ color: '#ccc', fontSize: 13, fontWeight: 500 }}>
-                                {c.client || 'Cliente'}
-                              </span>
-                              <span style={{ color: '#444', fontSize: 12, marginLeft: 8 }}>
-                                {c.date} {c.time}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              {c.service?.price && (
-                                <span style={{ color: '#555', fontSize: 12 }}>${c.service.price}</span>
-                              )}
-                              <span style={{
-                                fontSize: 11, fontWeight: 600,
-                                color: statusColors[c.status] || '#555',
-                                background: `${statusColors[c.status] || '#555'}15`,
-                                borderRadius: 5, padding: '2px 8px'
-                              }}>
-                                {c.status}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// =========================================================
-// PANEL PRINCIPAL
+// PANEL PRINCIPAL (SIMPLIFICADO)
 // =========================================================
 function SuperAdminDashboard({ onLogout }) {
-  const [barberias, setBarberias] = useState({});
+  const [barberias, setBarberias] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const unsubscribe = onValue(ref(db, 'barberias'), (snapshot) => {
-      setBarberias(snapshot.val() || {});
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.keys(data).map(slug => ({
+          slug,
+          nombre: data[slug]?.config?.nombre || slug,
+          email_admin: data[slug]?.config?.email_admin || '—'
+        }));
+        setBarberias(list.sort((a, b) => a.nombre.localeCompare(b.nombre)));
+      }
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  const slugs = Object.keys(barberias).filter(slug =>
-    search === '' ||
-    slug.toLowerCase().includes(search.toLowerCase()) ||
-    (barberias[slug]?.config?.name || '').toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Totales globales
-  const totalCitas = Object.values(barberias).reduce((sum, b) => {
-    const citas = b.citas ? Object.keys(b.citas).length : 0;
-    return sum + citas;
-  }, 0);
-
-  const totalBarberos = Object.values(barberias).reduce((sum, b) => {
-    const barberos = b.barberos ? Object.keys(b.barberos).length : 0;
-    return sum + barberos;
-  }, 0);
-
   return (
     <div style={{
       minHeight: '100vh', background: '#0a0a0a',
-      fontFamily: "'Inter', -apple-system, sans-serif"
+      fontFamily: "'Barlow', sans-serif"
     }}>
       {/* Header */}
       <div style={{
         background: '#141414', borderBottom: '1px solid #1f1f1f',
-        padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
-            width: 36, height: 36,
+            width: 40, height: 40,
             background: 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
             borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0a0a">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#0a0a0a">
               <path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 110 4 2 2 0 010-4z"/>
             </svg>
           </div>
           <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>BarberOS</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, fontFamily: "'Barlow Condensed', sans-serif" }}>BarberOS</div>
             <div style={{ color: '#555', fontSize: 12 }}>Panel de Fundadores</div>
           </div>
         </div>
@@ -425,7 +193,8 @@ function SuperAdminDashboard({ onLogout }) {
           style={{
             background: 'transparent', border: '1px solid #2a2a2a',
             color: '#666', borderRadius: 8, padding: '8px 16px',
-            fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
+            fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
+            fontFamily: "'Barlow', sans-serif"
           }}
           onMouseEnter={e => { e.target.style.borderColor = '#ef4444'; e.target.style.color = '#ef4444'; }}
           onMouseLeave={e => { e.target.style.borderColor = '#2a2a2a'; e.target.style.color = '#666'; }}
@@ -434,58 +203,73 @@ function SuperAdminDashboard({ onLogout }) {
         </button>
       </div>
 
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
-        {/* Stats globales */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 36 }}>
-          {[
-            { label: 'Barberías registradas', value: Object.keys(barberias).length, icon: '🏪', color: '#36B1DF' },
-            { label: 'Total citas (DB)', value: totalCitas, icon: '📅', color: '#22c55e' },
-            { label: 'Total barberos', value: totalBarberos, icon: '💈', color: '#8b5cf6' },
-          ].map(stat => (
-            <div key={stat.label} style={{
-              background: '#141414', border: '1px solid #1f1f1f',
-              borderRadius: 14, padding: '20px 22px'
-            }}>
-              <div style={{ fontSize: 26, marginBottom: 10 }}>{stat.icon}</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: stat.color, lineHeight: 1 }}>
-                {stat.value}
-              </div>
-              <div style={{ color: '#555', fontSize: 12, marginTop: 6 }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Buscador */}
-        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar barbería por nombre o slug..."
-            style={{
-              flex: 1, background: '#141414', color: '#fff',
-              border: '1px solid #222', borderRadius: 10, padding: '12px 16px',
-              fontSize: 14, outline: 'none'
-            }}
-          />
-          <div style={{ color: '#555', fontSize: 13, whiteSpace: 'nowrap' }}>
-            {slugs.length} {slugs.length === 1 ? 'resultado' : 'resultados'}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Stat card */}
+        <div style={{
+          background: '#141414', border: '1px solid #1f1f1f',
+          borderRadius: 14, padding: '20px 24px', marginBottom: 32
+        }}>
+          <div style={{ fontSize: 14, color: '#555', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
+            Total de barberías
+          </div>
+          <div style={{ fontSize: 48, fontWeight: 800, color: '#36B1DF', fontFamily: "'Barlow Condensed', sans-serif" }}>
+            {barberias.length}
           </div>
         </div>
 
-        {/* Lista de barberías */}
+        {/* Lista */}
         {loading ? (
-          <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 15 }}>
-            Cargando barberías...
+          <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 14 }}>
+            Cargando...
           </div>
-        ) : slugs.length === 0 ? (
-          <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 15 }}>
-            {search ? 'No se encontraron resultados' : 'No hay barberías registradas'}
+        ) : barberias.length === 0 ? (
+          <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 14 }}>
+            No hay barberías registradas aún
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {slugs.map(slug => (
-              <BarbershopCard key={slug} slug={slug} data={barberias[slug]} />
-            ))}
+          <div>
+            <div style={{ fontSize: 14, color: '#555', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
+              Listado
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {barberias.map((barber, i) => (
+                <div key={i} style={{
+                  background: '#141414', border: '1px solid #1f1f1f',
+                  borderRadius: 10, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  transition: 'border-color 0.2s'
+                }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#36B1DF44'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = '#1f1f1f'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                    <div style={{
+                      width: 36, height: 36,
+                      background: '#36B1DF22', border: '1px solid #36B1DF44',
+                      borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, fontWeight: 800, color: '#36B1DF', flexShrink: 0
+                    }}>
+                      {barber.nombre.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ color: '#ccc', fontSize: 14, fontWeight: 600 }}>
+                        {barber.nombre}
+                      </div>
+                      <div style={{ color: '#555', fontSize: 12, marginTop: 2 }}>
+                        /{barber.slug} · {barber.email_admin}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    background: '#36B1DF15', border: '1px solid #36B1DF30',
+                    borderRadius: 6, padding: '4px 12px',
+                    fontSize: 11, color: '#36B1DF', fontWeight: 600
+                  }}>
+                    ✓ Activa
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -497,14 +281,14 @@ function SuperAdminDashboard({ onLogout }) {
 // COMPONENTE PRINCIPAL
 // =========================================================
 export default function SuperAdminPanel() {
-  const [authState, setAuthState] = useState('loading'); // 'loading' | 'logged-out' | 'logged-in'
+  const [authState, setAuthState] = useState('loading');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user && FOUNDER_UIDS.includes(user.uid)) {
         setAuthState('logged-in');
       } else {
-        if (user) await signOut(auth); // Si es usuario pero no fundador, lo saca
+        if (user) await signOut(auth);
         setAuthState('logged-out');
       }
     });
