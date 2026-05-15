@@ -9,10 +9,8 @@ import SuperAdminPanel from './components/SuperAdminPanel';
 export default function App() {
   return (
     <Routes>
-      {/* Ruta raíz: panel exclusivo para fundadores */}
-      <Route path="/" element={<SuperAdminPanel />} />
-
-      {/* Rutas de cada barbería por slug */}
+      <Route path="/" element={<LoginScreen />} />
+      <Route path="/founders" element={<SuperAdminPanel />} />
       <Route path="/:slug" element={<SlugWrapper><LoginScreen /></SlugWrapper>} />
       <Route path="/:slug/cliente" element={<SlugWrapper><ClientView /></SlugWrapper>} />
       <Route path="/:slug/admin" element={<SlugWrapper><AdminView /></SlugWrapper>} />

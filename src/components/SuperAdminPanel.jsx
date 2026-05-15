@@ -181,7 +181,7 @@ function BarbershopCard({ slug, data }) {
   const citasPendientes = citas.filter(c => c.status === 'pendiente');
   const citasConfirmadas = citas.filter(c => c.status === 'confirmada');
   const citasCompletadas = citas.filter(c => c.status === 'completada');
-  const ingresosTotal = citasCompletadas.reduce((sum, c) => sum + (c.price || 0), 0);
+  const ingresosTotal = citasCompletadas.reduce((sum, c) => sum + (c.service?.price || 0), 0);
 
   return (
     <div style={{
@@ -208,15 +208,15 @@ function BarbershopCard({ slug, data }) {
             borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 20, fontWeight: 800, color: '#36B1DF', flexShrink: 0
           }}>
-            {(cfg.name || slug).charAt(0).toUpperCase()}
+            {(cfg.nombre || slug).charAt(0).toUpperCase()}
           </div>
 
           <div>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>
-              {cfg.name || slug}
+              {cfg.nombre || slug}
             </div>
             <div style={{ color: '#555', fontSize: 13, marginTop: 2 }}>
-              /{slug} · {cfg.address || 'Sin dirección'}
+              /{slug} · {cfg.direccion || 'Sin dirección'}
             </div>
           </div>
         </div>
@@ -327,15 +327,15 @@ function BarbershopCard({ slug, data }) {
                           }}>
                             <div>
                               <span style={{ color: '#ccc', fontSize: 13, fontWeight: 500 }}>
-                                {c.clientName || 'Cliente'}
+                                {c.client || 'Cliente'}
                               </span>
                               <span style={{ color: '#444', fontSize: 12, marginLeft: 8 }}>
                                 {c.date} {c.time}
                               </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              {c.price && (
-                                <span style={{ color: '#555', fontSize: 12 }}>${c.price}</span>
+                              {c.service?.price && (
+                                <span style={{ color: '#555', fontSize: 12 }}>${c.service.price}</span>
                               )}
                               <span style={{
                                 fontSize: 11, fontWeight: 600,
