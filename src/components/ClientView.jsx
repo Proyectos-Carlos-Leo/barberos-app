@@ -60,30 +60,66 @@ export default function ClientView() {
     setStep(s => s + 1);
   };
 
-  // ✅ FIX #3: handleSubmit es async y espera el resultado real de Firebase
+  // Validaciones anti-spam y seguridad
   const handleSubmit = async () => {
-    // ✅ Anti-spam: máximo 2 citas activas por teléfono al día
-    if (form.phone) {
-      const today = new Date().toISOString().split('T')[0];
+    // 1. Validar teléfono (solo dígitos, espacios, +, -, paréntesis)
+    const cleanPhone = form.phone.trim();
+    if (!/^[\d\s+\-()]{8,20}$/.test(cleanPhone)) {
+      alert('⚠ Número de teléfono inválido');
+      return;
+    }
+
+    // 2. Validar nombre (sin caracteres raros)
+    const cleanName = form.client.trim();
+    if (cleanName.length < 2 || cleanName.length > 100) {
+      alert('⚠ Nombre inválido');
+      return;
+    }
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s.'-]+$/.test(cleanName)) {
+      alert('⚠ El nombre solo puede contener letras');
+      return;
+    }
+
+    // 3. Validar que la fecha sea hoy o futuro
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (form.date < todayStr) {
+      alert('⚠ No puedes agendar citas en fechas pasadas');
+      return;
+    }
+
+    // 4. Anti-spam: máximo 2 citas activas por teléfono al día
+    if (cleanPhone) {
       const sameDayBookings = appointments.filter(a =>
-        a.phone === form.phone.trim() &&
-        a.date === today &&
+        a.phone === cleanPhone &&
+        a.date === form.date &&
         a.status !== 'cancelada'
       );
       if (sameDayBookings.length >= 2) {
-        alert('⚠ Ya tienes 2 citas para hoy con este número. Si necesitas más, contacta directamente a la barbería.');
+        alert('⚠ Ya tienes 2 citas para esta fecha con este número. Si necesitas más, contacta directamente a la barbería.');
         return;
       }
     }
 
+    // 5. Rate limit: máximo 5 citas en 1 hora desde el mismo teléfono
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const recentBookings = appointments.filter(a =>
+      a.phone === cleanPhone &&
+      a.createdAt &&
+      a.createdAt > oneHourAgo
+    );
+    if (recentBookings.length >= 5) {
+      alert('⚠ Demasiadas citas en poco tiempo. Espera unos minutos.');
+      return;
+    }
+
     const newAppt = await addAppointment({
-      client: form.client.trim(),
-      phone: form.phone.trim(),
-      barberId: form.barberId, // ✅ string, no Number()
+      client: cleanName,
+      phone: cleanPhone,
+      barberId: form.barberId,
       service: selectedService,
       date: form.date,
       time: form.time,
-      notes: form.notes.trim()
+      notes: form.notes.trim().slice(0, 500)
     });
     if (newAppt) {
       setCompletedAppointment({ ...newAppt, barber: selectedBarber });
@@ -325,8 +361,14 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
 // ==================== STEP 4 ====================
 function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const handleClick = async () => {
+    if (!acceptPrivacy) {
+      alert('⚠ Debes aceptar el aviso de privacidad para continuar');
+      return;
+    }
     setSubmitting(true);
     await onSubmit();
     setSubmitting(false);
@@ -361,7 +403,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
           </div>
         )}
       </div>
-      <div style={{ background: "var(--accent-bg)", border: "1px solid #0a3d56", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div style={{ background: "var(--accent-bg)", border: "1px solid #0a3d56", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <p style={{ color: "#36B1DF", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
           <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
@@ -370,12 +412,126 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
           {formatCurrency(selectedService?.price || 0)}
         </span>
       </div>
+
+      {/* Aviso de privacidad */}
+      <div style={{
+        background: "var(--bg-elevated)",
+        border: `1px solid ${acceptPrivacy ? "var(--accent)" : "var(--border)"}`,
+        borderRadius: 10,
+        padding: 14,
+        marginBottom: 20,
+        cursor: "pointer",
+        transition: "border-color 0.2s"
+      }}
+        onClick={() => setAcceptPrivacy(!acceptPrivacy)}
+      >
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={acceptPrivacy}
+            onChange={e => setAcceptPrivacy(e.target.checked)}
+            style={{ marginTop: 3, accentColor: "#36B1DF", width: 16, height: 16, cursor: "pointer" }}
+          />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            Acepto el{' '}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setShowPrivacyModal(true); }}
+              style={{ background: "transparent", border: "none", color: "#36B1DF", padding: 0, textDecoration: "underline", cursor: "pointer", font: "inherit" }}
+            >
+              aviso de privacidad
+            </button>
+            {' '}y autorizo el uso de mis datos para gestionar mi cita.
+          </span>
+        </label>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <button className="btn-ghost" onClick={onBack} disabled={submitting}>← Editar</button>
-        <button className="btn-gold" onClick={handleClick} disabled={submitting}>
+        <button className="btn-gold" onClick={handleClick} disabled={submitting || !acceptPrivacy}>
           {submitting ? "Guardando..." : "Confirmar cita ✓"}
         </button>
       </div>
+
+      {/* Modal de aviso de privacidad */}
+      {showPrivacyModal && (
+        <div
+          onClick={() => setShowPrivacyModal(false)}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20, zIndex: 2000
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-strong)",
+              borderRadius: 14,
+              maxWidth: 600,
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: 28
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h2 style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 22, fontWeight: 800, letterSpacing: 1,
+                textTransform: "uppercase", color: "var(--text-primary)"
+              }}>
+                🔒 Aviso de Privacidad
+              </h2>
+              <button
+                onClick={() => setShowPrivacyModal(false)}
+                style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: "var(--text-tertiary)", padding: 0 }}
+              >×</button>
+            </div>
+            <div style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-secondary)" }}>
+              <p style={{ marginBottom: 12 }}>
+                <strong>Responsable del tratamiento de datos:</strong> La barbería con la que estás agendando tu cita.
+              </p>
+              <p style={{ marginBottom: 12 }}>
+                <strong>Datos que recabamos:</strong>
+              </p>
+              <ul style={{ marginLeft: 20, marginBottom: 12 }}>
+                <li>Nombre completo</li>
+                <li>Número de teléfono</li>
+                <li>Fecha y hora de cita</li>
+                <li>Servicio solicitado</li>
+              </ul>
+              <p style={{ marginBottom: 12 }}>
+                <strong>Finalidad:</strong> Tus datos son usados ÚNICAMENTE para:
+              </p>
+              <ul style={{ marginLeft: 20, marginBottom: 12 }}>
+                <li>Confirmar y gestionar tu cita</li>
+                <li>Contactarte si hay cambios o cancelaciones</li>
+                <li>Llevar un historial de servicios prestados</li>
+              </ul>
+              <p style={{ marginBottom: 12 }}>
+                <strong>No compartimos:</strong> Tus datos NO se venden, NO se comparten con terceros ni se usan para fines publicitarios o de marketing sin tu consentimiento expreso.
+              </p>
+              <p style={{ marginBottom: 12 }}>
+                <strong>Tus derechos (ARCO):</strong> Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos en cualquier momento. Solo contacta directamente a la barbería.
+              </p>
+              <p style={{ marginBottom: 12 }}>
+                <strong>Almacenamiento:</strong> Los datos se almacenan de forma segura en servidores con cifrado. Solo el administrador autorizado de la barbería puede acceder a la información completa.
+              </p>
+              <p style={{ marginBottom: 16, fontSize: 12, color: "var(--text-muted)" }}>
+                Este aviso cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México.
+              </p>
+              <button
+                onClick={() => { setAcceptPrivacy(true); setShowPrivacyModal(false); }}
+                className="btn-gold"
+                style={{ width: "100%" }}
+              >
+                Aceptar y cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
