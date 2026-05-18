@@ -440,21 +440,42 @@ export default function ReportsView({ appointments, barbers }) {
                           {formatCurrency(d.revenue)}
                         </span>
                       )}
-                      {/* Barra */}
-                      <div style={{
-                        width: "100%",
-                        height: `${Math.max(heightPct, d.revenue > 0 ? 3 : 0)}%`,
-                        background: isToday
-                          ? "linear-gradient(180deg, #5FC8EC, #36B1DF, #1A7FAB)"
-                          : d.revenue > 0
-                            ? "linear-gradient(180deg, #555, #333)"
-                            : "var(--bg-track)",
-                        borderRadius: "4px 4px 0 0",
-                        border: isToday ? "1px solid #5FC8EC" : d.revenue > 0 ? "1px solid #444" : "1px dashed #222",
-                        minHeight: d.revenue > 0 ? 4 : 0,
-                        transition: "height 0.5s ease",
-                        position: "relative"
-                      }} />
+                      {/* Barra con hover */}
+                      <div
+                        title={`${d.label}: ${formatCurrency(d.revenue)}${isToday ? ' (Hoy)' : ''}`}
+                        style={{
+                          width: "100%",
+                          height: `${Math.max(heightPct, d.revenue > 0 ? 3 : 0)}%`,
+                          background: isToday
+                            ? "linear-gradient(180deg, #5FC8EC, #36B1DF, #1A7FAB)"
+                            : d.revenue > 0
+                              ? "linear-gradient(180deg, #555, #333)"
+                              : "var(--bg-track)",
+                          borderRadius: "4px 4px 0 0",
+                          border: isToday ? "1px solid #5FC8EC" : d.revenue > 0 ? "1px solid #444" : "1px dashed #222",
+                          minHeight: d.revenue > 0 ? 4 : 0,
+                          transition: "all 0.2s ease",
+                          position: "relative",
+                          cursor: d.revenue > 0 ? "pointer" : "default"
+                        }}
+                        onMouseEnter={e => {
+                          if (d.revenue > 0) {
+                            e.currentTarget.style.background = "linear-gradient(180deg, #7FD9F2, #36B1DF, #1A7FAB)";
+                            e.currentTarget.style.transform = "scaleY(1.03)";
+                            e.currentTarget.style.transformOrigin = "bottom";
+                            e.currentTarget.style.boxShadow = "0 0 12px rgba(54,177,223,0.5)";
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = isToday
+                            ? "linear-gradient(180deg, #5FC8EC, #36B1DF, #1A7FAB)"
+                            : d.revenue > 0
+                              ? "linear-gradient(180deg, #555, #333)"
+                              : "var(--bg-track)";
+                          e.currentTarget.style.transform = "scaleY(1)";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      />
                     </div>
                   );
                 })}
@@ -521,6 +542,13 @@ export default function ReportsView({ appointments, barbers }) {
         )}
       </Card>
 
+      {/* Grid 2x2 de reportes compactos */}
+      <div className="reports-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
+        gap: 16,
+        marginBottom: 16
+      }}>
       {/* Top barberos */}
       <Card title="🏆 Top barberos" subtitle="Ranking por ingresos generados">
         {topBarbers.length === 0 || topBarbers.every(b => b.count === 0) ? (
@@ -549,7 +577,25 @@ export default function ReportsView({ appointments, barbers }) {
                         {formatCurrency(b.revenue)}
                       </span>
                     </div>
-                    <div style={{ height: 6, background: "var(--bg-track)", borderRadius: 3, overflow: "hidden" }}>
+                    <div
+                      title={`${b.name}: ${b.count} corte${b.count !== 1 ? 's' : ''} · ${formatCurrency(b.revenue)}`}
+                      style={{
+                        height: 8, background: "var(--bg-track)",
+                        borderRadius: 3, overflow: "hidden",
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.height = "12px";
+                        e.currentTarget.style.boxShadow = i === 0
+                          ? "0 0 8px rgba(54,177,223,0.5)"
+                          : "0 0 8px rgba(136,136,136,0.4)";
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.height = "8px";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
                       <div style={{
                         width: `${widthPct}%`,
                         height: "100%",
@@ -587,7 +633,23 @@ export default function ReportsView({ appointments, barbers }) {
                       </span>
                     </div>
                   </div>
-                  <div style={{ height: 8, background: "var(--bg-track)", borderRadius: 4, overflow: "hidden" }}>
+                  <div
+                    title={`${s.name}: ${s.count} corte${s.count !== 1 ? 's' : ''} · ${formatCurrency(s.revenue)}`}
+                    style={{
+                      height: 10, background: "var(--bg-track)",
+                      borderRadius: 4, overflow: "hidden",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.height = "14px";
+                      e.currentTarget.style.boxShadow = "0 0 8px rgba(54,177,223,0.5)";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.height = "10px";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
                     <div style={{
                       width: `${widthPct}%`,
                       height: "100%",
@@ -601,7 +663,16 @@ export default function ReportsView({ appointments, barbers }) {
           </div>
         )}
       </Card>
+      </div>
+      {/* Fin grid 2x2 superior */}
 
+      {/* Grid 2x2 inferior */}
+      <div className="reports-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
+        gap: 16,
+        marginBottom: 16
+      }}>
       {/* HISTOGRAMA: Horarios pico con AM/PM */}
       <Card title="⏰ Horarios pico" subtitle="Distribución de citas por hora del día">
         {peakHours.length === 0 ? (
@@ -699,24 +770,41 @@ export default function ReportsView({ appointments, barbers }) {
                               {h.count}
                             </span>
                           )}
-                          {/* Barra */}
-                          <div style={{
-                            width: "100%",
-                            height: `${Math.max(heightPct, 3)}%`,
-                            background: isAM
-                              ? isPeak
-                                ? "linear-gradient(180deg, #e0f4fc, #5FC8EC, #1A7FAB)"
-                                : "linear-gradient(180deg, #1A7FAB, #0a3d56)"
-                              : isPeak
-                                ? "linear-gradient(180deg, #c7d2fe, #818cf8, #4f46e5)"
-                                : "linear-gradient(180deg, #4f46e5, #312e81)",
-                            borderRadius: "3px 3px 0 0",
-                            border: isPeak
-                              ? `1px solid ${isAM ? "#5FC8EC" : "#818cf8"}`
-                              : "1px solid transparent",
-                            minHeight: 3,
-                            transition: "height 0.5s ease"
-                          }} />
+                          {/* Barra con hover */}
+                          <div
+                            title={`${h.time} ${isAM ? 'AM' : 'PM'}: ${h.count} cita${h.count !== 1 ? 's' : ''}${isPeak ? ' (Hora pico)' : ''}`}
+                            style={{
+                              width: "100%",
+                              height: `${Math.max(heightPct, 3)}%`,
+                              background: isAM
+                                ? isPeak
+                                  ? "linear-gradient(180deg, #e0f4fc, #5FC8EC, #1A7FAB)"
+                                  : "linear-gradient(180deg, #1A7FAB, #0a3d56)"
+                                : isPeak
+                                  ? "linear-gradient(180deg, #c7d2fe, #818cf8, #4f46e5)"
+                                  : "linear-gradient(180deg, #4f46e5, #312e81)",
+                              borderRadius: "3px 3px 0 0",
+                              border: isPeak
+                                ? `1px solid ${isAM ? "#5FC8EC" : "#818cf8"}`
+                                : "1px solid transparent",
+                              minHeight: 3,
+                              transition: "all 0.2s ease",
+                              cursor: h.count > 0 ? "pointer" : "default"
+                            }}
+                            onMouseEnter={e => {
+                              if (h.count > 0) {
+                                e.currentTarget.style.transform = "scaleY(1.05)";
+                                e.currentTarget.style.transformOrigin = "bottom";
+                                e.currentTarget.style.boxShadow = `0 0 10px ${isAM ? "rgba(95,200,236,0.6)" : "rgba(129,140,248,0.6)"}`;
+                                e.currentTarget.style.filter = "brightness(1.2)";
+                              }
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.transform = "scaleY(1)";
+                              e.currentTarget.style.boxShadow = "none";
+                              e.currentTarget.style.filter = "brightness(1)";
+                            }}
+                          />
                         </div>
                       </div>
                     );
@@ -886,6 +974,8 @@ export default function ReportsView({ appointments, barbers }) {
           </div>
         )}
       </Card>
+      </div>
+      {/* Fin grid 2x2 inferior */}
     </div>
   );
 }
