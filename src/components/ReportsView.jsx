@@ -252,9 +252,27 @@ export default function ReportsView({ appointments, barbers }) {
   const totalLast7 = totalLastN;
 
   // ========== TOP BARBEROS ==========
+  // ========== FILTROS POR RANGO PARA CADA GRÁFICA ==========
+  const [barbersRange, setBarbersRange] = useState('all'); // 'today' | '7' | '30' | '90' | 'all'
+  const [servicesRange, setServicesRange] = useState('all');
+  const [hoursRange, setHoursRange] = useState('all');
+
+  // Helper: filtra completed por rango
+  const filterByRange = (data, range) => {
+    if (range === 'all') return data;
+    const today = getTodayStr();
+    if (range === 'today') return data.filter(a => a.date === today);
+    const days = parseInt(range);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    return data.filter(a => a.date >= cutoffStr);
+  };
+
   const topBarbers = useMemo(() => {
+    const filtered = filterByRange(completed, barbersRange);
     const stats = barbers.map(b => {
-      const barberAppts = completed.filter(a => String(a.barberId) === String(b.id));
+      const barberAppts = filtered.filter(a => String(a.barberId) === String(b.id));
       const revenue = barberAppts.reduce((sum, a) => sum + (a.service?.price || 0), 0);
       return {
         ...b,
@@ -263,12 +281,13 @@ export default function ReportsView({ appointments, barbers }) {
       };
     });
     return stats.sort((a, b) => b.revenue - a.revenue);
-  }, [completed, barbers]);
+  }, [completed, barbers, barbersRange]);
 
   // ========== SERVICIOS MÁS VENDIDOS ==========
   const topServices = useMemo(() => {
+    const filtered = filterByRange(completed, servicesRange);
     const map = new Map();
-    completed.forEach(a => {
+    filtered.forEach(a => {
       const name = a.service?.name || 'Sin servicio';
       const price = a.service?.price || 0;
       if (!map.has(name)) {
@@ -279,21 +298,22 @@ export default function ReportsView({ appointments, barbers }) {
       item.revenue += price;
     });
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
-  }, [completed]);
+  }, [completed, servicesRange]);
 
   const maxServiceCount = Math.max(...topServices.map(s => s.count), 1);
 
   // ========== HORARIOS PICO ==========
   const peakHours = useMemo(() => {
+    const filtered = filterByRange(completed, hoursRange);
     const map = new Map();
-    completed.forEach(a => {
+    filtered.forEach(a => {
       if (!map.has(a.time)) map.set(a.time, 0);
       map.set(a.time, map.get(a.time) + 1);
     });
     return Array.from(map.entries())
       .map(([time, count]) => ({ time, count }))
       .sort((a, b) => a.time.localeCompare(b.time));
-  }, [completed]);
+  }, [completed, hoursRange]);
 
   const maxHourCount = Math.max(...peakHours.map(h => h.count), 1);
 
@@ -589,7 +609,11 @@ export default function ReportsView({ appointments, barbers }) {
         marginBottom: 16
       }}>
       {/* Top barberos */}
-      <Card title="🏆 Top barberos" subtitle="Ranking por ingresos generados">
+      <Card
+        title="🏆 Top barberos"
+        subtitle="Ranking por ingresos generados"
+        action={<RangePill value={barbersRange} onChange={setBarbersRange} />}
+      >
         {topBarbers.length === 0 || topBarbers.every(b => b.count === 0) ? (
           <EmptyState icon="📊" message="Aún no hay datos suficientes" />
         ) : (
@@ -654,7 +678,11 @@ export default function ReportsView({ appointments, barbers }) {
       </Card>
 
       {/* Servicios más vendidos */}
-      <Card title="💈 Servicios más vendidos" subtitle="Por cantidad de cortes">
+      <Card
+        title="💈 Servicios más vendidos"
+        subtitle="Por cantidad de cortes"
+        action={<RangePill value={servicesRange} onChange={setServicesRange} />}
+      >
         {topServices.length === 0 ? (
           <EmptyState icon="📊" message="Aún no hay datos suficientes" />
         ) : (
@@ -713,7 +741,11 @@ export default function ReportsView({ appointments, barbers }) {
         marginBottom: 16
       }}>
       {/* HISTOGRAMA: Horarios pico con AM/PM */}
-      <Card title="⏰ Horarios pico" subtitle="Distribución de citas por hora del día">
+      <Card
+        title="⏰ Horarios pico"
+        subtitle="Distribución de citas por hora del día"
+        action={<RangePill value={hoursRange} onChange={setHoursRange} />}
+      >
         {peakHours.length === 0 ? (
           <EmptyState icon="📊" message="Aún no hay datos suficientes" />
         ) : (() => {
@@ -1017,6 +1049,42 @@ export default function ReportsView({ appointments, barbers }) {
 }
 
 // ========== HELPERS ==========
+function RangePill({ value, onChange }) {
+  const options = [
+    { val: 'today', label: 'Hoy' },
+    { val: '7', label: '7d' },
+    { val: '30', label: '30d' },
+    { val: '90', label: '90d' },
+    { val: 'all', label: 'Todo' }
+  ];
+  return (
+    <div style={{ display: "flex", gap: 4, background: "var(--bg-track)", padding: 3, borderRadius: 7 }}>
+      {options.map(opt => (
+        <button
+          key={opt.val}
+          onClick={() => onChange(opt.val)}
+          style={{
+            background: value === opt.val ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "transparent",
+            color: value === opt.val ? "#fff" : "var(--text-tertiary)",
+            border: "none",
+            borderRadius: 5,
+            padding: "5px 10px",
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            letterSpacing: 0.5,
+            whiteSpace: "nowrap"
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function KPI({ label, value, color, icon }) {
   return (
     <div style={{
