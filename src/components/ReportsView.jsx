@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { formatCurrency, getTodayStr } from '../utils/helpers';
 
 // ==================== EXPORTAR CSV ====================
@@ -226,10 +226,12 @@ export default function ReportsView({ appointments, barbers }) {
     [appointments]
   );
 
-  // ========== INGRESOS ÚLTIMOS 7 DÍAS ==========
-  const last7Days = useMemo(() => {
+  // ========== INGRESOS ÚLTIMOS N DÍAS ==========
+  const [daysRange, setDaysRange] = useState(7);
+
+  const lastNDays = useMemo(() => {
     const days = [];
-    for (let i = 6; i >= 0; i--) {
+    for (let i = daysRange - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
@@ -241,10 +243,13 @@ export default function ReportsView({ appointments, barbers }) {
       days.push({ dateStr, dayName, num: d.getDate(), revenue, count });
     }
     return days;
-  }, [completed]);
+  }, [completed, daysRange]);
 
-  const maxRevenue = Math.max(...last7Days.map(d => d.revenue), 1);
-  const totalLast7 = last7Days.reduce((sum, d) => sum + d.revenue, 0);
+  const maxRevenue = Math.max(...lastNDays.map(d => d.revenue), 1);
+  const totalLastN = lastNDays.reduce((sum, d) => sum + d.revenue, 0);
+  // Aliases para compatibilidad
+  const last7Days = lastNDays;
+  const totalLast7 = totalLastN;
 
   // ========== TOP BARBEROS ==========
   const topBarbers = useMemo(() => {
@@ -384,13 +389,41 @@ export default function ReportsView({ appointments, barbers }) {
       </div>
 
       {/* HISTOGRAMA: Ingresos últimos 7 días */}
-      <Card title="📊 Ingresos últimos 7 días" subtitle={`Total: ${formatCurrency(totalLast7)}`}>
+      <Card
+        title={`📊 Ingresos últimos ${daysRange} días`}
+        subtitle={`Total: ${formatCurrency(totalLastN)}`}
+        action={
+          <div style={{ display: "flex", gap: 6, background: "var(--bg-track)", padding: 4, borderRadius: 8 }}>
+            {[7, 15, 30].map(n => (
+              <button
+                key={n}
+                onClick={() => setDaysRange(n)}
+                style={{
+                  background: daysRange === n ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "transparent",
+                  color: daysRange === n ? "#fff" : "var(--text-tertiary)",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "6px 14px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  letterSpacing: 0.5
+                }}
+              >
+                {n}d
+              </button>
+            ))}
+          </div>
+        }
+      >
         {totalLast7 === 0 ? (
           <EmptyState icon="📊" message="Aún no hay ingresos registrados" />
         ) : (
-          <div style={{ padding: "16px 0 0" }}>
+          <div style={{ padding: "24px 0 0" }}>
             {/* Área del histograma */}
-            <div style={{ position: "relative", height: 200, display: "flex", alignItems: "flex-end", gap: 0 }}>
+            <div style={{ position: "relative", height: 220, display: "flex", alignItems: "flex-end", gap: 0, paddingTop: 16 }}>
               {/* Líneas guía del eje Y */}
               {[100, 75, 50, 25].map(pct => (
                 <div key={pct} style={{
@@ -429,9 +462,9 @@ export default function ReportsView({ appointments, barbers }) {
                       gap: 4
                     }}>
                       {/* Valor encima */}
-                      {d.revenue > 0 && (
+                      {d.revenue > 0 && daysRange <= 15 && (
                         <span style={{
-                          fontSize: 9,
+                          fontSize: daysRange > 7 ? 8 : 9,
                           color: isToday ? "#36B1DF" : "var(--text-dim)",
                           fontWeight: 700,
                           textAlign: "center",
@@ -442,7 +475,7 @@ export default function ReportsView({ appointments, barbers }) {
                       )}
                       {/* Barra con hover */}
                       <div
-                        title={`${d.label}: ${formatCurrency(d.revenue)}${isToday ? ' (Hoy)' : ''}`}
+                        title={`${d.dayName} ${d.num}: ${formatCurrency(d.revenue)}${isToday ? ' (Hoy)' : ''}`}
                         style={{
                           width: "100%",
                           height: `${Math.max(heightPct, d.revenue > 0 ? 3 : 0)}%`,
@@ -490,28 +523,35 @@ export default function ReportsView({ appointments, barbers }) {
             }}>
               {last7Days.map(d => {
                 const isToday = d.dateStr === getTodayStr();
+                const showDayName = daysRange <= 15;
+                const showCount = daysRange <= 15 && d.count > 0;
                 return (
                   <div key={d.dateStr} style={{
                     flex: 1,
                     textAlign: "center",
-                    paddingTop: 6
+                    paddingTop: 6,
+                    minWidth: 0
                   }}>
+                    {showDayName && (
+                      <p style={{
+                        fontSize: daysRange > 7 ? 9 : 10,
+                        fontWeight: 700,
+                        color: isToday ? "#36B1DF" : "var(--text-dim)",
+                        textTransform: "uppercase",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap"
+                      }}>
+                        {d.dayName}
+                      </p>
+                    )}
                     <p style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: isToday ? "#36B1DF" : "var(--text-dim)",
-                      textTransform: "uppercase"
-                    }}>
-                      {d.label}
-                    </p>
-                    <p style={{
-                      fontSize: 12,
+                      fontSize: daysRange > 15 ? 10 : 12,
                       fontWeight: 800,
                       color: isToday ? "#36B1DF" : "var(--text-tertiary)"
                     }}>
                       {d.num}
                     </p>
-                    {d.count > 0 && (
+                    {showCount && (
                       <p style={{ fontSize: 9, color: "var(--text-dim)" }}>{d.count}✓</p>
                     )}
                   </div>
@@ -994,7 +1034,7 @@ function KPI({ label, value, color, icon }) {
   );
 }
 
-function Card({ title, subtitle, children }) {
+function Card({ title, subtitle, children, action }) {
   return (
     <div style={{
       background: "var(--bg-elevated)",
@@ -1003,14 +1043,17 @@ function Card({ title, subtitle, children }) {
       padding: 22,
       marginBottom: 20
     }}>
-      <div style={{ marginBottom: 16 }}>
-        <h2 style={{
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontSize: 18, fontWeight: 700,
-          letterSpacing: 1, textTransform: "uppercase",
-          marginBottom: 2
-        }}>{title}</h2>
-        {subtitle && <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{subtitle}</p>}
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h2 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 18, fontWeight: 700,
+            letterSpacing: 1, textTransform: "uppercase",
+            marginBottom: 2
+          }}>{title}</h2>
+          {subtitle && <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{subtitle}</p>}
+        </div>
+        {action && <div>{action}</div>}
       </div>
       {children}
     </div>
