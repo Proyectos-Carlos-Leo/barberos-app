@@ -469,30 +469,190 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
 
 // ==================== HISTORY VIEW ====================
 function HistoryView({ appointments, barbers }) {
-  const completed = appointments.filter(a => a.status === "completada").sort((a, b) => new Date(b.date + "T" + b.time) - new Date(a.date + "T" + a.time));
-  const totalRevenue = completed.reduce((sum, a) => sum + (a.service?.price || 0), 0);
+  const [filterBarberId, setFilterBarberId] = useState('all');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const completed = appointments
+    .filter(a => a.status === "completada")
+    .sort((a, b) => new Date(b.date + "T" + b.time) - new Date(a.date + "T" + a.time));
+
+  // Aplicar filtros
+  const filtered = completed.filter(a => {
+    if (filterBarberId !== 'all' && a.barberId !== filterBarberId) return false;
+    if (filterDateFrom && a.date < filterDateFrom) return false;
+    if (filterDateTo && a.date > filterDateTo) return false;
+    return true;
+  });
+
+  const totalRevenue = filtered.reduce((sum, a) => sum + (a.service?.price || 0), 0);
+  const hasFilters = filterBarberId !== 'all' || filterDateFrom || filterDateTo;
+
+  // Exportar CSV
+  const handleExport = () => {
+    const BOM = '\uFEFF';
+    const headers = ['Fecha', 'Hora', 'Cliente', 'Telefono', 'Servicio', 'Precio', 'Barbero', 'Estado'];
+
+    const rows = filtered.map(a => {
+      const barber = barbers.find(b => b.id === a.barberId);
+      return [
+        a.date,
+        a.time,
+        a.client || '',
+        a.phone || '',
+        a.service?.name || '',
+        a.service?.price || 0,
+        barber?.name || 'Sin asignar',
+        a.status
+      ];
+    });
+
+    // Resumen al final
+    rows.push([]);
+    rows.push(['RESUMEN']);
+    rows.push(['Total citas', filtered.length]);
+    rows.push(['Ingresos totales', totalRevenue]);
+    rows.push(['Ticket promedio', filtered.length > 0 ? Math.round(totalRevenue / filtered.length) : 0]);
+
+    if (filterBarberId !== 'all') {
+      const b = barbers.find(x => x.id === filterBarberId);
+      rows.push(['Filtrado por barbero', b?.name || filterBarberId]);
+    }
+    if (filterDateFrom) rows.push(['Desde', filterDateFrom]);
+    if (filterDateTo) rows.push(['Hasta', filterDateTo]);
+
+    const csv = BOM + [headers, ...rows]
+      .map(r => r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `historial-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearFilters = () => {
+    setFilterBarberId('all');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+  };
 
   return (
     <div className="fade-in">
-      <div style={{ marginBottom: 28 }}>
-        <h1 className="section-title" style={{ marginBottom: 4 }}><span className="gold">Historial</span> de citas</h1>
-        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Citas completadas y reportes</p>
+      <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
+        <div>
+          <h1 className="section-title" style={{ marginBottom: 4 }}><span className="gold">Historial</span> de citas</h1>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Citas completadas y reportes</p>
+        </div>
+        <button
+          onClick={handleExport}
+          disabled={filtered.length === 0}
+          style={{
+            background: filtered.length === 0 ? "var(--bg-track)" : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+            color: filtered.length === 0 ? "var(--text-muted)" : "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "10px 18px",
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: "'Barlow Condensed', sans-serif",
+            letterSpacing: 0.5,
+            textTransform: "uppercase",
+            cursor: filtered.length === 0 ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+            whiteSpace: "nowrap"
+          }}
+        >
+          📥 Exportar CSV
+        </button>
       </div>
+
+      {/* Filtros */}
+      <div style={{
+        background: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: 12,
+        alignItems: "end"
+      }}>
+        <div>
+          <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 6 }}>
+            Barbero
+          </label>
+          <select
+            value={filterBarberId}
+            onChange={e => setFilterBarberId(e.target.value)}
+            style={{ width: "100%" }}
+          >
+            <option value="all">Todos los barberos</option>
+            {barbers.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 6 }}>
+            Desde
+          </label>
+          <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} style={{ width: "100%" }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 6 }}>
+            Hasta
+          </label>
+          <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} style={{ width: "100%" }} />
+        </div>
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            style={{
+              background: "transparent",
+              color: "var(--text-tertiary)",
+              border: "1px solid var(--border-strong)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap"
+            }}
+          >
+            ✕ Limpiar filtros
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
-        {[["Total completadas", completed.length, "#4ade80"], ["Ingresos totales", formatCurrency(totalRevenue), "#36B1DF"], ["Ticket promedio", completed.length > 0 ? formatCurrency(Math.round(totalRevenue / completed.length)) : "$0", "#60a5fa"]].map(([label, value, color]) => (
+        {[
+          ["Total completadas", filtered.length, "#4ade80"],
+          ["Ingresos totales", formatCurrency(totalRevenue), "#36B1DF"],
+          ["Ticket promedio", filtered.length > 0 ? formatCurrency(Math.round(totalRevenue / filtered.length)) : "$0", "#60a5fa"]
+        ].map(([label, value, color]) => (
           <div key={label} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
             <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
             <p style={{ fontSize: 26, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
           </div>
         ))}
       </div>
+
+      {/* Lista */}
       <div style={{ display: "grid", gap: 10 }}>
-        {completed.length === 0 ? (
+        {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <p style={{ fontSize: 36, marginBottom: 8 }}>📋</p>
-            <p style={{ fontSize: 14 }}>Aún no hay citas completadas</p>
+            <p style={{ fontSize: 14 }}>
+              {hasFilters ? "No hay citas que coincidan con los filtros" : "Aún no hay citas completadas"}
+            </p>
           </div>
-        ) : completed.map(appt => {
+        ) : filtered.map(appt => {
           const barber = barbers.find(b => b.id === appt.barberId);
           return (
             <div key={appt.id} className="card" style={{ padding: "14px 18px" }}>

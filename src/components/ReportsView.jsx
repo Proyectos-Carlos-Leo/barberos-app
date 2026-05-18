@@ -461,9 +461,8 @@ export default function ReportsView({ appointments, barbers }) {
                         onMouseEnter={e => {
                           if (d.revenue > 0) {
                             e.currentTarget.style.background = "linear-gradient(180deg, #7FD9F2, #36B1DF, #1A7FAB)";
-                            e.currentTarget.style.transform = "scaleY(1.03)";
-                            e.currentTarget.style.transformOrigin = "bottom";
-                            e.currentTarget.style.boxShadow = "0 0 12px rgba(54,177,223,0.5)";
+                            e.currentTarget.style.boxShadow = "0 0 16px rgba(54,177,223,0.7)";
+                            e.currentTarget.style.filter = "brightness(1.15)";
                           }
                         }}
                         onMouseLeave={e => {
@@ -472,8 +471,8 @@ export default function ReportsView({ appointments, barbers }) {
                             : d.revenue > 0
                               ? "linear-gradient(180deg, #555, #333)"
                               : "var(--bg-track)";
-                          e.currentTarget.style.transform = "scaleY(1)";
                           e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.filter = "brightness(1)";
                         }}
                       />
                     </div>
@@ -793,14 +792,11 @@ export default function ReportsView({ appointments, barbers }) {
                             }}
                             onMouseEnter={e => {
                               if (h.count > 0) {
-                                e.currentTarget.style.transform = "scaleY(1.05)";
-                                e.currentTarget.style.transformOrigin = "bottom";
-                                e.currentTarget.style.boxShadow = `0 0 10px ${isAM ? "rgba(95,200,236,0.6)" : "rgba(129,140,248,0.6)"}`;
-                                e.currentTarget.style.filter = "brightness(1.2)";
+                                e.currentTarget.style.boxShadow = `0 0 14px ${isAM ? "rgba(95,200,236,0.8)" : "rgba(129,140,248,0.8)"}`;
+                                e.currentTarget.style.filter = "brightness(1.25)";
                               }
                             }}
                             onMouseLeave={e => {
-                              e.currentTarget.style.transform = "scaleY(1)";
                               e.currentTarget.style.boxShadow = "none";
                               e.currentTarget.style.filter = "brightness(1)";
                             }}
