@@ -190,18 +190,47 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
 // ==================== STEPS INDICATOR ====================
 function StepsIndicator({ currentStep, steps }) {
   return (
-    <div style={{ display: "flex", marginBottom: 36 }}>
-      {steps.map((s, i) => (
-        <div key={s.num} style={{ flex: 1, display: "flex", alignItems: "center" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: currentStep >= s.num ? "#36B1DF" : "var(--border)", border: `2px solid ${currentStep >= s.num ? "#36B1DF" : "var(--border-strong)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: currentStep >= s.num ? "var(--bg-main)" : "var(--text-dim)", transition: "all 0.3s" }}>
-              {currentStep > s.num ? "✓" : s.num}
+    <div style={{ display: "flex", marginBottom: 36, alignItems: "center" }}>
+      {steps.map((s, i) => {
+        const isDone = currentStep > s.num;
+        const isActive = currentStep === s.num;
+        return (
+          <div key={s.num} style={{ flex: 1, display: "flex", alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: isDone ? "#36B1DF" : isActive ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "var(--bg-elevated-2)",
+                border: `2px solid ${isDone || isActive ? "#36B1DF" : "var(--border-strong)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 14, fontWeight: 800,
+                color: (isDone || isActive) ? "var(--bg-main)" : "var(--text-dim)",
+                transition: "all 0.3s",
+                boxShadow: isActive ? "0 0 16px rgba(54,177,223,0.5)" : "none",
+                fontFamily: "'Barlow Condensed', sans-serif"
+              }}>
+                {isDone ? "✓" : s.num}
+              </div>
+              <span style={{
+                fontSize: 11,
+                color: isActive ? "#36B1DF" : isDone ? "var(--text-secondary)" : "var(--text-dim)",
+                marginTop: 8,
+                fontWeight: isActive ? 700 : 500,
+                textAlign: "center",
+                textTransform: "uppercase",
+                letterSpacing: 0.5
+              }}>{s.label}</span>
             </div>
-            <span style={{ fontSize: 11, color: currentStep === s.num ? "#36B1DF" : "var(--text-dim)", marginTop: 6, fontWeight: currentStep === s.num ? 600 : 400, textAlign: "center" }}>{s.label}</span>
+            {i < steps.length - 1 && (
+              <div style={{
+                flex: 1, height: 2,
+                background: currentStep > s.num ? "#36B1DF" : "var(--border)",
+                marginBottom: 22,
+                transition: "background 0.4s"
+              }} />
+            )}
           </div>
-          {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: currentStep > s.num ? "#36B1DF" : "var(--border)", marginBottom: 22, transition: "background 0.3s" }} />}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -210,32 +239,141 @@ function StepsIndicator({ currentStep, steps }) {
 function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext }) {
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "var(--text-secondary)" }}>Ingresa tus datos</h3>
-      <div style={{ display: "grid", gap: 18 }}>
+      <div style={{ marginBottom: 24 }}>
+        <span style={{
+          display: "inline-block",
+          padding: "4px 12px",
+          background: "var(--accent-bg)",
+          color: "var(--accent-light, #5FC8EC)",
+          borderRadius: 20,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 0.5,
+          textTransform: "uppercase",
+          marginBottom: 8
+        }}>
+          Paso 1: Tus datos
+        </span>
+        <h3 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 26,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: 1,
+          color: "var(--text-primary)",
+          marginBottom: 4
+        }}>
+          ¿Quién <span className="gold">eres</span>?
+        </h3>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
+          Y elige a tu barbero preferido
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gap: 18, marginBottom: 24 }}>
         <FormField label="Nombre completo *" error={errors.client}>
           <input value={form.client} onChange={e => update("client", e.target.value)} placeholder="Ej. Juan García" />
         </FormField>
         <FormField label="Teléfono *" hint="Para confirmar tu cita por WhatsApp" error={errors.phone}>
           <input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="81 1234 5678" type="tel" />
         </FormField>
-        <FormField label="Barbero *" error={errors.barberId}>
-          <select value={form.barberId} onChange={e => update("barberId", e.target.value)}>
-            <option value="">Selecciona un barbero</option>
-            {barbers.map(b => <option key={b.id} value={b.id}>{b.name} — {b.specialty}</option>)}
-          </select>
-        </FormField>
-        {selectedBarber && (
-          <div className="fade-in" style={{ background: "var(--bg-elevated-2)", borderRadius: 10, padding: 16, display: "flex", alignItems: "center", gap: 14, border: "1px solid var(--border)" }}>
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: selectedBarber.bg, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, color: selectedBarber.color, flexShrink: 0 }}>{selectedBarber.avatar}</div>
-            <div>
-              <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{selectedBarber.name}</p>
-              <p style={{ fontSize: 13, color: "var(--text-tertiary)" }}>{selectedBarber.specialty}</p>
-            </div>
-          </div>
-        )}
       </div>
+
+      <p style={{
+        fontSize: 11,
+        color: "var(--text-tertiary)",
+        fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+        marginBottom: 12
+      }}>
+        Elige a tu barbero *
+      </p>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: 12,
+        marginBottom: 4
+      }}>
+        {barbers.map(b => {
+          const isSelected = form.barberId === b.id;
+          return (
+            <div
+              key={b.id}
+              onClick={() => update("barberId", b.id)}
+              style={{
+                position: "relative",
+                background: isSelected
+                  ? "linear-gradient(135deg, var(--accent-bg), var(--bg-elevated))"
+                  : "var(--bg-elevated)",
+                border: `2px solid ${isSelected ? "var(--accent)" : "var(--border)"}`,
+                borderRadius: 14,
+                padding: 18,
+                cursor: "pointer",
+                transition: "all 0.25s",
+                transform: isSelected ? "translateY(-2px)" : "none",
+                boxShadow: isSelected ? "0 8px 24px rgba(54,177,223,0.2)" : "none"
+              }}
+              onMouseEnter={e => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = "var(--border-strong)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }
+              }}
+            >
+              {isSelected && (
+                <div className="fade-in" style={{
+                  position: "absolute", top: 12, right: 12,
+                  width: 26, height: 26, borderRadius: "50%",
+                  background: "var(--accent)",
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              )}
+              <div style={{
+                width: 56, height: 56, borderRadius: "50%",
+                background: b.bg,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, fontSize: 20,
+                color: b.color,
+                marginBottom: 12,
+                border: isSelected ? `2px solid ${b.color}` : "none"
+              }}>
+                {b.avatar}
+              </div>
+              <p style={{
+                fontWeight: 700, fontSize: 15,
+                color: "var(--text-primary)",
+                marginBottom: 4
+              }}>
+                {b.name}
+              </p>
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                {b.specialty}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {errors.barberId && (
+        <p style={{ color: "#f87171", fontSize: 12, marginTop: 8 }}>⚠ {errors.barberId}</p>
+      )}
+
       <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
-        <button className="btn-gold" onClick={onNext} disabled={!form.client || !form.phone || !form.barberId}>Siguiente →</button>
+        <button className="btn-gold" onClick={onNext} disabled={!form.client || !form.phone || !form.barberId}>
+          Siguiente →
+        </button>
       </div>
     </div>
   );
@@ -243,24 +381,139 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 
 // ==================== STEP 2 ====================
 function Step2Service({ form, update, onBack, onNext }) {
+  // Mapa de emojis por servicio
+  const serviceEmojis = {
+    1: "✂️",   // Corte clásico
+    2: "💈",   // Corte + barba
+    3: "🔥",   // Degradado
+    4: "🧔",   // Barba completa
+    5: "👦",   // Corte infantil
+    6: "✨",   // Diseño + líneas
+  };
+
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 24, color: "var(--text-secondary)" }}>Elige tu servicio</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+      <div style={{ marginBottom: 24 }}>
+        <span style={{
+          display: "inline-block",
+          padding: "4px 12px",
+          background: "var(--accent-bg)",
+          color: "var(--accent-light, #5FC8EC)",
+          borderRadius: 20,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 0.5,
+          textTransform: "uppercase",
+          marginBottom: 8
+        }}>
+          Paso 2: Servicio
+        </span>
+        <h3 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 26,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: 1,
+          color: "var(--text-primary)",
+          marginBottom: 4
+        }}>
+          ¿Qué te <span className="gold">haces</span> hoy?
+        </h3>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
+          Selecciona el servicio que necesitas
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gap: 10 }}>
         {SERVICES.map(s => {
           const isSelected = form.serviceId === s.id;
+          const emoji = serviceEmojis[s.id] || "✂️";
           return (
-            <div key={s.id} onClick={() => update("serviceId", s.id)} style={{ padding: 16, borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "var(--border)"}`, background: isSelected ? "var(--accent-bg)" : "var(--bg-elevated-2)", cursor: "pointer", transition: "all 0.2s" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                <span style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</span>
-                <span style={{ color: "#36B1DF", fontWeight: 700, fontSize: 16 }}>${s.price}</span>
+            <div
+              key={s.id}
+              onClick={() => update("serviceId", s.id)}
+              style={{
+                padding: "16px 18px",
+                borderRadius: 12,
+                border: `2px solid ${isSelected ? "var(--accent)" : "var(--border)"}`,
+                background: isSelected ? "var(--accent-bg)" : "var(--bg-elevated)",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                position: "relative"
+              }}
+              onMouseEnter={e => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = "var(--border-strong)";
+                  e.currentTarget.style.background = "var(--bg-elevated-2)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.background = "var(--bg-elevated)";
+                }
+              }}
+            >
+              <div style={{
+                fontSize: 32,
+                width: 56, height: 56,
+                background: isSelected ? "rgba(54,177,223,0.15)" : "var(--bg-elevated-2)",
+                borderRadius: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                border: `1px solid ${isSelected ? "var(--accent-border)" : "var(--border)"}`
+              }}>
+                {emoji}
               </div>
-              <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>{s.description}</p>
-              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>⏱ {s.duration} min</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>
+                    {s.name}
+                  </span>
+                  <span style={{
+                    color: "var(--accent)",
+                    fontWeight: 800,
+                    fontSize: 22,
+                    fontFamily: "'Barlow Condensed', sans-serif"
+                  }}>
+                    ${s.price}
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>
+                  {s.description}
+                </p>
+                <span style={{
+                  fontSize: 11,
+                  color: "var(--text-muted)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4
+                }}>
+                  ⏱ {s.duration} min
+                </span>
+              </div>
+              {isSelected && (
+                <div className="fade-in" style={{
+                  width: 26, height: 26, borderRadius: "50%",
+                  background: "var(--accent)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
       <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between" }}>
         <button className="btn-ghost" onClick={onBack}>← Atrás</button>
         <button className="btn-gold" onClick={onNext} disabled={!form.serviceId}>Siguiente →</button>
@@ -276,47 +529,144 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
 
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "var(--text-secondary)" }}>Elige fecha y hora</h3>
       <div style={{ marginBottom: 24 }}>
-        <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Fecha</label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <span style={{
+          display: "inline-block",
+          padding: "4px 12px",
+          background: "var(--accent-bg)",
+          color: "var(--accent-light, #5FC8EC)",
+          borderRadius: 20,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 0.5,
+          textTransform: "uppercase",
+          marginBottom: 8
+        }}>
+          Paso 3: Fecha y hora
+        </span>
+        <h3 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 26,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: 1,
+          color: "var(--text-primary)",
+          marginBottom: 4
+        }}>
+          ¿Cuándo te <span className="gold">conviene</span>?
+        </h3>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
+          Elige fecha y hora disponibles
+        </p>
+      </div>
+
+      {/* Fechas - Scroll horizontal */}
+      <div style={{ marginBottom: 28 }}>
+        <label style={{
+          fontSize: 11, color: "var(--text-tertiary)",
+          display: "block", marginBottom: 12,
+          fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
+        }}>
+          📅 Fecha
+        </label>
+        <div style={{
+          display: "flex",
+          gap: 8,
+          overflowX: "auto",
+          paddingBottom: 4,
+          scrollbarWidth: "thin"
+        }}>
           {days.map(d => {
             const isSelected = form.date === d.date;
             return (
-              <div key={d.date} onClick={() => { update("date", d.date); update("time", ""); }} style={{ padding: "12px 14px", borderRadius: 10, border: `2px solid ${isSelected ? "#36B1DF" : "var(--border)"}`, background: isSelected ? "var(--accent-bg)" : "var(--bg-elevated-2)", cursor: "pointer", textAlign: "center", minWidth: 64, transition: "all 0.2s" }}>
-                <p style={{ fontSize: 11, color: isSelected ? "#36B1DF" : "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase" }}>{d.label}</p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: isSelected ? "#36B1DF" : "var(--text-primary)" }}>{d.num}</p>
+              <div
+                key={d.date}
+                onClick={() => { update("date", d.date); update("time", ""); }}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  border: `2px solid ${isSelected ? "var(--accent)" : "var(--border)"}`,
+                  background: isSelected
+                    ? "linear-gradient(135deg, var(--accent), var(--accent-light, #5FC8EC))"
+                    : "var(--bg-elevated)",
+                  cursor: "pointer",
+                  textAlign: "center",
+                  minWidth: 68,
+                  flexShrink: 0,
+                  transition: "all 0.25s",
+                  transform: isSelected ? "translateY(-2px)" : "none",
+                  boxShadow: isSelected ? "0 8px 20px rgba(54,177,223,0.3)" : "none"
+                }}
+                onMouseEnter={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = "var(--border-strong)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }
+                }}
+              >
+                <p style={{
+                  fontSize: 11,
+                  color: isSelected ? "rgba(255,255,255,0.9)" : "var(--text-tertiary)",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  marginBottom: 4
+                }}>{d.label}</p>
+                <p style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: isSelected ? "white" : "var(--text-primary)",
+                  fontFamily: "'Barlow Condensed', sans-serif"
+                }}>{d.num}</p>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Día bloqueado */}
       {form.date && isFullDayBlocked && (
         <div className="fade-in" style={{
-          background: "#3f1111",
-          border: "1px solid #dc2626",
-          borderRadius: 10,
-          padding: 16,
-          marginBottom: 16,
+          background: "var(--danger-bg)",
+          border: "1px solid var(--danger-border, #dc2626)",
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 20,
           textAlign: "center"
         }}>
-          <p style={{ fontSize: 24, marginBottom: 4 }}>🚫</p>
-          <p style={{ color: "#fca5a5", fontWeight: 600, fontSize: 14 }}>
+          <p style={{ fontSize: 32, marginBottom: 8 }}>🚫</p>
+          <p style={{ color: "var(--danger)", fontWeight: 700, fontSize: 15 }}>
             Este día no está disponible
           </p>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 12, marginTop: 4 }}>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginTop: 4 }}>
             Por favor elige otra fecha
           </p>
         </div>
       )}
+
+      {/* Horas */}
       {form.date && !isFullDayBlocked && (
         <div className="fade-in" style={{ marginBottom: 24 }}>
-          <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Hora disponible</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <label style={{
+            fontSize: 11, color: "var(--text-tertiary)",
+            display: "block", marginBottom: 12,
+            fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
+          }}>
+            ⏰ Hora disponible
+          </label>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
+            gap: 8
+          }}>
             {HOURS.map(h => {
               const taken = takenTimes.includes(h);
               const blocked = blockedHoursOnly.includes(h);
-              // ✅ Verificar si la hora ya pasó (solo si la fecha es hoy)
               const today = new Date().toISOString().split('T')[0];
               const isToday = form.date === today;
               const now = new Date();
@@ -325,31 +675,81 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
               const unavailable = taken || blocked || hourPassed;
               const isSelected = form.time === h;
               return (
-                <div key={h} onClick={() => !unavailable && update("time", h)} style={{
-                  padding: "10px 16px",
-                  borderRadius: 8,
-                  border: `1.5px solid ${isSelected ? "#36B1DF" : unavailable ? "var(--bg-track)" : "var(--border)"}`,
-                  background: isSelected ? "var(--accent-bg)" : unavailable ? "#0d0d0d" : "var(--bg-elevated-2)",
-                  cursor: unavailable ? "not-allowed" : "pointer",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: isSelected ? "#36B1DF" : unavailable ? "var(--text-faint)" : "var(--text-primary)",
-                  textDecoration: unavailable ? "line-through" : "none",
-                  transition: "all 0.2s"
-                }}>{h}</div>
+                <div
+                  key={h}
+                  onClick={() => !unavailable && update("time", h)}
+                  style={{
+                    padding: "12px 4px",
+                    borderRadius: 10,
+                    border: `1.5px solid ${isSelected ? "var(--accent)" : unavailable ? "var(--border)" : "var(--border)"}`,
+                    background: isSelected
+                      ? "linear-gradient(135deg, var(--accent), var(--accent-light, #5FC8EC))"
+                      : unavailable
+                        ? "transparent"
+                        : "var(--bg-elevated)",
+                    cursor: unavailable ? "not-allowed" : "pointer",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: isSelected
+                      ? "white"
+                      : unavailable
+                        ? "var(--text-faint)"
+                        : "var(--text-primary)",
+                    textDecoration: unavailable ? "line-through" : "none",
+                    transition: "all 0.2s",
+                    textAlign: "center",
+                    borderStyle: unavailable ? "dashed" : "solid",
+                    boxShadow: isSelected ? "0 4px 14px rgba(54,177,223,0.35)" : "none"
+                  }}
+                  onMouseEnter={e => {
+                    if (!unavailable && !isSelected) {
+                      e.currentTarget.style.borderColor = "var(--accent)";
+                      e.currentTarget.style.background = "var(--accent-bg)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!unavailable && !isSelected) {
+                      e.currentTarget.style.borderColor = "var(--border)";
+                      e.currentTarget.style.background = "var(--bg-elevated)";
+                    }
+                  }}
+                >
+                  {h}
+                </div>
               );
             })}
           </div>
           {(takenTimes.length > 0 || blockedHoursOnly.length > 0) && (
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>
+            <p style={{
+              fontSize: 11,
+              color: "var(--text-muted)",
+              marginTop: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}>
+              <span style={{
+                display: "inline-block",
+                width: 12, height: 12,
+                border: "1.5px dashed var(--border)",
+                borderRadius: 3
+              }}></span>
               Los horarios tachados no están disponibles
             </p>
           )}
         </div>
       )}
+
       <FormField label="Notas adicionales (opcional)">
-        <textarea value={form.notes} onChange={e => update("notes", e.target.value)} placeholder="Ej. Degradado bajo, barba recortada..." rows={3} style={{ resize: "none" }} />
+        <textarea
+          value={form.notes}
+          onChange={e => update("notes", e.target.value)}
+          placeholder="Ej. Degradado bajo, barba recortada..."
+          rows={3}
+          style={{ resize: "none" }}
+        />
       </FormField>
+
       <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between" }}>
         <button className="btn-ghost" onClick={onBack}>← Atrás</button>
         <button className="btn-gold" onClick={onNext} disabled={!form.date || !form.time || isFullDayBlocked}>Siguiente →</button>
