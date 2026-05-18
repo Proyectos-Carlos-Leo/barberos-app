@@ -233,14 +233,27 @@ function SuperAdminDashboard({ onLogout }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {barberias.map((barber, i) => (
-                <div key={i} style={{
-                  background: '#141414', border: '1px solid #1f1f1f',
-                  borderRadius: 10, padding: '16px 20px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  transition: 'border-color 0.2s'
-                }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = '#36B1DF44'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = '#1f1f1f'}
+                <a
+                  key={i}
+                  href={`/${barber.slug}/admin`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    textDecoration: 'none',
+                    background: '#141414', border: '1px solid #1f1f1f',
+                    borderRadius: 10, padding: '16px 20px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    transition: 'border-color 0.2s, background 0.2s',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = '#36B1DF';
+                    e.currentTarget.style.background = '#1a1a1a';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = '#1f1f1f';
+                    e.currentTarget.style.background = '#141414';
+                  }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
                     <div style={{
@@ -260,14 +273,17 @@ function SuperAdminDashboard({ onLogout }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{
-                    background: '#36B1DF15', border: '1px solid #36B1DF30',
-                    borderRadius: 6, padding: '4px 12px',
-                    fontSize: 11, color: '#36B1DF', fontWeight: 600
-                  }}>
-                    ✓ Activa
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      background: '#36B1DF15', border: '1px solid #36B1DF30',
+                      borderRadius: 6, padding: '4px 12px',
+                      fontSize: 11, color: '#36B1DF', fontWeight: 600
+                    }}>
+                      ✓ Activa
+                    </div>
+                    <span style={{ color: '#555', fontSize: 18, lineHeight: 1 }}>→</span>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
