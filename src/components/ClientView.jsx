@@ -424,7 +424,11 @@ function Step2Service({ form, update, onBack, onNext }) {
         </p>
       </div>
 
-      <div style={{ display: "grid", gap: 10 }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: 10
+      }}>
         {SERVICES.map(s => {
           const isSelected = form.serviceId === s.id;
           const emoji = serviceEmojis[s.id] || "✂️";
@@ -803,12 +807,12 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
           </div>
         )}
       </div>
-      <div style={{ background: "var(--accent-bg)", border: "1px solid #0a3d56", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div style={{ background: "var(--accent-bg)", border: "1px solid var(--accent-border)", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <p style={{ color: "#36B1DF", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
+          <p style={{ color: "var(--accent)", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
           <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
         </div>
-        <span style={{ color: "#36B1DF", fontSize: 28, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
+        <span style={{ color: "var(--accent)", fontSize: 28, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
           {formatCurrency(selectedService?.price || 0)}
         </span>
       </div>
@@ -1058,7 +1062,7 @@ function LoadingScreen() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ width: 56, height: 56, border: "3px solid #1e1e1e", borderTop: "3px solid #36B1DF", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
+        <div style={{ width: 56, height: 56, border: "3px solid var(--border)", borderTop: "3px solid var(--accent)", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <p style={{ color: "var(--text-tertiary)", fontFamily: "'Barlow', sans-serif" }}>Conectando con Firebase...</p>
       </div>

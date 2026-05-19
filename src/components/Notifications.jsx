@@ -18,10 +18,10 @@ export default function Notifications() {
     }}>
       {notifications.map(n => {
         const colors = {
-          success: { bg: "#14532d", border: "#16a34a", icon: "✓" },
-          new: { bg: "#1e3a5f", border: "#3b82f6", icon: "🔔" },
-          error: { bg: "#7f1d1d", border: "#dc2626", icon: "✕" },
-          info: { bg: "var(--accent-bg)", border: "#36B1DF", icon: "ℹ" }
+          success: { bg: "var(--success-bg)", border: "var(--success)", icon: "✓" },
+          new: { bg: "var(--accent-bg)", border: "var(--accent)", icon: "🔔" },
+          error: { bg: "var(--danger-bg)", border: "var(--danger)", icon: "✕" },
+          info: { bg: "var(--accent-bg)", border: "var(--accent)", icon: "ℹ" }
         };
         const c = colors[n.type] || colors.info;
 

@@ -158,8 +158,8 @@ export default function AdminView() {
       <Notifications />
       {showNotifBanner && (
         <div style={{
-          background: "linear-gradient(90deg, #051520, #051520)",
-          borderBottom: "1px solid #0a3d56",
+          background: "var(--accent-bg)",
+          borderBottom: "1px solid var(--accent-border)",
           padding: "12px 24px",
           display: "flex",
           alignItems: "center",
@@ -437,8 +437,8 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                   <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{b.name}</p>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{b.specialty}</p>
                 </div>
-                <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "#14532d" : "#3f1111", border: `1px solid ${b.active ? "#16a34a" : "#dc2626"}`, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
-                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: b.active ? "#4ade80" : "#f87171", position: "absolute", top: 2, left: b.active ? 21 : 2, transition: "left 0.2s" }} />
+                <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "var(--success-bg)" : "var(--danger-bg)", border: `1px solid ${b.active ? "var(--success)" : "var(--danger)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: b.active ? "var(--success)" : "var(--danger)", position: "absolute", top: 2, left: b.active ? 21 : 2, transition: "left 0.2s" }} />
                 </div>
               </div>
               <div className="divider" style={{ margin: "0 0 16px" }} />
