@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ref, update } from 'firebase/database';
+import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatCurrency } from '../utils/helpers';
@@ -14,6 +16,10 @@ export default function CheckAppointment() {
   const [phone, setPhone] = useState('');
   const [searched, setSearched] = useState(false);
   const [foundAppt, setFoundAppt] = useState(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
 
   const handleSearch = () => {
     const cleanFolio = folio.trim().toUpperCase();
@@ -24,38 +30,7 @@ export default function CheckAppointment() {
       return;
     }
 
-    // Normalizar teléfono: quitar espacios, guiones, paréntesis, puntos
-    const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
     const inputPhone = normalizePhone(cleanPhone);
-
-    // DEBUG: imprimir info en consola
-    console.log('🔍 Búsqueda iniciada');
-    console.log('Folio buscado:', cleanFolio);
-    console.log('Teléfono buscado (normalizado):', inputPhone);
-    console.log('Total citas cargadas:', appointments.length);
-    console.log('Citas con folio:', appointments.filter(a => a.folio).length);
-    if (appointments.length > 0) {
-      console.log('Ejemplo de cita:', {
-        folio: appointments[0].folio,
-        phone: appointments[0].phone,
-        phoneNormalizado: normalizePhone(appointments[0].phone)
-      });
-    }
-
-    // Primero buscar SOLO por folio (para debug)
-    const matchByFolio = appointments.find(a => a.folio === cleanFolio);
-    if (matchByFolio) {
-      console.log('✓ Cita encontrada por folio:', {
-        folioEsperado: cleanFolio,
-        folioReal: matchByFolio.folio,
-        phoneEsperado: inputPhone,
-        phoneReal: normalizePhone(matchByFolio.phone)
-      });
-    } else {
-      console.log('✗ Ninguna cita con ese folio. Folios existentes:', appointments.map(a => a.folio).filter(Boolean));
-    }
-
-    // Buscar cita por folio + teléfono (normalizado)
     const match = appointments.find(a =>
       a.folio === cleanFolio &&
       normalizePhone(a.phone) === inputPhone
@@ -70,6 +45,39 @@ export default function CheckAppointment() {
     setPhone('');
     setSearched(false);
     setFoundAppt(null);
+    setShowCancelConfirm(false);
+  };
+
+  const handleCancel = async () => {
+    if (!foundAppt) return;
+    setCancelling(true);
+    try {
+      // Solo actualizar el status (las reglas validan que folio/teléfono/cliente coincidan)
+      await update(ref(db, `barberias/${slug}/citas/${foundAppt.id}`), {
+        ...foundAppt,
+        status: 'cancelada',
+        cancelledAt: new Date().toISOString()
+      });
+      setFoundAppt({ ...foundAppt, status: 'cancelada' });
+      setShowCancelConfirm(false);
+    } catch (error) {
+      console.error('Error al cancelar:', error);
+      alert('Error al cancelar la cita. Intenta de nuevo.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleReschedule = () => {
+    // Llevar al cliente al flujo de agendar nueva cita
+    // (sin cancelar la actual — el admin lo verá)
+    if (confirm('Para reagendar te llevamos a crear una nueva cita. ¿Deseas también cancelar la cita actual?')) {
+      handleCancel().then(() => {
+        navigate(`/${slug}/cliente`);
+      });
+    } else {
+      navigate(`/${slug}/cliente`);
+    }
   };
 
   const STATUS_LABELS = {
@@ -78,6 +86,13 @@ export default function CheckAppointment() {
     completada: { label: 'Completada', color: '#36B1DF', bg: 'rgba(54,177,223,0.1)' },
     cancelada: { label: 'Cancelada', color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
   };
+
+  // Solo permitir cancelar/reagendar si la cita no está completada/cancelada
+  const canModify = foundAppt && (foundAppt.status === 'pendiente' || foundAppt.status === 'confirmada');
+
+  // Verificar si la cita ya pasó
+  const apptDateTime = foundAppt ? new Date(`${foundAppt.date}T${foundAppt.time}`) : null;
+  const apptPassed = apptDateTime && apptDateTime < new Date();
 
   if (loading) {
     return (
@@ -215,6 +230,79 @@ export default function CheckAppointment() {
               </div>
             )}
 
+            {/* Acciones según el estado */}
+            {canModify && !apptPassed && (
+              <div style={{
+                background: "var(--bg-elevated-2)",
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                padding: 14,
+                marginBottom: 16
+              }}>
+                <p style={{
+                  fontSize: 11, color: "var(--text-tertiary)",
+                  fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+                  marginBottom: 10, textAlign: "center"
+                }}>
+                  ¿Necesitas cambios?
+                </p>
+                <div style={{ display: "grid", gap: 8 }}>
+                  <button
+                    onClick={handleReschedule}
+                    style={{
+                      background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "12px 16px",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    🔄 Reagendar mi cita
+                  </button>
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    disabled={cancelling}
+                    style={{
+                      background: "transparent",
+                      color: "#f87171",
+                      border: "1px solid #7f1d1d",
+                      borderRadius: 8,
+                      padding: "10px 16px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: cancelling ? "not-allowed" : "pointer",
+                      fontFamily: "'Barlow', sans-serif",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    ❌ Cancelar mi cita
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {apptPassed && foundAppt.status !== 'cancelada' && (
+              <div style={{
+                background: "var(--bg-elevated-2)",
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                padding: 12,
+                marginBottom: 16,
+                textAlign: "center"
+              }}>
+                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  Esta cita ya pasó. Para cambios contacta a la barbería.
+                </p>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button className="btn-ghost" onClick={handleNewSearch} style={{ flex: 1, minWidth: 120 }}>
                 Buscar otra
@@ -335,6 +423,94 @@ export default function CheckAppointment() {
           </div>
         )}
       </div>
+
+      {/* Modal de confirmación de cancelación */}
+      {showCancelConfirm && (
+        <div
+          onClick={() => !cancelling && setShowCancelConfirm(false)}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20, zIndex: 2000
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="fade-in"
+            style={{
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-strong)",
+              borderRadius: 16,
+              width: "100%", maxWidth: 420,
+              padding: 28, textAlign: "center"
+            }}
+          >
+            <div style={{
+              width: 64, height: 64,
+              background: "var(--danger-bg)",
+              border: "2px solid var(--danger)",
+              borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 20px", fontSize: 28
+            }}>⚠️</div>
+
+            <h3 style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 22, fontWeight: 800,
+              letterSpacing: 1, textTransform: "uppercase",
+              marginBottom: 10, color: "var(--text-primary)"
+            }}>¿Cancelar cita?</h3>
+
+            <p style={{
+              color: "var(--text-secondary)",
+              fontSize: 14, marginBottom: 24, lineHeight: 1.5
+            }}>
+              Tu cita del <strong>{formatDate(foundAppt.date)}</strong> a las <strong>{foundAppt.time}</strong> será cancelada.
+              Esta acción no se puede deshacer.
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                disabled={cancelling}
+                style={{
+                  flex: 1,
+                  padding: "12px 16px",
+                  background: "transparent",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-strong)",
+                  borderRadius: 8,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 14, fontWeight: 700,
+                  letterSpacing: 0.5, textTransform: "uppercase",
+                  cursor: cancelling ? "not-allowed" : "pointer"
+                }}
+              >
+                No, regresar
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                style={{
+                  flex: 1,
+                  padding: "12px 16px",
+                  background: "#dc2626",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 14, fontWeight: 700,
+                  letterSpacing: 0.5, textTransform: "uppercase",
+                  cursor: cancelling ? "not-allowed" : "pointer"
+                }}
+              >
+                {cancelling ? "Cancelando..." : "Sí, cancelar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
