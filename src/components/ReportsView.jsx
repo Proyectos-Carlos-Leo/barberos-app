@@ -450,7 +450,7 @@ export default function ReportsView({ appointments, barbers }) {
                   position: "absolute",
                   left: 56, right: 0,
                   bottom: `${pct}%`,
-                  borderTop: "1px dashed var(--border)",
+                  borderTop: "1.5px dashed var(--text-faint)",
                   display: "flex",
                   alignItems: "center"
                 }}>
