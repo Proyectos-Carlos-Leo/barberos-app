@@ -233,29 +233,19 @@ function SuperAdminDashboard({ onLogout }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {barberias.map((barber, i) => (
-                <a
-                  key={i}
-                  href={`/${barber.slug}/admin`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    textDecoration: 'none',
-                    background: '#141414', border: '1px solid #1f1f1f',
-                    borderRadius: 10, padding: '16px 20px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    transition: 'border-color 0.2s, background 0.2s',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = '#36B1DF';
-                    e.currentTarget.style.background = '#1a1a1a';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '#1f1f1f';
-                    e.currentTarget.style.background = '#141414';
-                  }}
+                <div key={i} style={{
+                  background: '#141414', border: '1px solid #1f1f1f',
+                  borderRadius: 10, padding: '14px 18px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  gap: 14,
+                  transition: 'border-color 0.2s',
+                  flexWrap: 'wrap'
+                }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#36B1DF44'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = '#1f1f1f'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                  {/* Info de la barbería */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 240px', minWidth: 0 }}>
                     <div style={{
                       width: 36, height: 36,
                       background: '#36B1DF22', border: '1px solid #36B1DF44',
@@ -264,26 +254,86 @@ function SuperAdminDashboard({ onLogout }) {
                     }}>
                       {barber.nombre.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <div style={{ color: '#ccc', fontSize: 14, fontWeight: 600 }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ color: '#ccc', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {barber.nombre}
                       </div>
-                      <div style={{ color: '#555', fontSize: 12, marginTop: 2 }}>
-                        /{barber.slug} · {barber.email_admin}
+                      <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        /{barber.slug}
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      background: '#36B1DF15', border: '1px solid #36B1DF30',
-                      borderRadius: 6, padding: '4px 12px',
-                      fontSize: 11, color: '#36B1DF', fontWeight: 600
-                    }}>
-                      ✓ Activa
-                    </div>
-                    <span style={{ color: '#555', fontSize: 18, lineHeight: 1 }}>→</span>
+
+                  {/* Botones de acceso */}
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <a
+                      href={`/${barber.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        textDecoration: 'none',
+                        background: '#36B1DF15',
+                        border: '1px solid #36B1DF44',
+                        color: '#5FC8EC',
+                        borderRadius: 8,
+                        padding: '8px 14px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontFamily: "'Barlow', sans-serif"
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#36B1DF';
+                        e.currentTarget.style.color = '#0a0a0a';
+                        e.currentTarget.style.borderColor = '#36B1DF';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = '#36B1DF15';
+                        e.currentTarget.style.color = '#5FC8EC';
+                        e.currentTarget.style.borderColor = '#36B1DF44';
+                      }}
+                    >
+                      👤 Cliente
+                    </a>
+                    <a
+                      href={`/${barber.slug}/admin`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        textDecoration: 'none',
+                        background: '#2a2a2a',
+                        border: '1px solid #3a3a3a',
+                        color: '#aaa',
+                        borderRadius: 8,
+                        padding: '8px 14px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontFamily: "'Barlow', sans-serif"
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#3a3a3a';
+                        e.currentTarget.style.color = '#fff';
+                        e.currentTarget.style.borderColor = '#4a4a4a';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = '#2a2a2a';
+                        e.currentTarget.style.color = '#aaa';
+                        e.currentTarget.style.borderColor = '#3a3a3a';
+                      }}
+                    >
+                      ⚙️ Admin
+                    </a>
                   </div>
-                </a>
+                </div>
               ))}
             </div>
           </div>
