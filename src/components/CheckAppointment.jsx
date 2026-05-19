@@ -24,10 +24,41 @@ export default function CheckAppointment() {
       return;
     }
 
-    // Buscar cita por folio + teléfono (doble verificación de seguridad)
+    // Normalizar teléfono: quitar espacios, guiones, paréntesis, puntos
+    const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
+    const inputPhone = normalizePhone(cleanPhone);
+
+    // DEBUG: imprimir info en consola
+    console.log('🔍 Búsqueda iniciada');
+    console.log('Folio buscado:', cleanFolio);
+    console.log('Teléfono buscado (normalizado):', inputPhone);
+    console.log('Total citas cargadas:', appointments.length);
+    console.log('Citas con folio:', appointments.filter(a => a.folio).length);
+    if (appointments.length > 0) {
+      console.log('Ejemplo de cita:', {
+        folio: appointments[0].folio,
+        phone: appointments[0].phone,
+        phoneNormalizado: normalizePhone(appointments[0].phone)
+      });
+    }
+
+    // Primero buscar SOLO por folio (para debug)
+    const matchByFolio = appointments.find(a => a.folio === cleanFolio);
+    if (matchByFolio) {
+      console.log('✓ Cita encontrada por folio:', {
+        folioEsperado: cleanFolio,
+        folioReal: matchByFolio.folio,
+        phoneEsperado: inputPhone,
+        phoneReal: normalizePhone(matchByFolio.phone)
+      });
+    } else {
+      console.log('✗ Ninguna cita con ese folio. Folios existentes:', appointments.map(a => a.folio).filter(Boolean));
+    }
+
+    // Buscar cita por folio + teléfono (normalizado)
     const match = appointments.find(a =>
       a.folio === cleanFolio &&
-      a.phone === cleanPhone
+      normalizePhone(a.phone) === inputPhone
     );
 
     setSearched(true);
