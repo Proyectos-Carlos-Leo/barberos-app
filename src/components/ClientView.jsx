@@ -942,7 +942,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
 
 // ==================== SUCCESS VIEW ====================
 function SuccessView({ appointment, barbershop, onReset, onExit }) {
-  const folioId = appointment?.id ? String(appointment.id).slice(-6) : "------";
+  const folioId = appointment?.folio || (appointment?.id ? String(appointment.id).slice(-6).toUpperCase() : "------");
 
   return (
     <div className="fade-in" style={{ textAlign: "center", padding: "40px 20px" }}>

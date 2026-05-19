@@ -70,12 +70,19 @@ function ClientLanding({ slug }) {
           opacity: 0.6
         }} />
 
-        {/* Botón único - Agendar cita */}
-        <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
-          <button className="btn-large" style={{ width: "100%", maxWidth: 360, fontSize: 16, padding: "16px 32px" }}>
-            ✂️ Agendar mi cita
-          </button>
-        </Link>
+        {/* Botones */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360, margin: "0 auto" }}>
+          <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
+            <button className="btn-large" style={{ width: "100%", fontSize: 16, padding: "16px 32px" }}>
+              ✂️ Agendar mi cita
+            </button>
+          </Link>
+          <Link to={`/${slug}/mi-cita`} style={{ textDecoration: "none" }}>
+            <button className="btn-large gray" style={{ width: "100%", fontSize: 15, padding: "14px 32px" }}>
+              🎫 Ya tengo cita
+            </button>
+          </Link>
+        </div>
 
         {/* Info de la barbería */}
         {(barbershopConfig?.direccion || barbershopConfig?.telefono) && (

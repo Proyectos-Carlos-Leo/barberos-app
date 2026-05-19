@@ -88,9 +88,15 @@ export function AppProvider({ children, slug }) {
     if (!basePath) return;
     try {
       const nuevaRef = push(ref(db, `${basePath}/citas`));
-      await set(nuevaRef, { ...appointment, status: 'pendiente', createdAt: new Date().toISOString() });
+      // Generar folio único de 6 caracteres alfanuméricos (sin caracteres confusos)
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let folio = '';
+      for (let i = 0; i < 6; i++) {
+        folio += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      await set(nuevaRef, { ...appointment, folio, status: 'pendiente', createdAt: new Date().toISOString() });
       addNotification({ type: 'success', message: `Cita agendada para ${appointment.client}` });
-      return { ...appointment, id: nuevaRef.key, status: 'pendiente' };
+      return { ...appointment, id: nuevaRef.key, folio, status: 'pendiente' };
     } catch (error) {
       console.error('Error al agendar:', error);
       addNotification({ type: 'error', message: 'Error al agendar la cita' });
