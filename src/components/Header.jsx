@@ -10,7 +10,9 @@ export default function Header({ userType, navItems = [] }) {
   const { appointments } = useApp();
   const { theme, toggleTheme } = useTheme();
   const pendingCount = appointments.filter(a => a.status === "pendiente").length;
-  const home = slug ? `/${slug}` : '/';
+  const home = slug
+    ? (userType === 'admin' ? `/${slug}/admin` : `/${slug}`)
+    : '/';
 
   return (
     <header style={{

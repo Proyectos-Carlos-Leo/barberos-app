@@ -11,9 +11,15 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginScreen />} />
       <Route path="/founders" element={<SuperAdminPanel />} />
-      <Route path="/:slug" element={<SlugWrapper><LoginScreen /></SlugWrapper>} />
+
+      {/* Cliente: landing + agendar cita */}
+      <Route path="/:slug" element={<SlugWrapper><LoginScreen mode="client" /></SlugWrapper>} />
       <Route path="/:slug/cliente" element={<SlugWrapper><ClientView /></SlugWrapper>} />
-      <Route path="/:slug/admin" element={<SlugWrapper><AdminView /></SlugWrapper>} />
+
+      {/* Admin: landing + panel */}
+      <Route path="/:slug/admin" element={<SlugWrapper><LoginScreen mode="admin" /></SlugWrapper>} />
+      <Route path="/:slug/admin/panel" element={<SlugWrapper><AdminView /></SlugWrapper>} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

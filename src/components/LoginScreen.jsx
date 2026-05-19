@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
 
-function LoginContent({ slug }) {
+function ClientLanding({ slug }) {
   const { theme, toggleTheme } = useTheme();
   const { barbershopConfig } = useApp();
 
@@ -30,7 +30,8 @@ function LoginContent({ slug }) {
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
 
-      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px" }}>
+      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px", maxWidth: 480 }}>
+        {/* Logo */}
         <div style={{
           width: 80, height: 80,
           background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
@@ -44,6 +45,7 @@ function LoginContent({ slug }) {
           </svg>
         </div>
 
+        {/* Título */}
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
           fontSize: "clamp(40px, 12vw, 56px)",
@@ -68,15 +70,14 @@ function LoginContent({ slug }) {
           opacity: 0.6
         }} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360, margin: "0 auto" }}>
-          <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
-            <button className="btn-large" style={{ width: "100%" }}>👤 Soy Cliente</button>
-          </Link>
-          <Link to={`/${slug}/admin`} style={{ textDecoration: "none" }}>
-            <button className="btn-large gray" style={{ width: "100%" }}>⚙️ Soy Dueño</button>
-          </Link>
-        </div>
+        {/* Botón único - Agendar cita */}
+        <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
+          <button className="btn-large" style={{ width: "100%", maxWidth: 360, fontSize: 16, padding: "16px 32px" }}>
+            ✂️ Agendar mi cita
+          </button>
+        </Link>
 
+        {/* Info de la barbería */}
         {(barbershopConfig?.direccion || barbershopConfig?.telefono) && (
           <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
             {barbershopConfig.direccion && (
@@ -92,8 +93,87 @@ function LoginContent({ slug }) {
           </div>
         )}
 
+        {/* Footer */}
         <div style={{ marginTop: 40, color: "var(--text-dim)", fontSize: 12 }}>
           <p>💈 Powered by BarberOS</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminLanding({ slug }) {
+  const { theme, toggleTheme } = useTheme();
+  const { barbershopConfig } = useApp();
+
+  const nombre = barbershopConfig?.nombre || 'BarberOS';
+  const isBarberOS = nombre === 'BarberOS';
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+      background: theme === 'dark'
+        ? "radial-gradient(ellipse at center, var(--accent-bg) 0%, var(--bg-main) 70%)"
+        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)"
+    }}>
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+        style={{ position: "absolute", top: 20, right: 20 }}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
+
+      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px", maxWidth: 480 }}>
+        <div style={{
+          width: 80, height: 80,
+          background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
+          borderRadius: 20,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 32px",
+          boxShadow: "0 10px 40px rgba(54,177,223,0.3)"
+        }}>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
+            <path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 110 4 2 2 0 010-4z"/>
+          </svg>
+        </div>
+
+        <h1 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: "clamp(40px, 12vw, 56px)",
+          fontWeight: 800,
+          letterSpacing: 4,
+          textTransform: "uppercase",
+          color: "var(--text-primary)",
+          marginBottom: 8
+        }}>
+          {isBarberOS ? <><span className="gold">Barber</span>OS</> : nombre}
+        </h1>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 16, marginBottom: 32, letterSpacing: 1 }}>
+          Panel del dueño
+        </p>
+
+        <div style={{
+          width: 40, height: 3,
+          background: "var(--accent)",
+          borderRadius: 2,
+          margin: "0 auto 36px",
+          opacity: 0.6
+        }} />
+
+        <Link to={`/${slug}/admin/panel`} style={{ textDecoration: "none" }}>
+          <button className="btn-large" style={{ width: "100%", maxWidth: 360, fontSize: 16, padding: "16px 32px" }}>
+            ⚙️ Administrar barbería
+          </button>
+        </Link>
+
+        <div style={{ marginTop: 40, color: "var(--text-dim)", fontSize: 12 }}>
+          <p>🔒 Acceso restringido al dueño</p>
         </div>
       </div>
     </div>
@@ -179,8 +259,10 @@ function GlobalLogin() {
   );
 }
 
-export default function LoginScreen() {
+// Componente principal — decide qué mostrar según la ruta
+export default function LoginScreen({ mode = 'client' }) {
   const { slug } = useParams();
   if (!slug) return <GlobalLogin />;
-  return <LoginContent slug={slug} />;
+  if (mode === 'admin') return <AdminLanding slug={slug} />;
+  return <ClientLanding slug={slug} />;
 }
