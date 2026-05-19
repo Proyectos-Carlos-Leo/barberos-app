@@ -443,12 +443,12 @@ export default function ReportsView({ appointments, barbers }) {
         ) : (
           <div style={{ padding: "24px 0 0" }}>
             {/* Área del histograma */}
-            <div style={{ position: "relative", height: 220, display: "flex", alignItems: "flex-end", gap: 0, paddingTop: 16 }}>
+            <div style={{ position: "relative", height: 220, display: "flex", alignItems: "flex-end", gap: 0, paddingTop: 16, paddingLeft: 56 }}>
               {/* Líneas guía del eje Y */}
               {[100, 75, 50, 25].map(pct => (
                 <div key={pct} style={{
                   position: "absolute",
-                  left: 0, right: 0,
+                  left: 56, right: 0,
                   bottom: `${pct}%`,
                   borderTop: "1px dashed var(--border)",
                   display: "flex",
@@ -456,10 +456,11 @@ export default function ReportsView({ appointments, barbers }) {
                 }}>
                   <span style={{
                     position: "absolute",
-                    left: -8,
-                    transform: "translateX(-100%)",
-                    fontSize: 9,
-                    color: "var(--text-faint)",
+                    right: "100%",
+                    paddingRight: 8,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: "var(--text-tertiary)",
                     whiteSpace: "nowrap"
                   }}>
                     {formatCurrency(Math.round(maxRevenue * pct / 100))}
@@ -467,7 +468,7 @@ export default function ReportsView({ appointments, barbers }) {
                 </div>
               ))}
               {/* Barras */}
-              <div style={{ display: "flex", flex: 1, alignItems: "flex-end", gap: 6, paddingLeft: 48, height: "100%" }}>
+              <div style={{ display: "flex", flex: 1, alignItems: "flex-end", gap: 6, height: "100%" }}>
                 {last7Days.map(d => {
                   const heightPct = (d.revenue / maxRevenue) * 100;
                   const isToday = d.dateStr === getTodayStr();
@@ -536,7 +537,7 @@ export default function ReportsView({ appointments, barbers }) {
             {/* Eje X */}
             <div style={{
               display: "flex",
-              paddingLeft: 48,
+              paddingLeft: 56,
               gap: 6,
               marginTop: 6,
               borderTop: "2px solid var(--border-strong)"
