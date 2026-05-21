@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
@@ -149,7 +149,8 @@ export default function AdminView() {
     { key: "dashboard", label: "Panel", active: view === "dashboard", onClick: () => setView("dashboard") },
     { key: "team", label: "Equipo", active: view === "team", onClick: () => setView("team") },
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
-    { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") }
+    { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
+    { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty") }
   ];
 
   return (
@@ -208,6 +209,7 @@ export default function AdminView() {
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
         {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
+        {view === "loyalty" && <LoyaltyView appointments={appointments} />}
       </main>
     </div>
   );
@@ -670,6 +672,262 @@ function HistoryView({ appointments, barbers }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ==================== LOYALTY VIEW ====================
+function LoyaltyView({ appointments }) {
+  const [search, setSearch] = useState('');
+
+  // Normalizar teléfono para comparar
+  const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
+
+  // Agrupar citas completadas por teléfono (identificador único)
+  const clientStats = useMemo(() => {
+    const map = new Map();
+    appointments
+      .filter(a => a.status === 'completada')
+      .forEach(a => {
+        const phoneKey = normalizePhone(a.phone);
+        if (!phoneKey) return;
+        if (!map.has(phoneKey)) {
+          map.set(phoneKey, {
+            phone: a.phone,
+            client: a.client,
+            stamps: 0,
+            totalSpent: 0,
+            lastVisit: null,
+            visits: []
+          });
+        }
+        const c = map.get(phoneKey);
+        c.stamps += 1;
+        c.totalSpent += a.service?.price || 0;
+        c.visits.push(a);
+        // Tomar el nombre más reciente (el cliente puede haberlo escrito distinto)
+        if (!c.lastVisit || (a.createdAt && a.createdAt > c.lastVisit)) {
+          c.lastVisit = a.createdAt;
+          c.client = a.client;
+          c.phone = a.phone;
+        }
+      });
+    return Array.from(map.values()).sort((a, b) => b.stamps - a.stamps);
+  }, [appointments]);
+
+  // Filtrar por búsqueda
+  const filtered = useMemo(() => {
+    if (!search.trim()) return clientStats;
+    const q = search.toLowerCase().trim();
+    return clientStats.filter(c =>
+      c.client.toLowerCase().includes(q) ||
+      normalizePhone(c.phone).includes(normalizePhone(q))
+    );
+  }, [clientStats, search]);
+
+  // Top stats
+  const totalClients = clientStats.length;
+  const totalStamps = clientStats.reduce((s, c) => s + c.stamps, 0);
+  const vipClients = clientStats.filter(c => c.stamps >= 10).length;
+
+  return (
+    <div className="fade-in">
+      <div style={{ marginBottom: 28 }}>
+        <h1 className="section-title" style={{ marginBottom: 4 }}>
+          🏆 <span className="gold">Lealtad</span> de clientes
+        </h1>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
+          Conteo de sellos por cliente · Cada cita completada = 1 sello
+        </p>
+      </div>
+
+      {/* Stats top */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes registrados</p>
+          <p style={{ fontSize: 26, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
+        </div>
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Sellos totales</p>
+          <p style={{ fontSize: 26, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalStamps}</p>
+        </div>
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes VIP (10+)</p>
+          <p style={{ fontSize: 26, fontWeight: 800, color: "#f59e0b", fontFamily: "'Barlow Condensed', sans-serif" }}>{vipClients}</p>
+        </div>
+      </div>
+
+      {/* Buscador */}
+      <div style={{
+        background: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20
+      }}>
+        <label style={{
+          fontSize: 11, color: "var(--text-tertiary)",
+          fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+          display: "block", marginBottom: 8
+        }}>
+          🔍 Buscar cliente
+        </label>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Por nombre o teléfono..."
+          style={{ width: "100%" }}
+        />
+      </div>
+
+      {/* Lista */}
+      {filtered.length === 0 ? (
+        <div style={{
+          textAlign: "center", padding: 60,
+          color: "var(--text-dim)",
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border)",
+          borderRadius: 12
+        }}>
+          <p style={{ fontSize: 36, marginBottom: 8 }}>🎫</p>
+          <p style={{ fontSize: 14 }}>
+            {search ? "Ningún cliente coincide con la búsqueda" : "Aún no hay clientes con citas completadas"}
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          {filtered.map((client, i) => (
+            <ClientLoyaltyCard key={client.phone + i} client={client} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientLoyaltyCard({ client }) {
+  // Calcular cuántos sellos para próxima recompensa (cada 10)
+  const nextReward = Math.ceil(client.stamps / 10) * 10;
+  const stampsForNext = nextReward - client.stamps;
+  const initials = (client.client || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  // Generar grid de sellos (mostrar 10, el siguiente bloque)
+  const stampsInCurrentRow = client.stamps % 10 === 0 && client.stamps > 0 ? 10 : client.stamps % 10;
+  const completedRows = Math.floor(client.stamps / 10);
+
+  return (
+    <div style={{
+      background: "var(--bg-elevated)",
+      border: `1px solid ${client.stamps >= 10 ? "#f59e0b44" : "var(--border)"}`,
+      borderRadius: 12,
+      padding: 18
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%",
+          background: client.stamps >= 10
+            ? "linear-gradient(135deg, #f59e0b, #fbbf24)"
+            : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontWeight: 800, fontSize: 16, color: "#fff",
+          flexShrink: 0
+        }}>
+          {initials}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{client.client}</p>
+            {client.stamps >= 10 && (
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: "linear-gradient(135deg, #f59e0b, #fbbf24)",
+                color: "#fff", padding: "2px 8px",
+                borderRadius: 10, letterSpacing: 0.5
+              }}>⭐ VIP</span>
+            )}
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📞 {client.phone}</p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <p style={{
+            fontSize: 28, fontWeight: 800,
+            color: "#36B1DF",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            lineHeight: 1
+          }}>{client.stamps}</p>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>
+            sello{client.stamps !== 1 ? 's' : ''}
+          </p>
+        </div>
+      </div>
+
+      {/* Tarjeta de sellos visual */}
+      <div style={{
+        background: "var(--bg-elevated-2)",
+        border: "1px dashed var(--border-strong)",
+        borderRadius: 10,
+        padding: 12
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <p style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            Tarjeta actual ({stampsInCurrentRow}/10)
+          </p>
+          {stampsForNext > 0 && stampsForNext < 10 && (
+            <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>
+              {stampsForNext} para premio 🎁
+            </p>
+          )}
+        </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(10, 1fr)",
+          gap: 6
+        }}>
+          {Array.from({ length: 10 }).map((_, idx) => {
+            const filled = idx < stampsInCurrentRow;
+            return (
+              <div key={idx} style={{
+                aspectRatio: "1",
+                borderRadius: "50%",
+                background: filled
+                  ? "linear-gradient(135deg, #36B1DF, #5FC8EC)"
+                  : "var(--bg-track)",
+                border: `2px solid ${filled ? "#36B1DF" : "var(--border)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 14, color: filled ? "#fff" : "transparent"
+              }}>
+                {filled ? "✂️" : "·"}
+              </div>
+            );
+          })}
+        </div>
+        {completedRows > 0 && (
+          <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 10, fontWeight: 600, textAlign: "center" }}>
+            🏆 {completedRows} tarjeta{completedRows > 1 ? 's' : ''} completa{completedRows > 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+
+      {/* Detalles */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+        gap: 8, marginTop: 12,
+        paddingTop: 12,
+        borderTop: "1px solid var(--border)"
+      }}>
+        <div>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Total gastado</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(client.totalSpent)}</p>
+        </div>
+        <div>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Ticket promedio</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
+            {formatCurrency(Math.round(client.totalSpent / client.stamps))}
+          </p>
+        </div>
       </div>
     </div>
   );

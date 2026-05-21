@@ -6,6 +6,7 @@ import AdminView from './components/AdminView';
 import NotFound from './components/NotFound';
 import SuperAdminPanel from './components/SuperAdminPanel';
 import CheckAppointment from './components/CheckAppointment';
+import MyStamps from './components/MyStamps';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/:slug" element={<SlugWrapper><LoginScreen mode="client" /></SlugWrapper>} />
       <Route path="/:slug/cliente" element={<SlugWrapper><ClientView /></SlugWrapper>} />
       <Route path="/:slug/mi-cita" element={<SlugWrapper><CheckAppointment /></SlugWrapper>} />
+      <Route path="/:slug/sellos" element={<SlugWrapper><MyStamps /></SlugWrapper>} />
       <Route path="/:slug/admin" element={<SlugWrapper><LoginScreen mode="admin" /></SlugWrapper>} />
       <Route path="/:slug/admin/panel" element={<SlugWrapper><AdminView /></SlugWrapper>} />
       <Route path="*" element={<NotFound />} />
