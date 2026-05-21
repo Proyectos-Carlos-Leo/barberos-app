@@ -82,6 +82,36 @@ function ClientLanding({ slug }) {
               🎫 Ya tengo cita
             </button>
           </Link>
+          {barbershopConfig?.lealtad_activa !== false && (
+            <Link to={`/${slug}/sellos`} style={{ textDecoration: "none" }}>
+              <button style={{
+                width: "100%",
+                background: "transparent",
+                color: "var(--accent)",
+                border: "1.5px solid var(--accent-border)",
+                borderRadius: 10,
+                padding: "12px 32px",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                transition: "all 0.2s"
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--accent-bg)";
+                  e.currentTarget.style.borderColor = "var(--accent)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.borderColor = "var(--accent-border)";
+                }}
+              >
+                ⭐ Ver mis sellos
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* Info de la barbería */}

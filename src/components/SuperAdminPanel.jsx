@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, update } from 'firebase/database';
 import { auth, db } from '../firebase';
 
 const FOUNDER_UIDS = [
@@ -152,7 +152,8 @@ function SuperAdminDashboard({ onLogout }) {
         const list = Object.keys(data).map(slug => ({
           slug,
           nombre: data[slug]?.config?.nombre || slug,
-          email_admin: data[slug]?.config?.email_admin || '—'
+          email_admin: data[slug]?.config?.email_admin || '—',
+          lealtad_activa: data[slug]?.config?.lealtad_activa !== false
         }));
         setBarberias(list.sort((a, b) => a.nombre.localeCompare(b.nombre)));
       }
@@ -160,6 +161,17 @@ function SuperAdminDashboard({ onLogout }) {
     });
     return () => unsubscribe();
   }, []);
+
+  const toggleLealtad = async (slug, currentValue) => {
+    try {
+      await update(ref(db, `barberias/${slug}/config`), {
+        lealtad_activa: !currentValue
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al actualizar. Verifica las reglas de Firebase.');
+    }
+  };
 
   return (
     <div style={{
@@ -265,7 +277,28 @@ function SuperAdminDashboard({ onLogout }) {
                   </div>
 
                   {/* Botones de acceso */}
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => toggleLealtad(barber.slug, barber.lealtad_activa)}
+                      title={barber.lealtad_activa ? 'Desactivar lealtad' : 'Activar lealtad'}
+                      style={{
+                        background: barber.lealtad_activa ? '#f59e0b15' : '#2a2a2a',
+                        border: `1px solid ${barber.lealtad_activa ? '#f59e0b44' : '#3a3a3a'}`,
+                        color: barber.lealtad_activa ? '#f59e0b' : '#666',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        transition: 'all 0.15s',
+                        fontFamily: "'Barlow', sans-serif"
+                      }}
+                    >
+                      {barber.lealtad_activa ? '⭐ Lealtad ON' : '☆ Lealtad OFF'}
+                    </button>
                     <a
                       href={`/${barber.slug}`}
                       target="_blank"

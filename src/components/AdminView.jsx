@@ -150,7 +150,9 @@ export default function AdminView() {
     { key: "team", label: "Equipo", active: view === "team", onClick: () => setView("team") },
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
-    { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty") }
+    ...(barbershopConfig?.lealtad_activa !== false ? [
+      { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty") }
+    ] : [])
   ];
 
   return (

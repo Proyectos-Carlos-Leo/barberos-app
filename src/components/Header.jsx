@@ -103,40 +103,6 @@ export default function Header({ userType, navItems = [] }) {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          {/* Botón Mis sellos (solo clientes) */}
-          {userType === 'client' && slug && (
-            <button
-              onClick={() => navigate(`/${slug}/sellos`)}
-              title="Mis sellos de lealtad"
-              style={{
-                background: "var(--accent-bg)",
-                color: "var(--accent)",
-                border: "1px solid var(--accent-border)",
-                borderRadius: 6,
-                padding: "6px 10px",
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                whiteSpace: "nowrap",
-                fontFamily: "'Barlow', sans-serif",
-                transition: "all 0.15s"
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = "var(--accent)";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = "var(--accent-bg)";
-                e.currentTarget.style.color = "var(--accent)";
-              }}
-            >
-              🎫 Sellos
-            </button>
-          )}
-
           {/* Badge rol */}
           <span style={{
             fontSize: 11, color: "var(--text-tertiary)",

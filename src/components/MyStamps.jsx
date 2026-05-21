@@ -7,7 +7,7 @@ import { formatCurrency } from '../utils/helpers';
 export default function MyStamps() {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const { appointments, loading } = useApp();
+  const { appointments, loading, barbershopConfig } = useApp();
   const { theme, toggleTheme } = useTheme();
 
   const [phone, setPhone] = useState('');
@@ -57,6 +57,37 @@ export default function MyStamps() {
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
         <div style={{ width: 56, height: 56, border: "3px solid var(--border)", borderTop: "3px solid var(--accent)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Si la lealtad está desactivada para esta barbería
+  if (barbershopConfig?.lealtad_activa === false) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+        background: "var(--bg-main)"
+      }}>
+        <div className="fade-in" style={{ textAlign: "center", maxWidth: 420 }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🚫</div>
+          <h2 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 26, fontWeight: 800, letterSpacing: 1,
+            textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 12
+          }}>
+            Programa no disponible
+          </h2>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14, marginBottom: 24 }}>
+            Esta barbería no tiene activo el programa de lealtad.
+          </p>
+          <button className="btn-gold" onClick={() => navigate(`/${slug}`)}>
+            Volver al inicio
+          </button>
+        </div>
       </div>
     );
   }
