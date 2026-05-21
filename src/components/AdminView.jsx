@@ -213,7 +213,7 @@ export default function AdminView() {
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
         {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
-        {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} />}
+        {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
         {view === "loyalty" && <LoyaltyView appointments={appointments} />}
       </main>
     </div>
@@ -370,7 +370,6 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 // ==================== TEAM VIEW ====================
 function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) {
   const [showForm, setShowForm] = useState(false);
-  const [showBlocks, setShowBlocks] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({ name: "", specialty: "" });
 
@@ -386,32 +385,12 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>Tu <span className="gold">equipo</span></h1>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Gestiona barberos y horarios</p>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Gestiona barberos</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
-            onClick={() => setShowBlocks(true)}
-            style={{
-              padding: "10px 18px",
-              background: "transparent",
-              border: "1px solid #3f1111",
-              color: "#f87171",
-              borderRadius: 8,
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: 0.5,
-              textTransform: "uppercase",
-              cursor: "pointer"
-            }}
-          >
-            🚫 Bloqueos {blocks?.length > 0 && `(${blocks.length})`}
-          </button>
           <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancelar" : "+ Agregar barbero"}</button>
         </div>
       </div>
-
-      {showBlocks && <BlockSchedule barbers={barbers} blocks={blocks} onClose={() => setShowBlocks(false)} />}
 
       {showForm && (
         <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid #0a3d56" }}>
@@ -703,7 +682,7 @@ const ALL_HOURS = [
 
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90];
 
-function ScheduleView({ barbershopConfig, slug }) {
+function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
   const config = barbershopConfig?.horario || {};
 
   // Estado local del horario (inicializado desde Firebase)
@@ -937,6 +916,9 @@ function ScheduleView({ barbershopConfig, slug }) {
             </p>
           )}
         </div>
+
+        {/* Bloqueos de horarios */}
+        <BlockSchedule barbers={barbers} blocks={blocks} />
 
         {/* Guardar */}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, alignItems: "center" }}>
