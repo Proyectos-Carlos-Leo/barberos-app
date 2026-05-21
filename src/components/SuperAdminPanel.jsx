@@ -65,7 +65,7 @@ function SuperLogin({ onLogin }) {
           fontSize: 28, fontWeight: 800, letterSpacing: 1,
           color: '#fff', marginBottom: 8, textTransform: 'uppercase'
         }}>
-          BarberOS <span style={{ color: '#36B1DF' }}>Admin</span>
+          BarberOS <span style={{ color: '#36B1DF' }}>by MBT</span>
         </h1>
         <p style={{ color: '#666', fontSize: 14, marginBottom: 36 }}>
           Panel de fundadores
@@ -195,7 +195,7 @@ function SuperAdminDashboard({ onLogout }) {
             </svg>
           </div>
           <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, fontFamily: "'Barlow Condensed', sans-serif" }}>BarberOS</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, fontFamily: "'Barlow Condensed', sans-serif" }}>BarberOS <span style={{ color: '#36B1DF', fontSize: 14 }}>by MBT</span></div>
             <div style={{ color: '#555', fontSize: 12 }}>Panel de Fundadores</div>
           </div>
         </div>

@@ -132,7 +132,7 @@ function ClientLanding({ slug }) {
 
         {/* Footer */}
         <div style={{ marginTop: 40, color: "var(--text-dim)", fontSize: 12 }}>
-          <p>💈 Powered by BarberOS</p>
+          <p>💈 Powered by <strong style={{ color: "var(--accent)", letterSpacing: 1 }}>MBT</strong></p>
         </div>
       </div>
     </div>
