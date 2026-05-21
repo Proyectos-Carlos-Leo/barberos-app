@@ -3,9 +3,9 @@ export const getTodayStr = () => {
   return new Date().toISOString().split("T")[0];
 };
 
-export const getNext7Days = () => {
+export const getNext7Days = (n = 7) => {
   const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-  return Array.from({ length: 7 }, (_, i) => {
+  return Array.from({ length: n }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return {

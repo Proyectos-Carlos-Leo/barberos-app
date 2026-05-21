@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { ref, update } from 'firebase/database';
+import { auth, db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
@@ -26,7 +27,7 @@ export default function AdminView() {
   const [view, setView] = useState("dashboard");
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const previousIdsRef = useRef(null);
-  const { appointments, barbers, blocks, barbershopConfig, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
+  const { appointments, barbers, blocks, barbershopConfig, slug, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -148,6 +149,7 @@ export default function AdminView() {
   const navItems = [
     { key: "dashboard", label: "Panel", active: view === "dashboard", onClick: () => setView("dashboard") },
     { key: "team", label: "Equipo", active: view === "team", onClick: () => setView("team") },
+    { key: "schedule", label: "Horarios", active: view === "schedule", onClick: () => setView("schedule") },
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
     ...(barbershopConfig?.lealtad_activa !== false ? [
@@ -211,6 +213,7 @@ export default function AdminView() {
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
         {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
+        {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} />}
         {view === "loyalty" && <LoyaltyView appointments={appointments} />}
       </main>
     </div>
@@ -674,6 +677,283 @@ function HistoryView({ appointments, barbers }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ==================== SCHEDULE VIEW ====================
+const DAYS = [
+  { key: 'lun', label: 'Lunes' },
+  { key: 'mar', label: 'Martes' },
+  { key: 'mie', label: 'Miércoles' },
+  { key: 'jue', label: 'Jueves' },
+  { key: 'vie', label: 'Viernes' },
+  { key: 'sab', label: 'Sábado' },
+  { key: 'dom', label: 'Domingo' },
+];
+
+const ALL_HOURS = [
+  '07:00','07:30','08:00','08:30','09:00','09:30',
+  '10:00','10:30','11:00','11:30','12:00','12:30',
+  '13:00','13:30','14:00','14:30','15:00','15:30',
+  '16:00','16:30','17:00','17:30','18:00','18:30',
+  '19:00','19:30','20:00','20:30','21:00'
+];
+
+const DURATIONS = [15, 20, 30, 45, 60, 75, 90];
+
+function ScheduleView({ barbershopConfig, slug }) {
+  const config = barbershopConfig?.horario || {};
+
+  // Estado local del horario (inicializado desde Firebase)
+  const [duracion, setDuracion] = useState(config.duracion || 30);
+  const [horaInicio, setHoraInicio] = useState(config.hora_inicio || '09:00');
+  const [horaFin, setHoraFin] = useState(config.hora_fin || '20:00');
+  const [diasActivos, setDiasActivos] = useState(
+    config.dias_activos || { lun: true, mar: true, mie: true, jue: true, vie: true, sab: true, dom: false }
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Sincronizar si llegan datos de Firebase
+  useEffect(() => {
+    if (barbershopConfig?.horario) {
+      const h = barbershopConfig.horario;
+      if (h.duracion) setDuracion(h.duracion);
+      if (h.hora_inicio) setHoraInicio(h.hora_inicio);
+      if (h.hora_fin) setHoraFin(h.hora_fin);
+      if (h.dias_activos) setDiasActivos(h.dias_activos);
+    }
+  }, [barbershopConfig]);
+
+  const toggleDay = (day) => {
+    setDiasActivos(prev => ({ ...prev, [day]: !prev[day] }));
+    setSaved(false);
+  };
+
+  const handleSave = async () => {
+    if (!slug) return;
+    setSaving(true);
+    try {
+      await update(ref(db, `barberias/${slug}/config/horario`), {
+        duracion,
+        hora_inicio: horaInicio,
+        hora_fin: horaFin,
+        dias_activos: diasActivos
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar. Intenta de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Preview de slots generados
+  const previewSlots = [];
+  const [startH, startM] = horaInicio.split(':').map(Number);
+  const [endH, endM] = horaFin.split(':').map(Number);
+  let cur = startH * 60 + startM;
+  const endMin = endH * 60 + endM;
+  while (cur + duracion <= endMin) {
+    const h = String(Math.floor(cur / 60)).padStart(2, '0');
+    const m = String(cur % 60).padStart(2, '0');
+    previewSlots.push(`${h}:${m}`);
+    cur += duracion;
+  }
+
+  const diasActivosCount = Object.values(diasActivos).filter(Boolean).length;
+
+  return (
+    <div className="fade-in">
+      <div style={{ marginBottom: 28 }}>
+        <h1 className="section-title" style={{ marginBottom: 4 }}>
+          🕐 <span className="gold">Horarios</span> de atención
+        </h1>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
+          Configura cuándo y cómo puedes recibir citas
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gap: 20 }}>
+        {/* Días activos */}
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 14, padding: 22 }}>
+          <h3 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 18, fontWeight: 700, letterSpacing: 1,
+            textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
+          }}>📅 Días de atención</h3>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
+            {diasActivosCount} día{diasActivosCount !== 1 ? 's' : ''} activo{diasActivosCount !== 1 ? 's' : ''}
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
+            {DAYS.map(d => {
+              const active = diasActivos[d.key];
+              return (
+                <div
+                  key={d.key}
+                  onClick={() => toggleDay(d.key)}
+                  style={{
+                    padding: "14px 10px",
+                    borderRadius: 10,
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    background: active ? "var(--accent-bg)" : "var(--bg-elevated-2)",
+                    cursor: "pointer",
+                    textAlign: "center",
+                    transition: "all 0.2s",
+                    transform: active ? "translateY(-2px)" : "none",
+                    boxShadow: active ? "0 4px 14px rgba(54,177,223,0.2)" : "none"
+                  }}
+                >
+                  <p style={{
+                    fontSize: 14, fontWeight: 700,
+                    color: active ? "var(--accent)" : "var(--text-tertiary)"
+                  }}>{d.label}</p>
+                  <div style={{
+                    marginTop: 8,
+                    width: 20, height: 20,
+                    borderRadius: "50%",
+                    background: active ? "var(--accent)" : "var(--bg-track)",
+                    border: `2px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    margin: "8px auto 0",
+                    fontSize: 12, color: "white"
+                  }}>
+                    {active ? "✓" : ""}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Hora inicio / fin */}
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 14, padding: 22 }}>
+          <h3 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 18, fontWeight: 700, letterSpacing: 1,
+            textTransform: "uppercase", marginBottom: 18, color: "var(--text-primary)"
+          }}>⏰ Horario de apertura</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+                Primer turno
+              </label>
+              <select value={horaInicio} onChange={e => { setHoraInicio(e.target.value); setSaved(false); }}>
+                {ALL_HOURS.filter(h => h < horaFin).map(h => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+                Último turno
+              </label>
+              <select value={horaFin} onChange={e => { setHoraFin(e.target.value); setSaved(false); }}>
+                {ALL_HOURS.filter(h => h > horaInicio).map(h => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Duración de citas */}
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 14, padding: 22 }}>
+          <h3 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 18, fontWeight: 700, letterSpacing: 1,
+            textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
+          }}>⚡ Duración de cada cita</h3>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
+            Cada cuántos minutos se puede agendar un turno
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {DURATIONS.map(d => {
+              const selected = duracion === d;
+              return (
+                <div
+                  key={d}
+                  onClick={() => { setDuracion(d); setSaved(false); }}
+                  style={{
+                    padding: "12px 20px",
+                    borderRadius: 10,
+                    border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
+                    background: selected ? "var(--accent-bg)" : "var(--bg-elevated-2)",
+                    cursor: "pointer",
+                    textAlign: "center",
+                    transition: "all 0.2s",
+                    minWidth: 70
+                  }}
+                >
+                  <p style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 22, fontWeight: 800,
+                    color: selected ? "var(--accent)" : "var(--text-primary)"
+                  }}>{d}</p>
+                  <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>min</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Preview de slots */}
+        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 14, padding: 22 }}>
+          <h3 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 18, fontWeight: 700, letterSpacing: 1,
+            textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
+          }}>👁 Vista previa</h3>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
+            Así verán los clientes los horarios disponibles · {previewSlots.length} turnos por día
+          </p>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(68px, 1fr))",
+            gap: 8
+          }}>
+            {previewSlots.map(slot => (
+              <div key={slot} style={{
+                padding: "10px 4px",
+                borderRadius: 8,
+                background: "var(--bg-elevated-2)",
+                border: "1px solid var(--border)",
+                textAlign: "center",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text-secondary)"
+              }}>
+                {slot}
+              </div>
+            ))}
+          </div>
+          {previewSlots.length === 0 && (
+            <p style={{ color: "var(--text-muted)", fontSize: 13, textAlign: "center", padding: 20 }}>
+              ⚠ Ajusta la hora de inicio, fin y duración para generar turnos
+            </p>
+          )}
+        </div>
+
+        {/* Guardar */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, alignItems: "center" }}>
+          {saved && (
+            <p style={{ color: "#4ade80", fontSize: 14, fontWeight: 600 }}>
+              ✓ Horarios guardados
+            </p>
+          )}
+          <button
+            className="btn-gold"
+            onClick={handleSave}
+            disabled={saving}
+            style={{ minWidth: 160 }}
+          >
+            {saving ? 'Guardando...' : '💾 Guardar horarios'}
+          </button>
+        </div>
       </div>
     </div>
   );

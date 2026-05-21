@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
-import { SERVICES, HOURS, BARBERSHOP_INFO } from '../utils/data';
+import { SERVICES } from '../utils/data';
 import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone, getBlockedTimes } from '../utils/helpers';
 
 const STEPS = [
@@ -528,7 +528,45 @@ function Step2Service({ form, update, onBack, onNext }) {
 
 // ==================== STEP 3 ====================
 function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocked, onBack, onNext }) {
-  const days = getNext7Days();
+  const { barbershopConfig } = useApp();
+  const horario = barbershopConfig?.horario || {};
+
+  // Generar slots dinámicamente desde la config
+  const generateHours = () => {
+    const inicio = horario.hora_inicio || '09:00';
+    const fin = horario.hora_fin || '20:00';
+    const dur = horario.duracion || 30;
+    const slots = [];
+    const [startH, startM] = inicio.split(':').map(Number);
+    const [endH, endM] = fin.split(':').map(Number);
+    let cur = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+    while (cur + dur <= endMin) {
+      const h = String(Math.floor(cur / 60)).padStart(2, '0');
+      const m = String(cur % 60).padStart(2, '0');
+      slots.push(`${h}:${m}`);
+      cur += dur;
+    }
+    return slots.length > 0 ? slots : ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
+  };
+
+  const HOURS = generateHours();
+
+  // Dias de la semana keys
+  const DAY_KEYS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+
+  // Verificar si un día está activo
+  const isDayActive = (dateStr) => {
+    if (!horario.dias_activos) return true; // sin config = todos activos
+    const dayIndex = new Date(dateStr + 'T12:00').getDay();
+    const dayKey = DAY_KEYS[dayIndex];
+    return horario.dias_activos[dayKey] !== false;
+  };
+
+  // Obtener solo días activos para los próximos 14 días
+  const allDays = getNext7Days(14); // extendemos a 14 para tener suficientes días activos
+  const days = allDays.filter(d => isDayActive(d.date)).slice(0, 7);
+
   const blockedHoursOnly = (blockedTimes || []).filter(t => t !== 'FULL_DAY');
 
   return (
