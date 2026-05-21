@@ -686,11 +686,15 @@ function LoyaltyView({ appointments }) {
   // Normalizar teléfono para comparar
   const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
 
-  // Agrupar citas completadas por teléfono (identificador único)
+  // Agrupar SOLO citas completadas (estricto) por teléfono
   const clientStats = useMemo(() => {
     const map = new Map();
     appointments
-      .filter(a => a.status === 'completada')
+      .filter(a => {
+        // Filtro estricto: status debe ser EXACTAMENTE "completada"
+        const status = (a.status || '').toString().trim().toLowerCase();
+        return status === 'completada';
+      })
       .forEach(a => {
         const phoneKey = normalizePhone(a.phone);
         if (!phoneKey) return;

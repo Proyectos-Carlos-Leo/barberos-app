@@ -25,11 +25,11 @@ export default function MyStamps() {
 
     const inputPhone = normalizePhone(cleanPhone);
 
-    // Buscar todas las citas completadas con ese teléfono
-    const completedAppts = appointments.filter(a =>
-      a.status === 'completada' &&
-      normalizePhone(a.phone) === inputPhone
-    );
+    // Buscar SOLO citas completadas (estricto) con ese teléfono
+    const completedAppts = appointments.filter(a => {
+      const status = (a.status || '').toString().trim().toLowerCase();
+      return status === 'completada' && normalizePhone(a.phone) === inputPhone;
+    });
 
     if (completedAppts.length === 0) {
       setResult({ stamps: 0, client: null, totalSpent: 0, lastVisit: null });
