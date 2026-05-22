@@ -384,6 +384,15 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           color="#f59e0b"
           icon={stats.pending > 0 ? "!" : null}
           subtitle={stats.pending > 0 ? "Por confirmar" : "Al día"}
+          onClick={stats.pending > 0 ? () => {
+            setFilterDate('all');
+            setFilterStatus('pendiente');
+            setFilterBarber('all');
+            // Scroll suave al listado
+            setTimeout(() => {
+              document.querySelector('.appointments-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          } : null}
         />
         <StatCardPro
           label="Ingresos hoy"
@@ -577,7 +586,41 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         </div>
       </div>
 
-      <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16 }}>{filtered.length} cita{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}</p>
+      {filterDate === 'all' && filterStatus === 'pendiente' && filtered.length > 0 && (
+        <div style={{
+          background: "rgba(245,158,11,0.1)",
+          border: "1px solid #f59e0b",
+          borderRadius: 10,
+          padding: "10px 14px",
+          marginBottom: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap"
+        }}>
+          <p style={{ fontSize: 13, color: "#f59e0b", fontWeight: 600 }}>
+            ⚠️ Mostrando TODAS las citas pendientes ({filtered.length})
+          </p>
+          <button
+            onClick={() => { setFilterDate(getTodayStr()); setFilterStatus('all'); }}
+            style={{
+              background: "transparent",
+              border: "1px solid #f59e0b44",
+              color: "#f59e0b",
+              padding: "4px 10px",
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer"
+            }}
+          >
+            Ver solo hoy
+          </button>
+        </div>
+      )}
+
+      <p className="appointments-list" style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16, scrollMarginTop: 80 }}>{filtered.length} cita{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}</p>
 
       <div style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 && (
@@ -673,21 +716,53 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
     setShowForm(false);
   };
 
+  // Calcular stats por barbero y ordenar por ingresos
+  const barbersWithStats = useMemo(() => {
+    return barbers.map(b => ({
+      ...b,
+      stats: getBarberStats(appointments, b.id)
+    })).sort((a, b) => b.stats.revenue - a.stats.revenue);
+  }, [barbers, appointments]);
+
+  const totalRevenue = barbersWithStats.reduce((s, b) => s + b.stats.revenue, 0);
+  const totalCompleted = barbersWithStats.reduce((s, b) => s + b.stats.completed, 0);
+  const activeBarbers = barbers.filter(b => b.active).length;
+
   return (
     <div className="fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>Tu <span className="gold">equipo</span></h1>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Gestiona barberos</p>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{activeBarbers} barbero{activeBarbers !== 1 ? 's' : ''} activo{activeBarbers !== 1 ? 's' : ''} · {totalCompleted} cortes totales</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancelar" : "+ Agregar barbero"}</button>
         </div>
       </div>
 
+      {/* Stats top */}
+      {barbersWithStats.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+          <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Equipo activo</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>
+              {activeBarbers}<span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 400 }}>/{barbers.length}</span>
+            </p>
+          </div>
+          <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Cortes totales</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>{totalCompleted}</p>
+          </div>
+          <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Ingresos generados</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color: "#f59e0b", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>{formatCurrency(totalRevenue)}</p>
+          </div>
+        </div>
+      )}
+
       {showForm && (
-        <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid #0a3d56" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "#36B1DF" }}>Nuevo barbero</h3>
+        <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid var(--accent-border)" }}>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "var(--accent)" }}>➕ Nuevo barbero</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             <div>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Nombre *</label>
@@ -705,31 +780,69 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-        {barbers.map(b => {
-          const stats = getBarberStats(appointments, b.id);
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+        {barbersWithStats.map((b, idx) => {
+          const stats = b.stats;
+          const isTop = idx === 0 && stats.revenue > 0;
           return (
-            <div key={b.id} className="card" style={{ padding: 22, opacity: b.active ? 1 : 0.5, transition: "opacity 0.3s" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-                <div style={{ width: 56, height: 56, borderRadius: "50%", background: b.bg, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18, color: b.color, flexShrink: 0 }}>{b.avatar}</div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 3 }}>{b.name}</p>
+            <div key={b.id} className="card" style={{
+              padding: 22,
+              opacity: b.active ? 1 : 0.55,
+              transition: "all 0.3s",
+              position: "relative",
+              border: isTop ? "1px solid #f59e0b44" : "1px solid var(--border)",
+              boxShadow: isTop ? "0 4px 20px rgba(245,158,11,0.1)" : "none"
+            }}>
+              {isTop && (
+                <div style={{
+                  position: "absolute",
+                  top: -8, left: 16,
+                  background: "linear-gradient(135deg, #f59e0b, #fbbf24)",
+                  color: "#0a0a0a",
+                  padding: "3px 10px",
+                  borderRadius: 12,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  fontFamily: "'Barlow Condensed', sans-serif"
+                }}>
+                  🏆 Top Performer
+                </div>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                <div style={{
+                  width: 60, height: 60, borderRadius: "50%",
+                  background: b.bg,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: 800, fontSize: 20, color: b.color,
+                  flexShrink: 0,
+                  border: isTop ? `2px solid #f59e0b` : `2px solid ${b.color}22`
+                }}>{b.avatar}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 700, fontSize: 17, marginBottom: 3, color: "var(--text-primary)" }}>{b.name}</p>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{b.specialty}</p>
+                  {!b.active && (
+                    <p style={{ fontSize: 10, color: "var(--danger)", marginTop: 4, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" }}>● Inactivo</p>
+                  )}
                 </div>
                 <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "var(--success-bg)" : "var(--danger-bg)", border: `1px solid ${b.active ? "var(--success)" : "var(--danger)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: b.active ? "var(--success)" : "var(--danger)", position: "absolute", top: 2, left: b.active ? 21 : 2, transition: "left 0.2s" }} />
                 </div>
               </div>
-              <div className="divider" style={{ margin: "0 0 16px" }} />
+              <div className="divider" style={{ margin: "0 0 14px" }} />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, textAlign: "center", marginBottom: 14 }}>
-                {[["Hoy", stats.today], ["Total", stats.completed], ["Ingresos", formatCurrency(stats.revenue)]].map(([label, val]) => (
+                {[["Hoy", stats.today, "#36B1DF"], ["Cortes", stats.completed, "#4ade80"], ["Ingresos", formatCurrency(stats.revenue), "#f59e0b"]].map(([label, val, color]) => (
                   <div key={label} style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: "12px 4px" }}>
                     <p style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
-                    <p style={{ fontSize: 15, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
+                    <p style={{ fontSize: 16, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
                   </div>
                 ))}
               </div>
-              <button onClick={() => setConfirmDelete({ id: b.id, name: b.name })} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
+              <button onClick={() => setConfirmDelete({ id: b.id, name: b.name })} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid var(--border-strong)", color: "var(--danger)", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--danger-bg)"; e.currentTarget.style.borderColor = "var(--danger)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
+              >🗑 Eliminar</button>
             </div>
           );
         })}
@@ -934,17 +1047,54 @@ function HistoryView({ appointments, barbers }) {
         ) : filtered.map(appt => {
           const barber = barbers.find(b => b.id === appt.barberId);
           return (
-            <div key={appt.id} className="card" style={{ padding: "14px 18px" }}>
+            <div key={appt.id} className="card" style={{
+              padding: "14px 18px",
+              transition: "all 0.2s",
+              cursor: "default"
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.background = "var(--bg-elevated)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = ""; }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: barber?.bg || "var(--text-faint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: barber?.color || "#fff" }}>{barber?.avatar || "?"}</div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 600, fontSize: 14 }}>{appt.client}</p>
+                <div style={{
+                  width: 38, height: 38, borderRadius: "50%",
+                  background: barber?.bg || "var(--bg-elevated-2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 800, color: barber?.color || "var(--text-tertiary)",
+                  flexShrink: 0,
+                  border: `1.5px solid ${barber?.color || "var(--border)"}33`
+                }}>{barber?.avatar || "?"}</div>
+                <div style={{ flex: 1, minWidth: 180 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{appt.client}</p>
+                    <span style={{
+                      background: "rgba(74,222,128,0.12)",
+                      color: "#4ade80",
+                      padding: "2px 8px",
+                      borderRadius: 10,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase"
+                    }}>✓ Completada</span>
+                  </div>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                    {appt.service?.name} · <strong style={{ color: "var(--text-secondary)" }}>{barber?.name || "Sin asignar"}</strong>
+                    {appt.service?.emoji || '✂️'} {appt.service?.name} · <strong style={{ color: "var(--text-secondary)" }}>{barber?.name || "Sin asignar"}</strong>
                   </p>
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{formatDate(appt.date)} · {appt.time}</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                    📅 {formatDate(appt.date)} · 🕐 {appt.time}
+                  </p>
                 </div>
-                <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 15 }}>{formatCurrency(appt.service?.price || 0)}</span>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{
+                    fontWeight: 800, color: "var(--accent)",
+                    fontSize: 20,
+                    fontFamily: "'Barlow Condensed', sans-serif"
+                  }}>{formatCurrency(appt.service?.price || 0)}</p>
+                  <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    {appt.service?.duration} min
+                  </p>
+                </div>
               </div>
             </div>
           );
@@ -2134,29 +2284,40 @@ function ServicesView({ slug }) {
 }
 
 // ==================== COMPONENTES DASHBOARD ====================
-function StatCardPro({ label, value, color, change, spark, maxSpark, icon, subtitle, progress }) {
+function StatCardPro({ label, value, color, change, spark, maxSpark, icon, subtitle, progress, onClick }) {
   const sparkPoints = spark
     ? spark.map((v, i) => `${(i / (spark.length - 1)) * 100},${20 - (v / maxSpark) * 16}`).join(' ')
     : null;
 
+  const isClickable = !!onClick;
+
   return (
-    <div style={{
-      background: "var(--bg-elevated)",
-      border: "1px solid var(--border)",
-      borderRadius: 12,
-      padding: 14,
-      position: "relative",
-      overflow: "hidden",
-      transition: "transform 0.2s, border-color 0.2s",
-      cursor: "default"
-    }}
+    <div
+      onClick={onClick}
+      style={{
+        background: "var(--bg-elevated)",
+        border: `1px solid ${isClickable ? color + '44' : "var(--border)"}`,
+        borderRadius: 12,
+        padding: 14,
+        position: "relative",
+        overflow: "hidden",
+        transition: "all 0.2s",
+        cursor: isClickable ? "pointer" : "default",
+        boxShadow: isClickable ? `0 0 0 1px ${color}22` : "none"
+      }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.borderColor = "var(--border-strong)";
+        if (isClickable) {
+          e.currentTarget.style.borderColor = color;
+          e.currentTarget.style.boxShadow = `0 4px 16px ${color}33`;
+        } else {
+          e.currentTarget.style.borderColor = "var(--border-strong)";
+        }
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.borderColor = isClickable ? color + '44' : "var(--border)";
+        e.currentTarget.style.boxShadow = isClickable ? `0 0 0 1px ${color}22` : "none";
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
