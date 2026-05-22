@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { ref, update, push, remove } from 'firebase/database';
+import { ref, update, push, remove, onValue } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
@@ -945,17 +945,35 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
 
 // ==================== LOYALTY VIEW ====================
 function LoyaltyView({ appointments }) {
+  const { slug, barbershopConfig } = useApp();
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('clientes'); // clientes | canjes | config
+  const [redemptions, setRedemptions] = useState([]);
 
-  // Normalizar teléfono para comparar
+  // Config de lealtad
+  const loyaltyConfig = barbershopConfig?.loyalty_config || {};
+  const REQUIRED_STAMPS = loyaltyConfig.required_stamps || 10;
+  const REWARD_NAME = loyaltyConfig.reward_name || 'Corte gratis';
+
   const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
 
-  // Agrupar SOLO citas completadas (estricto) por teléfono
+  // Cargar canjes desde Firebase
+  useEffect(() => {
+    if (!slug) return;
+    const unsub = onValue(ref(db, `barberias/${slug}/canjes`), (snap) => {
+      const data = snap.val();
+      setRedemptions(data ? Object.entries(data).map(([id, v]) => ({ ...v, id })) : []);
+    });
+    return () => unsub();
+  }, [slug]);
+
+  // Agrupar SOLO citas completadas por teléfono y descontar canjes aprobados
   const clientStats = useMemo(() => {
     const map = new Map();
+
+    // 1. Sumar citas completadas
     appointments
       .filter(a => {
-        // Filtro estricto: status debe ser EXACTAMENTE "completada"
         const status = (a.status || '').toString().trim().toLowerCase();
         return status === 'completada';
       })
@@ -964,29 +982,37 @@ function LoyaltyView({ appointments }) {
         if (!phoneKey) return;
         if (!map.has(phoneKey)) {
           map.set(phoneKey, {
-            phone: a.phone,
-            client: a.client,
-            stamps: 0,
-            totalSpent: 0,
-            lastVisit: null,
-            visits: []
+            phone: a.phone, client: a.client,
+            stamps: 0, totalSpent: 0,
+            lastVisit: null, redeemed: 0
           });
         }
         const c = map.get(phoneKey);
         c.stamps += 1;
         c.totalSpent += a.service?.price || 0;
-        c.visits.push(a);
-        // Tomar el nombre más reciente (el cliente puede haberlo escrito distinto)
         if (!c.lastVisit || (a.createdAt && a.createdAt > c.lastVisit)) {
           c.lastVisit = a.createdAt;
           c.client = a.client;
           c.phone = a.phone;
         }
       });
-    return Array.from(map.values()).sort((a, b) => b.stamps - a.stamps);
-  }, [appointments]);
 
-  // Filtrar por búsqueda
+    // 2. Restar canjes APROBADOS
+    redemptions
+      .filter(r => r.status === 'aprobado')
+      .forEach(r => {
+        const phoneKey = normalizePhone(r.phone);
+        if (!phoneKey || !map.has(phoneKey)) return;
+        const c = map.get(phoneKey);
+        c.stamps -= (r.stamps_used || REQUIRED_STAMPS);
+        c.redeemed += 1;
+      });
+
+    return Array.from(map.values())
+      .map(c => ({ ...c, stamps: Math.max(0, c.stamps) }))
+      .sort((a, b) => b.stamps - a.stamps);
+  }, [appointments, redemptions, REQUIRED_STAMPS]);
+
   const filtered = useMemo(() => {
     if (!search.trim()) return clientStats;
     const q = search.toLowerCase().trim();
@@ -996,174 +1022,475 @@ function LoyaltyView({ appointments }) {
     );
   }, [clientStats, search]);
 
-  // Top stats
+  const pendingRedemptions = redemptions.filter(r => r.status === 'pendiente');
   const totalClients = clientStats.length;
   const totalStamps = clientStats.reduce((s, c) => s + c.stamps, 0);
-  const vipClients = clientStats.filter(c => c.stamps >= 10).length;
+  const vipClients = clientStats.filter(c => c.stamps >= REQUIRED_STAMPS).length;
 
   return (
     <div className="fade-in">
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 24 }}>
         <h1 className="section-title" style={{ marginBottom: 4 }}>
           🏆 <span className="gold">Lealtad</span> de clientes
         </h1>
         <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
-          Conteo de sellos por cliente · Cada cita completada = 1 sello
+          {REQUIRED_STAMPS} sellos = {REWARD_NAME}
         </p>
       </div>
 
-      {/* Stats top */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
-        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes registrados</p>
-          <p style={{ fontSize: 26, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
-        </div>
-        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Sellos totales</p>
-          <p style={{ fontSize: 26, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalStamps}</p>
-        </div>
-        <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes VIP (10+)</p>
-          <p style={{ fontSize: 26, fontWeight: 800, color: "#f59e0b", fontFamily: "'Barlow Condensed', sans-serif" }}>{vipClients}</p>
-        </div>
+      {/* Tabs */}
+      <div style={{
+        display: "flex", gap: 4, marginBottom: 24,
+        background: "var(--bg-elevated)",
+        padding: 4, borderRadius: 10,
+        border: "1px solid var(--border)"
+      }}>
+        {[
+          { key: 'clientes', label: '👥 Clientes', count: totalClients },
+          { key: 'canjes', label: '🎁 Canjes', count: pendingRedemptions.length, badge: pendingRedemptions.length > 0 },
+          { key: 'config', label: '⚙️ Configuración' }
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            style={{
+              flex: 1,
+              background: activeTab === t.key ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "transparent",
+              color: activeTab === t.key ? "white" : "var(--text-tertiary)",
+              border: "none",
+              borderRadius: 7,
+              padding: "10px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              transition: "all 0.2s",
+              position: "relative",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {t.label}
+            {t.count !== undefined && (
+              <span style={{
+                marginLeft: 6,
+                background: t.badge ? "#dc2626" : "rgba(255,255,255,0.2)",
+                color: "white",
+                borderRadius: 10,
+                padding: "2px 7px",
+                fontSize: 10,
+                fontWeight: 800
+              }}>{t.count}</span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Buscador */}
-      <div style={{
-        background: "var(--bg-elevated)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 20
+      {/* TAB: CLIENTES */}
+      {activeTab === 'clientes' && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 20 }}>
+            <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes</p>
+              <p style={{ fontSize: 26, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
+            </div>
+            <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Sellos activos</p>
+              <p style={{ fontSize: 26, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalStamps}</p>
+            </div>
+            <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Listos para canjear</p>
+              <p style={{ fontSize: 26, fontWeight: 800, color: "#f59e0b", fontFamily: "'Barlow Condensed', sans-serif" }}>{vipClients}</p>
+            </div>
+          </div>
+
+          <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+              🔍 Buscar cliente
+            </label>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Por nombre o teléfono..."
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
+              <p style={{ fontSize: 36, marginBottom: 8 }}>🎫</p>
+              <p style={{ fontSize: 14 }}>
+                {search ? "Ningún cliente coincide" : "Aún no hay clientes con citas completadas"}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 12 }}>
+              {filtered.map((client, i) => (
+                <ClientLoyaltyCard key={client.phone + i} client={client} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* TAB: CANJES */}
+      {activeTab === 'canjes' && (
+        <RedemptionsManager redemptions={redemptions} slug={slug} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} />
+      )}
+
+      {/* TAB: CONFIG */}
+      {activeTab === 'config' && (
+        <LoyaltyConfig slug={slug} currentConfig={loyaltyConfig} />
+      )}
+    </div>
+  );
+}
+
+// ========== CONFIG ==========
+function LoyaltyConfig({ slug, currentConfig }) {
+  const [stamps, setStamps] = useState(currentConfig.required_stamps || 10);
+  const [reward, setReward] = useState(currentConfig.reward_name || 'Corte gratis');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (stamps < 2 || stamps > 50) { alert('Sellos entre 2 y 50'); return; }
+    if (!reward.trim()) { alert('Escribe un premio'); return; }
+    setSaving(true);
+    try {
+      await update(ref(db, `barberias/${slug}/config/loyalty_config`), {
+        required_stamps: Number(stamps),
+        reward_name: reward.trim()
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, maxWidth: 600 }}>
+      <h3 style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: 18, fontWeight: 700, letterSpacing: 1,
+        textTransform: "uppercase", marginBottom: 18, color: "var(--text-primary)"
       }}>
-        <label style={{
-          fontSize: 11, color: "var(--text-tertiary)",
-          fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
-          display: "block", marginBottom: 8
-        }}>
-          🔍 Buscar cliente
+        ⚙️ Configurar programa de lealtad
+      </h3>
+
+      <div style={{ marginBottom: 18 }}>
+        <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+          Sellos necesarios para premio
         </label>
         <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Por nombre o teléfono..."
-          style={{ width: "100%" }}
+          type="number"
+          value={stamps}
+          onChange={e => setStamps(e.target.value)}
+          min="2" max="50"
         />
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+          Cuántos cortes debe completar el cliente
+        </p>
       </div>
 
-      {/* Lista */}
+      <div style={{ marginBottom: 18 }}>
+        <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+          Premio
+        </label>
+        <input
+          value={reward}
+          onChange={e => setReward(e.target.value)}
+          placeholder="Ej. Corte gratis, 50% descuento, Producto..."
+          maxLength={80}
+        />
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+          Qué se lleva el cliente al juntar sellos
+        </p>
+      </div>
+
+      <div style={{
+        background: "var(--accent-bg)",
+        border: "1px solid var(--accent-border)",
+        borderRadius: 10,
+        padding: 14,
+        marginBottom: 18
+      }}>
+        <p style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
+          📋 Vista previa
+        </p>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+          "Junta <strong style={{ color: "var(--accent)" }}>{stamps} sellos</strong> y obtén un <strong style={{ color: "var(--accent)" }}>{reward}</strong>"
+        </p>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <button className="btn-gold" onClick={handleSave} disabled={saving}>
+          {saving ? 'Guardando...' : '💾 Guardar'}
+        </button>
+        {saved && <p style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}>✓ Guardado</p>}
+      </div>
+    </div>
+  );
+}
+
+// ========== REDEMPTIONS MANAGER ==========
+function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
+  const [filter, setFilter] = useState('pendiente'); // pendiente | aprobado | rechazado | todos
+
+  const filtered = redemptions
+    .filter(r => filter === 'todos' || r.status === filter)
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+  const handleApprove = async (id) => {
+    if (!confirm(`Aprobar canje de "${rewardName}"? Se descontarán ${requiredStamps} sellos del cliente.`)) return;
+    try {
+      await update(ref(db, `barberias/${slug}/canjes/${id}`), {
+        status: 'aprobado',
+        approvedAt: new Date().toISOString(),
+        stamps_used: requiredStamps,
+        reward_given: rewardName
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Error al aprobar');
+    }
+  };
+
+  const handleReject = async (id) => {
+    if (!confirm('¿Rechazar este canje? Los sellos NO se descontarán.')) return;
+    try {
+      await update(ref(db, `barberias/${slug}/canjes/${id}`), {
+        status: 'rechazado',
+        rejectedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Error al rechazar');
+    }
+  };
+
+  const statusInfo = {
+    pendiente: { label: 'Pendiente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    aprobado: { label: 'Aprobado ✓', color: '#4ade80', bg: 'rgba(74,222,128,0.1)' },
+    rechazado: { label: 'Rechazado ✗', color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
+  };
+
+  return (
+    <div>
+      {/* Filtros */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+        {[
+          { key: 'pendiente', label: '⏳ Pendientes' },
+          { key: 'aprobado', label: '✓ Aprobados' },
+          { key: 'rechazado', label: '✗ Rechazados' },
+          { key: 'todos', label: 'Todos' }
+        ].map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            style={{
+              background: filter === f.key ? "var(--accent)" : "transparent",
+              color: filter === f.key ? "white" : "var(--text-tertiary)",
+              border: `1px solid ${filter === f.key ? "var(--accent)" : "var(--border-strong)"}`,
+              borderRadius: 8,
+              padding: "8px 14px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {filtered.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: 60,
-          color: "var(--text-dim)",
-          background: "var(--bg-elevated)",
-          border: "1px solid var(--border)",
-          borderRadius: 12
-        }}>
-          <p style={{ fontSize: 36, marginBottom: 8 }}>🎫</p>
+        <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
+          <p style={{ fontSize: 36, marginBottom: 8 }}>🎁</p>
           <p style={{ fontSize: 14 }}>
-            {search ? "Ningún cliente coincide con la búsqueda" : "Aún no hay clientes con citas completadas"}
+            {filter === 'pendiente' ? 'No hay canjes pendientes' : `No hay canjes ${filter === 'todos' ? 'registrados' : filter + 's'}`}
           </p>
         </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
-          {filtered.map((client, i) => (
-            <ClientLoyaltyCard key={client.phone + i} client={client} />
-          ))}
+          {filtered.map(r => {
+            const info = statusInfo[r.status] || statusInfo.pendiente;
+            const initials = (r.client || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            return (
+              <div key={r.id} style={{
+                background: "var(--bg-elevated)",
+                border: `1px solid ${r.status === 'pendiente' ? '#f59e0b44' : 'var(--border)'}`,
+                borderRadius: 12,
+                padding: 18
+              }}>
+                <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: "50%",
+                    background: "linear-gradient(135deg, #f59e0b, #fbbf24)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 800, fontSize: 16, color: "#fff", flexShrink: 0
+                  }}>{initials}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{r.client}</p>
+                    <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📞 {r.phone}</p>
+                  </div>
+                  <div style={{
+                    background: info.bg,
+                    color: info.color,
+                    border: `1px solid ${info.color}`,
+                    borderRadius: 6,
+                    padding: "4px 10px",
+                    fontSize: 11,
+                    fontWeight: 700
+                  }}>{info.label}</div>
+                </div>
+                <div style={{
+                  background: "var(--bg-elevated-2)",
+                  border: "1px dashed var(--border-strong)",
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: r.status === 'pendiente' ? 12 : 0
+                }}>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>Premio solicitado</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)" }}>🎁 {r.reward_requested || rewardName}</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+                    Solicitado: {r.createdAt ? new Date(r.createdAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
+                  </p>
+                  {r.approvedAt && (
+                    <p style={{ fontSize: 11, color: "#4ade80", marginTop: 2 }}>
+                      Aprobado: {new Date(r.approvedAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
+                  )}
+                </div>
+                {r.status === 'pendiente' && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => handleReject(r.id)}
+                      style={{
+                        flex: 1,
+                        background: "transparent",
+                        color: "#f87171",
+                        border: "1px solid #7f1d1d",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      ✗ Rechazar
+                    </button>
+                    <button
+                      onClick={() => handleApprove(r.id)}
+                      style={{
+                        flex: 1,
+                        background: "linear-gradient(135deg, #16a34a, #4ade80)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      ✓ Aprobar
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function ClientLoyaltyCard({ client }) {
-  // Calcular cuántos sellos para próxima recompensa (cada 10)
-  const nextReward = Math.ceil(client.stamps / 10) * 10;
-  const stampsForNext = nextReward - client.stamps;
+function ClientLoyaltyCard({ client, requiredStamps, rewardName }) {
+  const REQ = requiredStamps || 10;
+  const stampsForNext = REQ - (client.stamps % REQ);
   const initials = (client.client || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-
-  // Generar grid de sellos (mostrar 10, el siguiente bloque)
-  const stampsInCurrentRow = client.stamps % 10 === 0 && client.stamps > 0 ? 10 : client.stamps % 10;
-  const completedRows = Math.floor(client.stamps / 10);
+  const stampsInCurrentRow = client.stamps % REQ === 0 && client.stamps > 0 ? REQ : client.stamps % REQ;
+  const canRedeem = client.stamps >= REQ;
 
   return (
     <div style={{
       background: "var(--bg-elevated)",
-      border: `1px solid ${client.stamps >= 10 ? "#f59e0b44" : "var(--border)"}`,
+      border: `1px solid ${canRedeem ? "#f59e0b44" : "var(--border)"}`,
       borderRadius: 12,
       padding: 18
     }}>
-      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{
           width: 44, height: 44, borderRadius: "50%",
-          background: client.stamps >= 10
+          background: canRedeem
             ? "linear-gradient(135deg, #f59e0b, #fbbf24)"
             : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 800, fontSize: 16, color: "#fff",
-          flexShrink: 0
-        }}>
-          {initials}
-        </div>
+          fontWeight: 800, fontSize: 16, color: "#fff", flexShrink: 0
+        }}>{initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{client.client}</p>
-            {client.stamps >= 10 && (
+            {canRedeem && (
               <span style={{
                 fontSize: 10, fontWeight: 700,
                 background: "linear-gradient(135deg, #f59e0b, #fbbf24)",
                 color: "#fff", padding: "2px 8px",
                 borderRadius: 10, letterSpacing: 0.5
-              }}>⭐ VIP</span>
+              }}>🎁 LISTO</span>
+            )}
+            {client.redeemed > 0 && (
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: "rgba(54,177,223,0.15)",
+                color: "var(--accent)",
+                padding: "2px 8px",
+                borderRadius: 10
+              }}>{client.redeemed}× canjeado</span>
             )}
           </div>
           <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📞 {client.phone}</p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <p style={{
-            fontSize: 28, fontWeight: 800,
-            color: "#36B1DF",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            lineHeight: 1
-          }}>{client.stamps}</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>{client.stamps}</p>
           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>
             sello{client.stamps !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
-      {/* Tarjeta de sellos visual */}
-      <div style={{
-        background: "var(--bg-elevated-2)",
-        border: "1px dashed var(--border-strong)",
-        borderRadius: 10,
-        padding: 12
-      }}>
+      <div style={{ background: "var(--bg-elevated-2)", border: "1px dashed var(--border-strong)", borderRadius: 10, padding: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <p style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
-            Tarjeta actual ({stampsInCurrentRow}/10)
+            Progreso ({stampsInCurrentRow}/{REQ})
           </p>
-          {stampsForNext > 0 && stampsForNext < 10 && (
+          {canRedeem ? (
+            <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>🎁 Premio listo</p>
+          ) : stampsForNext > 0 && stampsForNext < REQ && (
             <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>
-              {stampsForNext} para premio 🎁
+              {stampsForNext} para premio
             </p>
           )}
         </div>
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(10, 1fr)",
+          gridTemplateColumns: `repeat(${Math.min(REQ, 10)}, 1fr)`,
           gap: 6
         }}>
-          {Array.from({ length: 10 }).map((_, idx) => {
+          {Array.from({ length: REQ }).map((_, idx) => {
             const filled = idx < stampsInCurrentRow;
             return (
               <div key={idx} style={{
                 aspectRatio: "1",
                 borderRadius: "50%",
-                background: filled
-                  ? "linear-gradient(135deg, #36B1DF, #5FC8EC)"
-                  : "var(--bg-track)",
+                background: filled ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "var(--bg-track)",
                 border: `2px solid ${filled ? "#36B1DF" : "var(--border)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 14, color: filled ? "#fff" : "transparent"
@@ -1173,19 +1500,11 @@ function ClientLoyaltyCard({ client }) {
             );
           })}
         </div>
-        {completedRows > 0 && (
-          <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 10, fontWeight: 600, textAlign: "center" }}>
-            🏆 {completedRows} tarjeta{completedRows > 1 ? 's' : ''} completa{completedRows > 1 ? 's' : ''}
-          </p>
-        )}
       </div>
 
-      {/* Detalles */}
       <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-        gap: 8, marginTop: 12,
-        paddingTop: 12,
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+        gap: 8, marginTop: 12, paddingTop: 12,
         borderTop: "1px solid var(--border)"
       }}>
         <div>
@@ -1195,7 +1514,7 @@ function ClientLoyaltyCard({ client }) {
         <div>
           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Ticket promedio</p>
           <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
-            {formatCurrency(Math.round(client.totalSpent / client.stamps))}
+            {client.stamps > 0 ? formatCurrency(Math.round(client.totalSpent / (client.stamps + (client.redeemed * REQ)))) : '—'}
           </p>
         </div>
       </div>
