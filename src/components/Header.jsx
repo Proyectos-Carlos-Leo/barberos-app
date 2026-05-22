@@ -68,6 +68,7 @@ export default function Header({ userType, navItems = [] }) {
             {navItems.map(item => (
               <button
                 key={item.key}
+                data-key={item.key}
                 className={`nav-btn ${item.active ? 'active' : ''}`}
                 onClick={item.onClick}
               >
@@ -80,6 +81,16 @@ export default function Header({ userType, navItems = [] }) {
                     fontSize: 10, fontWeight: 700, marginLeft: 6
                   }}>
                     {pendingCount}
+                  </span>
+                )}
+                {item.badge && (
+                  <span style={{
+                    background: "#f59e0b", color: "#0a0a0a",
+                    borderRadius: "50%", width: 18, height: 18,
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 800, marginLeft: 6
+                  }}>
+                    {item.badge}
                   </span>
                 )}
               </button>

@@ -27,6 +27,8 @@ export default function AdminView() {
   const [view, setView] = useState("dashboard");
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const previousIdsRef = useRef(null);
+  const previousRedemptionsRef = useRef(null);
+  const [pendingRedemptionsCount, setPendingRedemptionsCount] = useState(0);
   const { appointments, barbers, blocks, barbershopConfig, slug, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -107,6 +109,37 @@ export default function AdminView() {
     return () => updateTabTitle(0);
   }, []);
 
+  // Detectar canjes pendientes nuevos
+  useEffect(() => {
+    if (!isAuth || !slug) return;
+    const unsub = onValue(ref(db, `barberias/${slug}/canjes`), (snap) => {
+      const data = snap.val();
+      const allRedemptions = data ? Object.entries(data).map(([id, v]) => ({ ...v, id })) : [];
+      const pending = allRedemptions.filter(r => r.status === 'pendiente');
+      setPendingRedemptionsCount(pending.length);
+
+      // Detectar canjes nuevos
+      const currentIds = new Set(pending.map(r => r.id));
+      if (previousRedemptionsRef.current === null) {
+        previousRedemptionsRef.current = currentIds;
+        return;
+      }
+
+      const newOnes = pending.filter(r => !previousRedemptionsRef.current.has(r.id));
+      if (newOnes.length > 0 && 'Notification' in window && Notification.permission === 'granted') {
+        newOnes.forEach(r => {
+          new Notification('🎁 Nuevo canje pendiente', {
+            body: `${r.client} solicita: ${r.reward_requested}`,
+            icon: '/favicon.ico',
+            tag: r.id
+          });
+        });
+      }
+      previousRedemptionsRef.current = currentIds;
+    });
+    return () => unsub();
+  }, [isAuth, slug]);
+
   const handleEnableNotifications = async () => {
     await initNotifications();
     setShowNotifBanner(false);
@@ -154,7 +187,7 @@ export default function AdminView() {
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
     ...(barbershopConfig?.lealtad_activa !== false ? [
-      { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty") }
+      { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty"), badge: pendingRedemptionsCount > 0 ? pendingRedemptionsCount : null }
     ] : [])
   ];
 
@@ -224,39 +257,297 @@ export default function AdminView() {
 
 // ==================== DASHBOARD ====================
 function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
+  const { barbershopConfig } = useApp();
   const [filterDate, setFilterDate] = useState(getTodayStr());
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selected, setSelected] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name }
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const filtered = filterAppointments(appointments, { date: filterDate, barberId: filterBarber, status: filterStatus })
     .sort((a, b) => a.time.localeCompare(b.time));
 
   const stats = calculateStats(appointments);
+  const todayStr = getTodayStr();
 
-  const statCards = [
-    { label: "Citas hoy", value: stats.todayTotal, color: "#36B1DF", icon: "📅" },
-    { label: "Pendientes", value: stats.pending, color: "#f87171", icon: "⏳" },
-    { label: "Completadas hoy", value: stats.completedToday, color: "#4ade80", icon: "✓" },
-    { label: "Ingresos hoy", value: formatCurrency(stats.revenueToday), color: "#60a5fa", icon: "💰" },
-  ];
+  // 🆕 Calcular tendencia vs ayer
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayAppts = appointments.filter(a => a.date === yesterdayStr);
+  const yesterdayRevenue = yesterdayAppts
+    .filter(a => a.status === 'completada')
+    .reduce((s, a) => s + (a.service?.price || 0), 0);
+  const revenueChange = yesterdayRevenue > 0
+    ? Math.round(((stats.revenueToday - yesterdayRevenue) / yesterdayRevenue) * 100)
+    : 0;
+  const apptsChange = yesterdayAppts.length > 0
+    ? Math.round(((stats.todayTotal - yesterdayAppts.length) / yesterdayAppts.length) * 100)
+    : 0;
+
+  // 🆕 Sparklines últimos 7 días
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dStr = d.toISOString().split('T')[0];
+    const dayAppts = appointments.filter(a => a.date === dStr && a.status === 'completada');
+    return {
+      revenue: dayAppts.reduce((s, a) => s + (a.service?.price || 0), 0),
+      count: dayAppts.length
+    };
+  });
+  const maxRev = Math.max(...last7Days.map(d => d.revenue), 1);
+  const maxCount = Math.max(...last7Days.map(d => d.count), 1);
+
+  // 🆕 Ocupación de hoy
+  const horario = barbershopConfig?.horario || {};
+  const dur = horario.duracion || 30;
+  const startH = parseInt((horario.hora_inicio || '09:00').split(':')[0]);
+  const endH = parseInt((horario.hora_fin || '20:00').split(':')[0]);
+  const totalSlots = Math.floor(((endH - startH) * 60) / dur) * (barbers.length || 1);
+  const todayActive = appointments.filter(a =>
+    a.date === todayStr && a.status !== 'cancelada'
+  ).length;
+  const ocupacion = totalSlots > 0 ? Math.min(100, Math.round((todayActive / totalSlots) * 100)) : 0;
+
+  // 🆕 Próximas citas (próximas 4 horas desde ahora)
+  const now = new Date();
+  const upcomingAppts = appointments
+    .filter(a => {
+      if (a.date !== todayStr) return false;
+      if (a.status !== 'pendiente' && a.status !== 'confirmada') return false;
+      const [h, m] = a.time.split(':').map(Number);
+      const apptTime = new Date();
+      apptTime.setHours(h, m, 0, 0);
+      const diff = (apptTime - now) / (1000 * 60); // minutos
+      return diff >= -15 && diff <= 240;
+    })
+    .sort((a, b) => a.time.localeCompare(b.time))
+    .slice(0, 5);
+
+  const getMinutesUntil = (time) => {
+    const [h, m] = time.split(':').map(Number);
+    const apptTime = new Date();
+    apptTime.setHours(h, m, 0, 0);
+    return Math.round((apptTime - now) / (1000 * 60));
+  };
+
+  // Saludo según hora
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const adminName = barbershopConfig?.nombre || 'admin';
 
   return (
     <div className="fade-in">
-      <div style={{ marginBottom: 28 }}>
-        <h1 className="section-title" style={{ marginBottom: 4 }}>Panel del <span className="gold">dueño</span></h1>
-        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Administra todas las citas en tiempo real</p>
+      {/* 🆕 Header con saludo */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+        marginBottom: 24, flexWrap: "wrap", gap: 16,
+        paddingBottom: 18, borderBottom: "1px solid var(--border)"
+      }}>
+        <div>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>
+            {greeting} 👋
+          </p>
+          <h1 className="section-title" style={{ marginBottom: 4, marginTop: 4 }}>
+            Tu <span className="gold">barbería</span> hoy
+          </h1>
+        </div>
+        <div style={{
+          background: "var(--accent-bg)",
+          border: "1px solid var(--accent-border)",
+          color: "var(--accent)",
+          padding: "8px 14px",
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 700,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          letterSpacing: 0.5
+        }}>
+          📅 {new Date().toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
-        {statCards.map(s => (
-          <div key={s.label} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
-            <span style={{ position: "absolute", top: 12, right: 14, fontSize: 18, opacity: 0.4 }}>{s.icon}</span>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{s.label}</p>
-            <p style={{ fontSize: 28, fontWeight: 800, color: s.color, fontFamily: "'Barlow Condensed', sans-serif" }}>{s.value}</p>
+      {/* 🆕 KPIs mejorados con sparklines y tendencias */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+        <StatCardPro
+          label="Citas hoy"
+          value={stats.todayTotal}
+          color="#36B1DF"
+          change={apptsChange}
+          spark={last7Days.map(d => d.count)}
+          maxSpark={maxCount}
+        />
+        <StatCardPro
+          label="Pendientes"
+          value={stats.pending}
+          color="#f59e0b"
+          icon={stats.pending > 0 ? "!" : null}
+          subtitle={stats.pending > 0 ? "Por confirmar" : "Al día"}
+        />
+        <StatCardPro
+          label="Ingresos hoy"
+          value={formatCurrency(stats.revenueToday)}
+          color="#4ade80"
+          change={revenueChange}
+          spark={last7Days.map(d => d.revenue)}
+          maxSpark={maxRev}
+        />
+        <StatCardPro
+          label="Ocupación"
+          value={`${ocupacion}%`}
+          color="#36B1DF"
+          progress={ocupacion}
+        />
+      </div>
+
+      {/* 🆕 Acciones rápidas */}
+      <div style={{ marginBottom: 24 }}>
+        <p style={{
+          fontSize: 10, color: "var(--text-muted)",
+          textTransform: "uppercase", letterSpacing: 1,
+          marginBottom: 10, fontWeight: 700
+        }}>⚡ Acciones rápidas</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+          <QuickAction
+            icon="📞"
+            label="WhatsApp Bot"
+            color="#25D366"
+            onClick={() => alert('Próximamente: envío automático de confirmaciones')}
+          />
+          <QuickAction
+            icon="📊"
+            label="Ver reportes"
+            color="#36B1DF"
+            onClick={() => document.querySelector('[data-key="reports"]')?.click()}
+          />
+          <QuickAction
+            icon="🚫"
+            label="Bloquear hora"
+            color="#f87171"
+            onClick={() => document.querySelector('[data-key="schedule"]')?.click()}
+          />
+          <QuickAction
+            icon="💈"
+            label="Editar servicios"
+            color="#f59e0b"
+            onClick={() => document.querySelector('[data-key="services"]')?.click()}
+          />
+        </div>
+      </div>
+
+      {/* 🆕 Próximas citas con countdown */}
+      {upcomingAppts.length > 0 && (
+        <div style={{
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border)",
+          borderRadius: 12,
+          padding: 18,
+          marginBottom: 24
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <p style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 16, fontWeight: 700,
+              color: "var(--text-primary)",
+              textTransform: "uppercase", letterSpacing: 1
+            }}>⏱ Próximas citas</p>
+            <span style={{
+              background: "var(--accent-bg)",
+              color: "var(--accent)",
+              padding: "4px 10px",
+              borderRadius: 12,
+              fontSize: 11,
+              fontWeight: 700
+            }}>HOY · {upcomingAppts.length}</span>
           </div>
-        ))}
+
+          <div style={{ display: "grid", gap: 8 }}>
+            {upcomingAppts.map(appt => {
+              const barber = barbers.find(b => b.id === appt.barberId);
+              const minutes = getMinutesUntil(appt.time);
+              const isNow = minutes >= -15 && minutes <= 15;
+              const isSoon = minutes > 15 && minutes <= 60;
+              const borderColor = isNow ? "#f59e0b" : isSoon ? "var(--accent)" : "var(--border)";
+              const timeLabel = minutes < 0
+                ? "AHORA"
+                : minutes < 60
+                  ? `EN ${minutes} MIN`
+                  : `EN ${Math.floor(minutes / 60)}H ${minutes % 60}M`;
+
+              return (
+                <div key={appt.id} style={{
+                  display: "flex", gap: 12,
+                  padding: 12,
+                  background: "var(--bg-elevated-2)",
+                  borderRadius: 10,
+                  borderLeft: `3px solid ${borderColor}`,
+                  alignItems: "center",
+                  flexWrap: "wrap"
+                }}>
+                  <div style={{ textAlign: "center", minWidth: 60 }}>
+                    <p style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 20, fontWeight: 800,
+                      color: "var(--text-primary)"
+                    }}>{appt.time}</p>
+                    <p style={{
+                      fontSize: 10,
+                      color: isNow ? "#f59e0b" : "var(--text-muted)",
+                      fontWeight: 700,
+                      letterSpacing: 0.5
+                    }}>{timeLabel}</p>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 120 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{appt.client}</p>
+                    <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                      {appt.service?.emoji || '✂️'} {appt.service?.name} · {barber?.name || 'Sin asignar'}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {appt.status === 'pendiente' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onStatusChange(appt.id, 'confirmada'); }}
+                        style={{
+                          background: "rgba(74,222,128,0.15)",
+                          border: "1px solid #4ade80",
+                          color: "#4ade80",
+                          padding: "6px 10px",
+                          borderRadius: 6,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer"
+                        }}
+                      >✓ Confirmar</button>
+                    )}
+                    {appt.phone && (
+                      <a href={`tel:${appt.phone}`} style={{
+                        background: "transparent",
+                        border: "1px solid var(--border-strong)",
+                        color: "var(--text-tertiary)",
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        textDecoration: "none"
+                      }}>📞</a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Separador */}
+      <div style={{ marginBottom: 18 }}>
+        <h2 style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 20, fontWeight: 800,
+          textTransform: "uppercase", letterSpacing: 1,
+          color: "var(--text-secondary)"
+        }}>📋 Todas las citas</h2>
       </div>
 
       <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
@@ -1839,5 +2130,127 @@ function ServicesView({ slug }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ==================== COMPONENTES DASHBOARD ====================
+function StatCardPro({ label, value, color, change, spark, maxSpark, icon, subtitle, progress }) {
+  const sparkPoints = spark
+    ? spark.map((v, i) => `${(i / (spark.length - 1)) * 100},${20 - (v / maxSpark) * 16}`).join(' ')
+    : null;
+
+  return (
+    <div style={{
+      background: "var(--bg-elevated)",
+      border: "1px solid var(--border)",
+      borderRadius: 12,
+      padding: 14,
+      position: "relative",
+      overflow: "hidden",
+      transition: "transform 0.2s, border-color 0.2s",
+      cursor: "default"
+    }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.borderColor = "var(--border-strong)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.borderColor = "var(--border)";
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <span style={{
+          fontSize: 10, color: "var(--text-muted)",
+          textTransform: "uppercase", letterSpacing: 0.5,
+          fontWeight: 600
+        }}>{label}</span>
+        {change !== undefined && change !== 0 && (
+          <span style={{
+            background: change > 0 ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.15)",
+            color: change > 0 ? "#4ade80" : "#f87171",
+            fontSize: 10,
+            padding: "2px 6px",
+            borderRadius: 4,
+            fontWeight: 700
+          }}>
+            {change > 0 ? '↑' : '↓'} {Math.abs(change)}%
+          </span>
+        )}
+        {icon && (
+          <span style={{
+            background: "rgba(245,158,11,0.15)",
+            color: "#f59e0b",
+            fontSize: 11,
+            width: 18, height: 18,
+            borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: 800
+          }}>{icon}</span>
+        )}
+      </div>
+      <p style={{
+        fontSize: 24, fontWeight: 800,
+        color, fontFamily: "'Barlow Condensed', sans-serif",
+        lineHeight: 1
+      }}>{value}</p>
+      {subtitle && (
+        <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>{subtitle}</p>
+      )}
+      {sparkPoints && (
+        <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" style={{ marginTop: 6 }}>
+          <polyline points={sparkPoints} fill="none" stroke={color} strokeWidth="1.5" />
+        </svg>
+      )}
+      {progress !== undefined && (
+        <div style={{
+          background: "var(--bg-track)",
+          height: 4, borderRadius: 2,
+          marginTop: 8, overflow: "hidden"
+        }}>
+          <div style={{
+            background: `linear-gradient(90deg, ${color}, ${color}aa)`,
+            height: "100%", width: `${progress}%`,
+            transition: "width 0.4s"
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickAction({ icon, label, color, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+        borderRadius: 10,
+        padding: 12,
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 4,
+        transition: "all 0.2s",
+        fontFamily: "'Barlow', sans-serif"
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = color;
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
+    >
+      <span style={{ fontSize: 22 }}>{icon}</span>
+      <span style={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: "var(--text-secondary)"
+      }}>{label}</span>
+    </button>
   );
 }

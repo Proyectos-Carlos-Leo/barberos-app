@@ -90,13 +90,35 @@ export default function MyStamps() {
 
   const handleRequestRedemption = async () => {
     if (!result || result.stamps < REQUIRED_STAMPS) return;
+
+    // 🔐 Anti-spam: máximo 1 canje pendiente por teléfono
+    const cleanPhone = normalizePhone(result.phone);
+    const existingPending = redemptions.filter(r =>
+      r.status === 'pendiente' && normalizePhone(r.phone) === cleanPhone
+    );
+    if (existingPending.length > 0) {
+      alert('⚠ Ya tienes un canje pendiente. Espera a que el administrador lo revise.');
+      return;
+    }
+
+    // 🔐 Anti-spam: máximo 3 canjes pedidos en las últimas 24 hrs
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const recentRequests = redemptions.filter(r =>
+      normalizePhone(r.phone) === cleanPhone &&
+      r.createdAt && r.createdAt > oneDayAgo
+    );
+    if (recentRequests.length >= 3) {
+      alert('⚠ Demasiadas solicitudes. Intenta de nuevo mañana.');
+      return;
+    }
+
     if (!confirm(`¿Solicitar el canje de "${REWARD_NAME}"?\n\nEl administrador deberá aprobarlo antes de aplicarse.`)) return;
     setRequesting(true);
     try {
       await push(ref(db, `barberias/${slug}/canjes`), {
-        client: result.client,
-        phone: result.phone,
-        reward_requested: REWARD_NAME,
+        client: result.client.slice(0, 60),
+        phone: result.phone.slice(0, 15),
+        reward_requested: REWARD_NAME.slice(0, 100),
         status: 'pendiente',
         stamps_at_request: result.stamps,
         createdAt: new Date().toISOString()
@@ -105,7 +127,7 @@ export default function MyStamps() {
       setResult({ ...result, hasPending: true });
     } catch (err) {
       console.error(err);
-      alert('Error al solicitar el canje. Intenta de nuevo.');
+      alert('Error al solicitar el canje. Verifica que tengas conexión.');
     } finally {
       setRequesting(false);
     }
