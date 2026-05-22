@@ -504,3 +504,83 @@ main { max-width: 100%; overflow-x: hidden; }
   background: var(--bg-elevated);
   border-top-color: var(--border);
 }
+
+/* ==================== MEJORAS RESPONSIVE ADMIN ==================== */
+@media (max-width: 600px) {
+  /* Main padding reducido */
+  main { padding: 16px 12px !important; }
+
+  /* Cards generales */
+  .card { padding: 14px !important; }
+  .booking-card { padding: 16px !important; }
+
+  /* Section title más pequeño */
+  .section-title { font-size: 22px !important; letter-spacing: 0.5px !important; }
+
+  /* Inputs y selects más grandes touch */
+  input, select, textarea {
+    font-size: 14px !important;
+    min-height: 42px;
+  }
+
+  /* Botones touch friendly */
+  .btn-gold, .btn-ghost, .btn-large {
+    min-height: 44px;
+    padding: 10px 14px !important;
+  }
+
+  /* Stat cards más compactas */
+  .stat-card-pro { padding: 10px !important; }
+}
+
+/* Móviles muy chicos */
+@media (max-width: 380px) {
+  main { padding: 12px 8px !important; }
+
+  .section-title { font-size: 20px !important; }
+
+  /* Header más compacto */
+  .app-header { padding: 0 10px !important; }
+
+  /* Cards padding mínimo */
+  .card { padding: 12px !important; }
+  .booking-card { padding: 14px 12px !important; }
+
+  /* Modales con menos padding */
+  .modal-content { padding: 18px !important; }
+
+  /* Reducir tamaño de gaps */
+  .grid-2-col { gap: 8px !important; }
+}
+
+/* Wraps mejor en móvil para botones de acción */
+@media (max-width: 480px) {
+  /* Botones de acciones en cards de citas se apilan */
+  .appt-actions {
+    width: 100%;
+    margin-top: 8px;
+    justify-content: space-between;
+  }
+
+  /* Tabs scroll horizontal */
+  .tabs-scroll {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs-scroll::-webkit-scrollbar { display: none; }
+  .tabs-scroll > * { flex-shrink: 0; }
+}
+
+/* Prevenir overflow horizontal en tablas largas */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tarjeta de sellos: en móvil máximo 5 por fila */
+@media (max-width: 480px) {
+  .stamps-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+}

@@ -486,15 +486,15 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 
               return (
                 <div key={appt.id} style={{
-                  display: "flex", gap: 12,
-                  padding: 12,
+                  display: "flex", gap: 10,
+                  padding: "10px 12px",
                   background: "var(--bg-elevated-2)",
                   borderRadius: 10,
                   borderLeft: `3px solid ${borderColor}`,
                   alignItems: "center",
                   flexWrap: "wrap"
                 }}>
-                  <div style={{ textAlign: "center", minWidth: 60 }}>
+                  <div style={{ textAlign: "center", minWidth: 52, flexShrink: 0 }}>
                     <p style={{
                       fontFamily: "'Barlow Condensed', sans-serif",
                       fontSize: 20, fontWeight: 800,
@@ -780,7 +780,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16 }}>
         {barbersWithStats.map((b, idx) => {
           const stats = b.stats;
           const isTop = idx === 0 && stats.revenue > 0;
@@ -1922,9 +1922,11 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName }) {
         </div>
         <div style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${Math.min(REQ, 10)}, 1fr)`,
+          gridTemplateColumns: `repeat(${Math.min(REQ, 10)}, minmax(0, 1fr))`,
           gap: 6
-        }}>
+        }}
+        className="stamps-grid"
+        >
           {Array.from({ length: REQ }).map((_, idx) => {
             const filled = idx < stampsInCurrentRow;
             return (
