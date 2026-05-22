@@ -17,6 +17,7 @@ export function AppProvider({ children, slug }) {
   const [appointments, setAppointments] = useState([]);
   const [barbers, setBarbers] = useState([]);
   const [blocks, setBlocks] = useState([]);
+  const [services, setServices] = useState([]);
   const [barbershopConfig, setBarbershopConfig] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,16 @@ export function AppProvider({ children, slug }) {
     const unsub = onValue(ref(db, `${basePath}/barberos`), (snapshot) => {
       const data = snapshot.val();
       setBarbers(data ? Object.entries(data).map(([id, val]) => ({ ...val, id })) : []);
+    });
+    return () => unsub();
+  }, [basePath, notFound]);
+
+  // ========== SERVICIOS ==========
+  useEffect(() => {
+    if (!basePath || notFound) return;
+    const unsub = onValue(ref(db, `${basePath}/servicios`), (snapshot) => {
+      const data = snapshot.val();
+      setServices(data ? Object.entries(data).map(([id, val]) => ({ ...val, id })) : []);
     });
     return () => unsub();
   }, [basePath, notFound]);
@@ -149,7 +160,7 @@ export function AppProvider({ children, slug }) {
 
   const value = {
     slug, basePath, barbershopConfig,
-    appointments, barbers, blocks,
+    appointments, barbers, blocks, services,
     notifications, loading, notFound,
     addAppointment, updateAppointmentStatus, deleteAppointment,
     addBarber, toggleBarber, deleteBarber,

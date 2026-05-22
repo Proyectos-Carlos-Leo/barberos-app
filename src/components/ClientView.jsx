@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
 import Notifications from './Notifications';
-import { SERVICES } from '../utils/data';
+import { SERVICES as DEFAULT_SERVICES } from '../utils/data';
 import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone, getBlockedTimes } from '../utils/helpers';
 
 const STEPS = [
@@ -25,7 +25,8 @@ export default function ClientView() {
     client: "", phone: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
 
-  const { appointments, barbers, blocks, addAppointment, loading, slug, barbershopConfig } = useApp();
+  const { appointments, barbers, blocks, services: firebaseServices, addAppointment, loading, slug, barbershopConfig } = useApp();
+  const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
   if (loading) return <LoadingScreen />;
@@ -34,7 +35,7 @@ export default function ClientView() {
 
   // ✅ FIX #2: Comparar IDs como string, no con Number()
   const selectedBarber = activeBarbers.find(b => b.id === form.barberId);
-  const selectedService = SERVICES.find(s => s.id === Number(form.serviceId));
+  const selectedService = SERVICES.find(s => String(s.id) === String(form.serviceId));
   const takenTimes = getTakenTimes(appointments, form.barberId, form.date);
   const blockedTimes = getBlockedTimes(blocks, form.barberId, form.date);
   const isFullDayBlocked = blockedTimes.includes('FULL_DAY');
@@ -142,7 +143,7 @@ export default function ClientView() {
         {done && completedAppointment ? (
           <SuccessView
             appointment={completedAppointment}
-            barbershop={BARBERSHOP_INFO}
+            barbershop={barbershopConfig}
             onReset={reset}
             onExit={() => navigate(`/${slug}`)}
           />
@@ -381,14 +382,15 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 
 // ==================== STEP 2 ====================
 function Step2Service({ form, update, onBack, onNext }) {
-  // Mapa de emojis por servicio
-  const serviceEmojis = {
-    1: "✂️",   // Corte clásico
-    2: "💈",   // Corte + barba
-    3: "🔥",   // Degradado
-    4: "🧔",   // Barba completa
-    5: "👦",   // Corte infantil
-    6: "✨",   // Diseño + líneas
+  const { services: firebaseServices } = useApp();
+  const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
+
+  // Mapa de emojis por servicio (id puede ser número o string)
+  const getEmoji = (id) => {
+    const emojiMap = {
+      1: "✂️", 2: "💈", 3: "🔥", 4: "🧔", 5: "👦", 6: "✨"
+    };
+    return emojiMap[id] || "✂️";
   };
 
   return (
@@ -431,7 +433,7 @@ function Step2Service({ form, update, onBack, onNext }) {
       }}>
         {SERVICES.map(s => {
           const isSelected = form.serviceId === s.id;
-          const emoji = serviceEmojis[s.id] || "✂️";
+          const emoji = s.emoji || getEmoji(s.id);
           return (
             <div
               key={s.id}

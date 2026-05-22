@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { ref, update } from 'firebase/database';
+import { ref, update, push, remove } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import Header from './Header';
@@ -149,6 +149,7 @@ export default function AdminView() {
   const navItems = [
     { key: "dashboard", label: "Panel", active: view === "dashboard", onClick: () => setView("dashboard") },
     { key: "team", label: "Equipo", active: view === "team", onClick: () => setView("team") },
+    { key: "services", label: "Servicios", active: view === "services", onClick: () => setView("services") },
     { key: "schedule", label: "Horarios", active: view === "schedule", onClick: () => setView("schedule") },
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
@@ -214,6 +215,7 @@ export default function AdminView() {
         {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
         {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
+        {view === "services" && <ServicesView slug={slug} />}
         {view === "loyalty" && <LoyaltyView appointments={appointments} />}
       </main>
     </div>
@@ -1197,6 +1199,326 @@ function ClientLoyaltyCard({ client }) {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ==================== SERVICES VIEW ====================
+const DEFAULT_SERVICES_TEMPLATE = [
+  { name: "Corte clásico", duration: 30, price: 150, description: "Corte tradicional con tijera y máquina", emoji: "✂️" },
+  { name: "Corte + barba", duration: 50, price: 220, description: "Corte completo con arreglo de barba", emoji: "💈" },
+  { name: "Degradado", duration: 40, price: 180, description: "Degradado profesional con técnica avanzada", emoji: "🔥" },
+  { name: "Barba completa", duration: 30, price: 120, description: "Diseño y arreglo completo de barba", emoji: "🧔" },
+  { name: "Corte infantil", duration: 25, price: 100, description: "Corte para niños menores de 12 años", emoji: "👦" },
+  { name: "Diseño + líneas", duration: 45, price: 200, description: "Diseños personalizados con líneas", emoji: "✨" },
+];
+
+const SERVICE_EMOJIS = ["✂️", "💈", "🔥", "🧔", "👦", "✨", "💇", "🎨", "⭐", "🪒", "👨", "🧖"];
+
+function ServicesView({ slug }) {
+  const { services } = useApp();
+  const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", duration: 30, price: 100, description: "", emoji: "✂️" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const resetForm = () => {
+    setForm({ name: "", duration: 30, price: 100, description: "", emoji: "✂️" });
+    setEditingId(null);
+    setShowForm(false);
+    setError("");
+  };
+
+  const handleEdit = (svc) => {
+    setForm({
+      name: svc.name || "",
+      duration: svc.duration || 30,
+      price: svc.price || 100,
+      description: svc.description || "",
+      emoji: svc.emoji || "✂️"
+    });
+    setEditingId(svc.id);
+    setShowForm(true);
+    setError("");
+  };
+
+  const handleSave = async () => {
+    setError("");
+    if (!form.name.trim()) { setError("El nombre es obligatorio"); return; }
+    if (form.duration < 5 || form.duration > 240) { setError("Duración entre 5 y 240 minutos"); return; }
+    if (form.price < 0) { setError("Precio debe ser positivo"); return; }
+
+    setSaving(true);
+    try {
+      const data = {
+        name: form.name.trim(),
+        duration: Number(form.duration),
+        price: Number(form.price),
+        description: form.description.trim() || "",
+        emoji: form.emoji
+      };
+      if (editingId) {
+        await update(ref(db, `barberias/${slug}/servicios/${editingId}`), data);
+      } else {
+        await push(ref(db, `barberias/${slug}/servicios`), data);
+      }
+      resetForm();
+    } catch (err) {
+      console.error(err);
+      setError("Error al guardar el servicio");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("¿Eliminar este servicio? Las citas pasadas con este servicio no se afectan.")) return;
+    try {
+      await remove(ref(db, `barberias/${slug}/servicios/${id}`));
+    } catch (err) {
+      console.error(err);
+      alert("Error al eliminar");
+    }
+  };
+
+  const loadDefaults = async () => {
+    if (services.length > 0) {
+      if (!confirm("Ya tienes servicios. ¿Quieres agregar los servicios por defecto a los existentes?")) return;
+    }
+    try {
+      for (const svc of DEFAULT_SERVICES_TEMPLATE) {
+        await push(ref(db, `barberias/${slug}/servicios`), svc);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al cargar defaults");
+    }
+  };
+
+  return (
+    <div className="fade-in">
+      <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 className="section-title" style={{ marginBottom: 4 }}>
+            💈 <span className="gold">Servicios</span> ofrecidos
+          </h1>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
+            Edita los cortes y servicios que ofrece tu barbería
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {services.length === 0 && (
+            <button className="btn-ghost" onClick={loadDefaults}>
+              📋 Cargar defaults
+            </button>
+          )}
+          <button className="btn-gold" onClick={() => { resetForm(); setShowForm(true); }}>
+            ➕ Nuevo servicio
+          </button>
+        </div>
+      </div>
+
+      {/* Formulario */}
+      {showForm && (
+        <div className="fade-in" style={{
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--accent-border)",
+          borderRadius: 14,
+          padding: 22,
+          marginBottom: 20
+        }}>
+          <h3 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 18, fontWeight: 700, letterSpacing: 1,
+            textTransform: "uppercase", marginBottom: 18,
+            color: "var(--text-primary)"
+          }}>
+            {editingId ? "✏️ Editar servicio" : "➕ Nuevo servicio"}
+          </h3>
+
+          {/* Emoji selector */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+              Ícono
+            </label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {SERVICE_EMOJIS.map(e => (
+                <div
+                  key={e}
+                  onClick={() => setForm({ ...form, emoji: e })}
+                  style={{
+                    width: 44, height: 44,
+                    borderRadius: 10,
+                    border: `2px solid ${form.emoji === e ? "var(--accent)" : "var(--border)"}`,
+                    background: form.emoji === e ? "var(--accent-bg)" : "var(--bg-elevated-2)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 22, cursor: "pointer", transition: "all 0.2s"
+                  }}
+                >
+                  {e}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+              Nombre del servicio *
+            </label>
+            <input
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+              placeholder="Ej. Corte clásico"
+              maxLength={50}
+            />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+                Duración (min) *
+              </label>
+              <input
+                type="number"
+                value={form.duration}
+                onChange={e => setForm({ ...form, duration: e.target.value })}
+                min="5" max="240" step="5"
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+                Precio (MXN) *
+              </label>
+              <input
+                type="number"
+                value={form.price}
+                onChange={e => setForm({ ...form, price: e.target.value })}
+                min="0" step="10"
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+              Descripción
+            </label>
+            <input
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              placeholder="Breve descripción del servicio"
+              maxLength={150}
+            />
+          </div>
+
+          {error && <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12 }}>⚠ {error}</p>}
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <button className="btn-ghost" onClick={resetForm} disabled={saving}>Cancelar</button>
+            <button className="btn-gold" onClick={handleSave} disabled={saving}>
+              {saving ? "Guardando..." : editingId ? "Actualizar" : "Crear servicio"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de servicios */}
+      {services.length === 0 ? (
+        <div style={{
+          textAlign: "center", padding: 60,
+          color: "var(--text-dim)",
+          background: "var(--bg-elevated)",
+          border: "1px dashed var(--border-strong)",
+          borderRadius: 12
+        }}>
+          <p style={{ fontSize: 40, marginBottom: 12 }}>💈</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>
+            Aún no tienes servicios configurados
+          </p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            Crea tu primer servicio o carga los predeterminados
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          {services.map(svc => (
+            <div key={svc.id} style={{
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: 18,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              flexWrap: "wrap"
+            }}>
+              <div style={{
+                fontSize: 30,
+                width: 56, height: 56,
+                background: "var(--bg-elevated-2)",
+                borderRadius: 12,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "1px solid var(--border)",
+                flexShrink: 0
+              }}>
+                {svc.emoji || "✂️"}
+              </div>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <p style={{ fontWeight: 700, fontSize: 16, color: "var(--text-primary)", marginBottom: 4 }}>
+                  {svc.name}
+                </p>
+                {svc.description && (
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>
+                    {svc.description}
+                  </p>
+                )}
+                <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                  ⏱ {svc.duration} min
+                </p>
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <p style={{
+                  fontSize: 24, fontWeight: 800,
+                  color: "var(--accent)",
+                  fontFamily: "'Barlow Condensed', sans-serif"
+                }}>${svc.price}</p>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                <button
+                  onClick={() => handleEdit(svc)}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--border-strong)",
+                    color: "var(--accent)",
+                    borderRadius: 6,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  ✏️ Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(svc.id)}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--danger-bg)",
+                    color: "var(--danger)",
+                    borderRadius: 6,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  🗑
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
