@@ -258,12 +258,15 @@ export default function AdminView() {
 
 // ==================== DASHBOARD ====================
 function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
-  const { barbershopConfig } = useApp();
+  const { barbershopConfig, slug } = useApp();
   const [filterDate, setFilterDate] = useState(getTodayStr());
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selected, setSelected] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showEmailConfig, setShowEmailConfig] = useState(false);
+  const [emailConfirm, setEmailConfirm] = useState(barbershopConfig?.email_confirmacion || "");
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const filtered = filterAppointments(appointments, { date: filterDate, barberId: filterBarber, status: filterStatus })
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -333,6 +336,24 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
     return Math.round((apptTime - now) / (1000 * 60));
   };
 
+  const handleSaveEmail = async () => {
+    if (!emailConfirm.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailConfirm)) {
+      alert('Email inválido');
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      await update(ref(db, `barberias/${slug}/config/email_confirmacion`), emailConfirm.trim());
+      setShowEmailConfig(false);
+      alert('Email guardado. Desde ahora se enviarán confirmaciones desde este email.');
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar');
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
   // Saludo según hora
   const hour = now.getHours();
   const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
@@ -354,18 +375,39 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             Tu <span className="gold">barbería</span> hoy
           </h1>
         </div>
-        <div style={{
-          background: "var(--accent-bg)",
-          border: "1px solid var(--accent-border)",
-          color: "var(--accent)",
-          padding: "8px 14px",
-          borderRadius: 8,
-          fontSize: 12,
-          fontWeight: 700,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          letterSpacing: 0.5
-        }}>
-          📅 {new Date().toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button
+            onClick={() => { setEmailConfirm(barbershopConfig?.email_confirmacion || ""); setShowEmailConfig(true); }}
+            style={{
+              background: "var(--accent-bg)",
+              border: "1px solid var(--accent-border)",
+              color: "var(--accent)",
+              padding: "8px 14px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.1)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.background = "var(--accent-bg)"; }}
+          >
+            📧 Email confirmación
+          </button>
+          <div style={{
+            background: "var(--accent-bg)",
+            border: "1px solid var(--accent-border)",
+            color: "var(--accent)",
+            padding: "8px 14px",
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: "'Barlow Condensed', sans-serif",
+            letterSpacing: 0.5,
+            whiteSpace: "nowrap"
+          }}>
+            📅 {new Date().toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+          </div>
         </div>
       </div>
 
@@ -700,6 +742,64 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         onConfirm={() => { onDelete(confirmDelete.id); setConfirmDelete(null); }}
         onCancel={() => setConfirmDelete(null)}
       />
+
+      {/* Modal configurar email */}
+      {showEmailConfig && (
+        <div onClick={() => setShowEmailConfig(false)} style={{
+          position: "fixed", inset: 0,
+          background: "rgba(0,0,0,0.85)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 20, zIndex: 3000
+        }}>
+          <div onClick={e => e.stopPropagation()} className="fade-in" style={{
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-strong)",
+            borderRadius: 16,
+            width: "100%", maxWidth: 480,
+            padding: 24
+          }}>
+            <h2 style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 22, fontWeight: 800, letterSpacing: 1,
+              textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 6
+            }}>
+              📧 Email de confirmación
+            </h2>
+            <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginBottom: 20 }}>
+              Desde qué email se enviarán las confirmaciones de citas
+            </p>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{
+                fontSize: 11, color: "var(--text-tertiary)",
+                fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+                display: "block", marginBottom: 8
+              }}>
+                Dirección de email *
+              </label>
+              <input
+                value={emailConfirm}
+                onChange={e => setEmailConfirm(e.target.value)}
+                placeholder="tu-barberia@gmail.com"
+                type="email"
+                style={{ width: "100%", boxSizing: "border-box" }}
+              />
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+                Asegúrate de que sea un email de Gmail y que hayas activado "apps menos seguras"
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button className="btn-ghost" onClick={() => setShowEmailConfig(false)} disabled={savingEmail}>
+                Cancelar
+              </button>
+              <button className="btn-gold" onClick={handleSaveEmail} disabled={savingEmail || !emailConfirm.trim()}>
+                {savingEmail ? 'Guardando...' : '💾 Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

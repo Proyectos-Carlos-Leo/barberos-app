@@ -22,7 +22,7 @@ export default function ClientView() {
   const [errors, setErrors] = useState({});
   const [completedAppointment, setCompletedAppointment] = useState(null);
   const [form, setForm] = useState({
-    client: "", phone: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
+    client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
 
   const { appointments, barbers, blocks, services: firebaseServices, addAppointment, loading, slug, barbershopConfig } = useApp();
@@ -49,6 +49,7 @@ export default function ClientView() {
     const errs = {};
     if (!validateName(form.client)) errs.client = "Ingresa tu nombre completo (mínimo 3 caracteres)";
     if (!form.phone || !validatePhone(form.phone)) errs.phone = "Teléfono obligatorio (mínimo 10 dígitos)";
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Email válido obligatorio";
     if (!form.barberId) errs.barberId = "Selecciona un barbero";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -277,6 +278,9 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
         </FormField>
         <FormField label="Teléfono *" hint="Para confirmar tu cita por WhatsApp" error={errors.phone}>
           <input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="81 1234 5678" type="tel" />
+        </FormField>
+        <FormField label="Email *" hint="Te enviaremos la confirmación de tu cita" error={errors.email}>
+          <input value={form.email} onChange={e => update("email", e.target.value)} placeholder="tu@email.com" type="email" />
         </FormField>
       </div>
 
