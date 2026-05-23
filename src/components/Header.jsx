@@ -44,7 +44,7 @@ export default function Header({ userType, navItems = [] }) {
         }}>
           <div style={{
             width: 32, height: 32,
-            background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+            background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
             borderRadius: 6,
             display: "flex", alignItems: "center", justifyContent: "center"
           }}>
@@ -78,7 +78,7 @@ export default function Header({ userType, navItems = [] }) {
                 {item.label}
                 {item.key === 'dashboard' && pendingCount > 0 && (
                   <span style={{
-                    background: "#36B1DF", color: "var(--bg-main)",
+                    background: "var(--accent)", color: "var(--bg-main)",
                     borderRadius: "50%", width: 18, height: 18,
                     display: "inline-flex", alignItems: "center", justifyContent: "center",
                     fontSize: 10, fontWeight: 700, marginLeft: 6
@@ -187,7 +187,7 @@ export default function Header({ userType, navItems = [] }) {
               {item.label}
               {item.key === 'dashboard' && pendingCount > 0 && (
                 <span style={{
-                  background: "#36B1DF", color: "var(--bg-main)",
+                  background: "var(--accent)", color: "var(--bg-main)",
                   borderRadius: "50%", width: 16, height: 16,
                   display: "inline-flex", alignItems: "center", justifyContent: "center",
                   fontSize: 9, fontWeight: 700, marginLeft: 4

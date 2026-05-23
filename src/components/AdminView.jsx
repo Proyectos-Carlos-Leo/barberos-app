@@ -208,14 +208,14 @@ export default function AdminView() {
           flexWrap: "wrap"
         }}>
           <span style={{ fontSize: 20 }}>🔔</span>
-          <p style={{ fontSize: 13, color: "#36B1DF", flex: 1, minWidth: 200 }}>
+          <p style={{ fontSize: 13, color: "var(--accent)", flex: 1, minWidth: 200 }}>
             <strong>Activa las notificaciones</strong> para recibir un aviso cada vez que alguien agende una cita
           </p>
           <button
             onClick={handleEnableNotifications}
             style={{
               padding: "6px 14px",
-              background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+              background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
               color: "var(--bg-main)",
               border: "none",
               borderRadius: 6,
@@ -374,7 +374,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         <StatCardPro
           label="Citas hoy"
           value={stats.todayTotal}
-          color="#36B1DF"
+          color="var(--accent)"
           change={apptsChange}
           spark={last7Days.map(d => d.count)}
           maxSpark={maxCount}
@@ -406,7 +406,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         <StatCardPro
           label="Ocupación"
           value={`${ocupacion}%`}
-          color="#36B1DF"
+          color="var(--accent)"
           progress={ocupacion}
         />
       </div>
@@ -428,7 +428,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           <QuickAction
             icon="📊"
             label="Ver reportes"
-            color="#36B1DF"
+            color="var(--accent)"
             onClick={() => document.querySelector('[data-key="reports"]')?.click()}
           />
           <QuickAction
@@ -635,16 +635,16 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           const sc = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
           const isOpen = selected === appt.id;
           return (
-            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "#36B1DF33" : "var(--border)"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
+            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "var(--accent)33" : "var(--border)"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "#36B1DF", minWidth: 56 }}>{appt.time}</div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "var(--accent)", minWidth: 56 }}>{appt.time}</div>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "var(--text-faint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{appt.client}</p>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{appt.service?.name} · {barber?.name || "Sin asignar"}</p>
                 </div>
                 <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                  <span style={{ fontWeight: 700, color: "#36B1DF", fontSize: 16 }}>{formatCurrency(appt.service?.price || 0)}</span>
+                  <span style={{ fontWeight: 700, color: "var(--accent)", fontSize: 16 }}>{formatCurrency(appt.service?.price || 0)}</span>
                   <span className="tag" style={{ background: sc.bg, color: sc.text }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot, display: "inline-block" }}></span>
                     {sc.label}
@@ -670,7 +670,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                     </div>
                   </div>
                   {appt.notes && (
-                    <div style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid #36B1DF" }}>
+                    <div style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid var(--accent)" }}>
                       <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
                       <p style={{ fontSize: 13, fontStyle: "italic", color: "var(--text-secondary)" }}>"{appt.notes}"</p>
                     </div>
@@ -767,7 +767,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
             <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Equipo activo</p>
-            <p style={{ fontSize: 24, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>
+            <p style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>
               {activeBarbers}<span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 400 }}>/{barbers.length}</span>
             </p>
           </div>
@@ -905,7 +905,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
               </div>
               <div className="divider" style={{ margin: "0 0 14px" }} />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, textAlign: "center", marginBottom: 14 }}>
-                {[["Hoy", stats.today, "#36B1DF"], ["Cortes", stats.completed, "#4ade80"], ["Ingresos", formatCurrency(stats.revenue), "#f59e0b"]].map(([label, val, color]) => (
+                {[["Hoy", stats.today, "var(--accent)"], ["Cortes", stats.completed, "#4ade80"], ["Ingresos", formatCurrency(stats.revenue), "#f59e0b"]].map(([label, val, color]) => (
                   <div key={label} style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: "12px 4px" }}>
                     <p style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
                     <p style={{ fontSize: 16, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
@@ -1016,7 +1016,7 @@ function HistoryView({ appointments, barbers }) {
           onClick={handleExport}
           disabled={filtered.length === 0}
           style={{
-            background: filtered.length === 0 ? "var(--bg-track)" : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+            background: filtered.length === 0 ? "var(--bg-track)" : "linear-gradient(135deg, var(--accent), var(--accent-light))",
             color: filtered.length === 0 ? "var(--text-muted)" : "#fff",
             border: "none",
             borderRadius: 8,
@@ -1098,7 +1098,7 @@ function HistoryView({ appointments, barbers }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
         {[
           ["Total completadas", filtered.length, "#4ade80"],
-          ["Ingresos totales", formatCurrency(totalRevenue), "#36B1DF"],
+          ["Ingresos totales", formatCurrency(totalRevenue), "var(--accent)"],
           ["Ticket promedio", filtered.length > 0 ? formatCurrency(Math.round(totalRevenue / filtered.length)) : "$0", "#60a5fa"]
         ].map(([label, value, color]) => (
           <div key={label} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
@@ -1300,7 +1300,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
                     textAlign: "center",
                     transition: "all 0.2s",
                     transform: active ? "translateY(-2px)" : "none",
-                    boxShadow: active ? "0 4px 14px rgba(54,177,223,0.2)" : "none"
+                    boxShadow: active ? "0 4px 14px rgba(var(--accent-rgb),0.2)" : "none"
                   }}
                 >
                   <p style={{
@@ -1570,7 +1570,7 @@ function LoyaltyView({ appointments }) {
             onClick={() => setActiveTab(t.key)}
             style={{
               flex: 1,
-              background: activeTab === t.key ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "transparent",
+              background: activeTab === t.key ? "linear-gradient(135deg, var(--accent), var(--accent-light))" : "transparent",
               color: activeTab === t.key ? "white" : "var(--text-tertiary)",
               border: "none",
               borderRadius: 7,
@@ -1608,7 +1608,7 @@ function LoyaltyView({ appointments }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 20 }}>
             <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
               <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes</p>
-              <p style={{ fontSize: 26, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
+              <p style={{ fontSize: 26, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
             </div>
             <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
               <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Sellos activos</p>
@@ -2035,7 +2035,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
           width: 44, height: 44, borderRadius: "50%",
           background: canRedeem
             ? "linear-gradient(135deg, #f59e0b, #fbbf24)"
-            : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+            : "linear-gradient(135deg, var(--accent), var(--accent-light))",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontWeight: 800, fontSize: 16, color: "#fff", flexShrink: 0
         }}>{initials}</div>
@@ -2053,7 +2053,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
             {client.redeemed > 0 && (
               <span style={{
                 fontSize: 10, fontWeight: 700,
-                background: "rgba(54,177,223,0.15)",
+                background: "rgba(var(--accent-rgb),0.15)",
                 color: "var(--accent)",
                 padding: "2px 8px",
                 borderRadius: 10
@@ -2063,7 +2063,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
           <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📞 {client.phone}</p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <p style={{ fontSize: 28, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>{client.stamps}</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>{client.stamps}</p>
           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>
             sello{client.stamps !== 1 ? 's' : ''}
           </p>

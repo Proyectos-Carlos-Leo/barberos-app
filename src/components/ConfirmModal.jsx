@@ -31,7 +31,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
         <div style={{
           width: 64, height: 64,
           background: danger ? "#3f1111" : "var(--accent-bg)",
-          border: `2px solid ${danger ? "#dc2626" : "#36B1DF"}`,
+          border: `2px solid ${danger ? "#dc2626" : "var(--accent)"}`,
           borderRadius: "50%",
           display: "flex",
           alignItems: "center",
@@ -82,7 +82,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
             onClick={onConfirm}
             style={{
               padding: "12px 24px",
-              background: danger ? "#dc2626" : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+              background: danger ? "#dc2626" : "linear-gradient(135deg, var(--accent), var(--accent-light))",
               color: danger ? "#fff" : "var(--bg-main)",
               border: "none",
               borderRadius: 8,

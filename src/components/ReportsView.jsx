@@ -363,8 +363,8 @@ export default function ReportsView({ appointments, barbers }) {
             style={{
               padding: "10px 16px",
               background: "transparent",
-              border: "1px solid #36B1DF",
-              color: "#36B1DF",
+              border: "1px solid var(--accent)",
+              color: "var(--accent)",
               borderRadius: 8,
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: 13,
@@ -382,7 +382,7 @@ export default function ReportsView({ appointments, barbers }) {
             disabled={appointments.length === 0}
             style={{
               padding: "10px 16px",
-              background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+              background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
               border: "none",
               color: "var(--bg-main)",
               borderRadius: 8,
@@ -403,7 +403,7 @@ export default function ReportsView({ appointments, barbers }) {
       {/* Resumen general */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
         <KPI label="Total citas completadas" value={completed.length} color="#4ade80" icon="✓" />
-        <KPI label="Ingresos totales" value={formatCurrency(totalRevenue)} color="#36B1DF" icon="💰" />
+        <KPI label="Ingresos totales" value={formatCurrency(totalRevenue)} color="var(--accent)" icon="💰" />
         <KPI label="Ticket promedio" value={formatCurrency(Math.round(avgTicket))} color="#60a5fa" icon="🧾" />
         <KPI label="Últimos 7 días" value={formatCurrency(totalLast7)} color="#a78bfa" icon="📅" />
       </div>
@@ -419,7 +419,7 @@ export default function ReportsView({ appointments, barbers }) {
                 key={n}
                 onClick={() => setDaysRange(n)}
                 style={{
-                  background: daysRange === n ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "transparent",
+                  background: daysRange === n ? "linear-gradient(135deg, var(--accent), var(--accent-light))" : "transparent",
                   color: daysRange === n ? "#fff" : "var(--text-tertiary)",
                   border: "none",
                   borderRadius: 6,
@@ -486,7 +486,7 @@ export default function ReportsView({ appointments, barbers }) {
                       {d.revenue > 0 && daysRange <= 15 && (
                         <span style={{
                           fontSize: daysRange > 7 ? 8 : 9,
-                          color: isToday ? "#36B1DF" : "var(--text-dim)",
+                          color: isToday ? "var(--accent)" : "var(--text-dim)",
                           fontWeight: 700,
                           textAlign: "center",
                           whiteSpace: "nowrap"
@@ -501,12 +501,12 @@ export default function ReportsView({ appointments, barbers }) {
                           width: "100%",
                           height: `${Math.max(heightPct, d.revenue > 0 ? 3 : 0)}%`,
                           background: isToday
-                            ? "linear-gradient(180deg, #5FC8EC, #36B1DF, #1A7FAB)"
+                            ? "linear-gradient(180deg, var(--accent-light), var(--accent), var(--accent-dark))"
                             : d.revenue > 0
                               ? "linear-gradient(180deg, #555, #333)"
                               : "var(--bg-track)",
                           borderRadius: "4px 4px 0 0",
-                          border: isToday ? "1px solid #5FC8EC" : d.revenue > 0 ? "1px solid #444" : "1px dashed #222",
+                          border: isToday ? "1px solid var(--accent-light)" : d.revenue > 0 ? "1px solid #444" : "1px dashed #222",
                           minHeight: d.revenue > 0 ? 4 : 0,
                           transition: "all 0.2s ease",
                           position: "relative",
@@ -514,14 +514,14 @@ export default function ReportsView({ appointments, barbers }) {
                         }}
                         onMouseEnter={e => {
                           if (d.revenue > 0) {
-                            e.currentTarget.style.background = "linear-gradient(180deg, #7FD9F2, #36B1DF, #1A7FAB)";
-                            e.currentTarget.style.boxShadow = "0 0 16px rgba(54,177,223,0.7)";
+                            e.currentTarget.style.background = "linear-gradient(180deg, var(--accent-light), var(--accent), var(--accent-dark))";
+                            e.currentTarget.style.boxShadow = "0 0 16px rgba(var(--accent-rgb),0.7)";
                             e.currentTarget.style.filter = "brightness(1.15)";
                           }
                         }}
                         onMouseLeave={e => {
                           e.currentTarget.style.background = isToday
-                            ? "linear-gradient(180deg, #5FC8EC, #36B1DF, #1A7FAB)"
+                            ? "linear-gradient(180deg, var(--accent-light), var(--accent), var(--accent-dark))"
                             : d.revenue > 0
                               ? "linear-gradient(180deg, #555, #333)"
                               : "var(--bg-track)";
@@ -557,7 +557,7 @@ export default function ReportsView({ appointments, barbers }) {
                       <p style={{
                         fontSize: daysRange > 7 ? 9 : 10,
                         fontWeight: 700,
-                        color: isToday ? "#36B1DF" : "var(--text-dim)",
+                        color: isToday ? "var(--accent)" : "var(--text-dim)",
                         textTransform: "uppercase",
                         overflow: "hidden",
                         whiteSpace: "nowrap"
@@ -568,7 +568,7 @@ export default function ReportsView({ appointments, barbers }) {
                     <p style={{
                       fontSize: daysRange > 15 ? 10 : 12,
                       fontWeight: 800,
-                      color: isToday ? "#36B1DF" : "var(--text-tertiary)"
+                      color: isToday ? "var(--accent)" : "var(--text-tertiary)"
                     }}>
                       {d.num}
                     </p>
@@ -589,7 +589,7 @@ export default function ReportsView({ appointments, barbers }) {
               flexWrap: "wrap"
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(180deg, #5FC8EC, #36B1DF)" }} />
+                <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(180deg, var(--accent-light), var(--accent))" }} />
                 <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hoy</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -637,7 +637,7 @@ export default function ReportsView({ appointments, barbers }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                       <span style={{ fontWeight: 600, fontSize: 14 }}>{b.name}</span>
-                      <span style={{ color: "#36B1DF", fontWeight: 700, fontSize: 14 }}>
+                      <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 14 }}>
                         {formatCurrency(b.revenue)}
                       </span>
                     </div>
@@ -652,7 +652,7 @@ export default function ReportsView({ appointments, barbers }) {
                       onMouseEnter={e => {
                         e.currentTarget.style.height = "12px";
                         e.currentTarget.style.boxShadow = i === 0
-                          ? "0 0 8px rgba(54,177,223,0.5)"
+                          ? "0 0 8px rgba(var(--accent-rgb),0.5)"
                           : "0 0 8px rgba(136,136,136,0.4)";
                       }}
                       onMouseLeave={e => {
@@ -664,7 +664,7 @@ export default function ReportsView({ appointments, barbers }) {
                         width: `${widthPct}%`,
                         height: "100%",
                         background: i === 0
-                          ? "linear-gradient(90deg, #36B1DF, #5FC8EC)"
+                          ? "linear-gradient(90deg, var(--accent), var(--accent-light))"
                           : "linear-gradient(90deg, #555, #888)",
                         transition: "width 0.5s"
                       }} />
@@ -696,7 +696,7 @@ export default function ReportsView({ appointments, barbers }) {
                     <span style={{ fontWeight: 600, fontSize: 13 }}>{s.name}</span>
                     <div style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
                       <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.count} corte{s.count !== 1 ? 's' : ''}</span>
-                      <span style={{ color: "#36B1DF", fontWeight: 700, fontSize: 13 }}>
+                      <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
                         {formatCurrency(s.revenue)}
                       </span>
                     </div>
@@ -711,7 +711,7 @@ export default function ReportsView({ appointments, barbers }) {
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.height = "14px";
-                      e.currentTarget.style.boxShadow = "0 0 8px rgba(54,177,223,0.5)";
+                      e.currentTarget.style.boxShadow = "0 0 8px rgba(var(--accent-rgb),0.5)";
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.height = "10px";
@@ -721,7 +721,7 @@ export default function ReportsView({ appointments, barbers }) {
                     <div style={{
                       width: `${widthPct}%`,
                       height: "100%",
-                      background: "linear-gradient(90deg, #36B1DF, #5FC8EC)",
+                      background: "linear-gradient(90deg, var(--accent), var(--accent-light))",
                       transition: "width 0.5s"
                     }} />
                   </div>
@@ -836,7 +836,7 @@ export default function ReportsView({ appointments, barbers }) {
                           {h.count > 0 && (
                             <span style={{
                               fontSize: 9,
-                              color: isPeak ? (isAM ? "#5FC8EC" : "#818cf8") : "var(--text-dim)",
+                              color: isPeak ? (isAM ? "var(--accent-light)" : "#818cf8") : "var(--text-dim)",
                               fontWeight: 700
                             }}>
                               {h.count}
@@ -850,14 +850,14 @@ export default function ReportsView({ appointments, barbers }) {
                               height: `${Math.max(heightPct, 3)}%`,
                               background: isAM
                                 ? isPeak
-                                  ? "linear-gradient(180deg, #e0f4fc, #5FC8EC, #1A7FAB)"
-                                  : "linear-gradient(180deg, #1A7FAB, #0a3d56)"
+                                  ? "linear-gradient(180deg, #e0f4fc, var(--accent-light), var(--accent-dark))"
+                                  : "linear-gradient(180deg, var(--accent-dark), #0a3d56)"
                                 : isPeak
                                   ? "linear-gradient(180deg, #c7d2fe, #818cf8, #4f46e5)"
                                   : "linear-gradient(180deg, #4f46e5, #312e81)",
                               borderRadius: "3px 3px 0 0",
                               border: isPeak
-                                ? `1px solid ${isAM ? "#5FC8EC" : "#818cf8"}`
+                                ? `1px solid ${isAM ? "var(--accent-light)" : "#818cf8"}`
                                 : "1px solid transparent",
                               minHeight: 3,
                               transition: "all 0.2s ease",
@@ -901,7 +901,7 @@ export default function ReportsView({ appointments, barbers }) {
                         <span style={{
                           fontSize: 8,
                           fontWeight: 600,
-                          color: isAM ? "#1A7FAB" : "#6366f1",
+                          color: isAM ? "var(--accent-dark)" : "#6366f1",
                           display: "block"
                         }}>
                           {h.time.replace(":00", "").replace(":30", "³⁰")}
@@ -931,12 +931,12 @@ export default function ReportsView({ appointments, barbers }) {
                   alignItems: "center",
                   gap: 10
                 }}>
-                  <div style={{ width: 10, height: 28, borderRadius: 2, background: "linear-gradient(180deg, #5FC8EC, #1A7FAB)" }} />
+                  <div style={{ width: 10, height: 28, borderRadius: 2, background: "linear-gradient(180deg, var(--accent-light), var(--accent-dark))" }} />
                   <div>
-                    <p style={{ fontSize: 11, color: "#1A7FAB", fontWeight: 700, textTransform: "uppercase" }}>
+                    <p style={{ fontSize: 11, color: "var(--accent-dark)", fontWeight: 700, textTransform: "uppercase" }}>
                       ☀️ AM (9:00 - 13:30)
                     </p>
-                    <p style={{ fontSize: 13, color: "#5FC8EC", fontWeight: 800 }}>
+                    <p style={{ fontSize: 13, color: "var(--accent-light)", fontWeight: 800 }}>
                       {amHours.reduce((s, h) => s + h.count, 0)} citas
                     </p>
                   </div>
@@ -974,7 +974,7 @@ export default function ReportsView({ appointments, barbers }) {
                 alignItems: "center"
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#5FC8EC" }} />
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "var(--accent-light)" }} />
                   <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hora AM pico</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -1012,10 +1012,10 @@ export default function ReportsView({ appointments, barbers }) {
             borderRadius: 10,
             padding: 18
           }}>
-            <p style={{ fontSize: 11, color: "#36B1DF", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
+            <p style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
               Este mes
             </p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: "#36B1DF", fontFamily: "'Barlow Condensed', sans-serif" }}>
+            <p style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
               {formatCurrency(monthComparison.thisMonth.revenue)}
             </p>
             <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
@@ -1065,7 +1065,7 @@ function RangePill({ value, onChange }) {
           key={opt.val}
           onClick={() => onChange(opt.val)}
           style={{
-            background: value === opt.val ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "transparent",
+            background: value === opt.val ? "linear-gradient(135deg, var(--accent), var(--accent-light))" : "transparent",
             color: value === opt.val ? "#fff" : "var(--text-tertiary)",
             border: "none",
             borderRadius: 5,

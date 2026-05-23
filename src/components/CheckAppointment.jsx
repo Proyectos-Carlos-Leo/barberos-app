@@ -83,7 +83,7 @@ export default function CheckAppointment() {
   const STATUS_LABELS = {
     pendiente: { label: 'Pendiente de confirmación', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
     confirmada: { label: 'Confirmada ✓', color: '#4ade80', bg: 'rgba(74,222,128,0.1)' },
-    completada: { label: 'Completada', color: '#36B1DF', bg: 'rgba(54,177,223,0.1)' },
+    completada: { label: 'Completada', color: 'var(--accent)', bg: 'rgba(var(--accent-rgb),0.1)' },
     cancelada: { label: 'Cancelada', color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
   };
 
@@ -250,7 +250,7 @@ export default function CheckAppointment() {
                   <button
                     onClick={handleReschedule}
                     style={{
-                      background: "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+                      background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
                       color: "white",
                       border: "none",
                       borderRadius: 8,

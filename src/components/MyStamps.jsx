@@ -191,10 +191,10 @@ export default function MyStamps() {
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{
                 width: 72, height: 72,
-                background: canRedeem ? "linear-gradient(135deg, #f59e0b, #fbbf24)" : "linear-gradient(135deg, #36B1DF, #5FC8EC)",
+                background: canRedeem ? "linear-gradient(135deg, #f59e0b, #fbbf24)" : "linear-gradient(135deg, var(--accent), var(--accent-light))",
                 borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto 16px", fontSize: 36,
-                boxShadow: canRedeem ? "0 8px 24px rgba(245,158,11,0.4)" : "0 8px 24px rgba(54,177,223,0.3)"
+                boxShadow: canRedeem ? "0 8px 24px rgba(245,158,11,0.4)" : "0 8px 24px rgba(var(--accent-rgb),0.3)"
               }}>
                 {canRedeem ? "🎁" : "🎫"}
               </div>
@@ -265,7 +265,7 @@ export default function MyStamps() {
                           border: `2px solid ${filled ? (canRedeem ? "#f59e0b" : "var(--accent)") : "var(--border)"}`,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: 16,
-                          boxShadow: filled ? "0 4px 12px rgba(54,177,223,0.3)" : "none",
+                          boxShadow: filled ? "0 4px 12px rgba(var(--accent-rgb),0.3)" : "none",
                           overflow: "hidden"
                         }}>
                           {filled && STAMP_IMAGE ? (

@@ -15,6 +15,7 @@
   --text-dim: #777;
   --text-faint: #555;
   --accent: #36B1DF;
+  --accent-rgb: 54, 177, 223;
   --accent-light: #5FC8EC;
   --accent-dark: #1A7FAB;
   --accent-bg: #051520;
@@ -46,6 +47,7 @@
   --text-dim: #4b5563;
   --text-faint: #9ca3af;
   --accent: #1A7FAB;
+  --accent-rgb: 26, 127, 171;
   --accent-light: #36B1DF;
   --accent-dark: #0a3d56;
   --accent-bg: #e0f4fc;

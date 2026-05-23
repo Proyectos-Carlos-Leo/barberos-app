@@ -200,20 +200,20 @@ function StepsIndicator({ currentStep, steps }) {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: "50%",
-                background: isDone ? "#36B1DF" : isActive ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "var(--bg-elevated-2)",
-                border: `2px solid ${isDone || isActive ? "#36B1DF" : "var(--border-strong)"}`,
+                background: isDone ? "var(--accent)" : isActive ? "linear-gradient(135deg, var(--accent), var(--accent-light))" : "var(--bg-elevated-2)",
+                border: `2px solid ${isDone || isActive ? "var(--accent)" : "var(--border-strong)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 14, fontWeight: 800,
                 color: (isDone || isActive) ? "var(--bg-main)" : "var(--text-dim)",
                 transition: "all 0.3s",
-                boxShadow: isActive ? "0 0 16px rgba(54,177,223,0.5)" : "none",
+                boxShadow: isActive ? "0 0 16px rgba(var(--accent-rgb),0.5)" : "none",
                 fontFamily: "'Barlow Condensed', sans-serif"
               }}>
                 {isDone ? "✓" : s.num}
               </div>
               <span style={{
                 fontSize: 11,
-                color: isActive ? "#36B1DF" : isDone ? "var(--text-secondary)" : "var(--text-dim)",
+                color: isActive ? "var(--accent)" : isDone ? "var(--text-secondary)" : "var(--text-dim)",
                 marginTop: 8,
                 fontWeight: isActive ? 700 : 500,
                 textAlign: "center",
@@ -224,7 +224,7 @@ function StepsIndicator({ currentStep, steps }) {
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2,
-                background: currentStep > s.num ? "#36B1DF" : "var(--border)",
+                background: currentStep > s.num ? "var(--accent)" : "var(--border)",
                 marginBottom: 22,
                 transition: "background 0.4s"
               }} />
@@ -245,7 +245,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
           display: "inline-block",
           padding: "4px 12px",
           background: "var(--accent-bg)",
-          color: "var(--accent-light, #5FC8EC)",
+          color: "var(--accent-light, var(--accent-light))",
           borderRadius: 20,
           fontSize: 11,
           fontWeight: 700,
@@ -314,7 +314,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
                 cursor: "pointer",
                 transition: "all 0.25s",
                 transform: isSelected ? "translateY(-2px)" : "none",
-                boxShadow: isSelected ? "0 8px 24px rgba(54,177,223,0.2)" : "none"
+                boxShadow: isSelected ? "0 8px 24px rgba(var(--accent-rgb),0.2)" : "none"
               }}
               onMouseEnter={e => {
                 if (!isSelected) {
@@ -403,7 +403,7 @@ function Step2Service({ form, update, onBack, onNext }) {
           display: "inline-block",
           padding: "4px 12px",
           background: "var(--accent-bg)",
-          color: "var(--accent-light, #5FC8EC)",
+          color: "var(--accent-light, var(--accent-light))",
           borderRadius: 20,
           fontSize: 11,
           fontWeight: 700,
@@ -469,7 +469,7 @@ function Step2Service({ form, update, onBack, onNext }) {
               <div style={{
                 fontSize: 32,
                 width: 56, height: 56,
-                background: isSelected ? "rgba(54,177,223,0.15)" : "var(--bg-elevated-2)",
+                background: isSelected ? "rgba(var(--accent-rgb),0.15)" : "var(--bg-elevated-2)",
                 borderRadius: 12,
                 display: "flex",
                 alignItems: "center",
@@ -581,7 +581,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           display: "inline-block",
           padding: "4px 12px",
           background: "var(--accent-bg)",
-          color: "var(--accent-light, #5FC8EC)",
+          color: "var(--accent-light, var(--accent-light))",
           borderRadius: 20,
           fontSize: 11,
           fontWeight: 700,
@@ -634,7 +634,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                   borderRadius: 12,
                   border: `2px solid ${isSelected ? "var(--accent)" : "var(--border)"}`,
                   background: isSelected
-                    ? "linear-gradient(135deg, var(--accent), var(--accent-light, #5FC8EC))"
+                    ? "linear-gradient(135deg, var(--accent), var(--accent-light, var(--accent-light)))"
                     : "var(--bg-elevated)",
                   cursor: "pointer",
                   textAlign: "center",
@@ -642,7 +642,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                   flexShrink: 0,
                   transition: "all 0.25s",
                   transform: isSelected ? "translateY(-2px)" : "none",
-                  boxShadow: isSelected ? "0 8px 20px rgba(54,177,223,0.3)" : "none"
+                  boxShadow: isSelected ? "0 8px 20px rgba(var(--accent-rgb),0.3)" : "none"
                 }}
                 onMouseEnter={e => {
                   if (!isSelected) {
@@ -730,7 +730,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                     borderRadius: 10,
                     border: `1.5px solid ${isSelected ? "var(--accent)" : unavailable ? "var(--border)" : "var(--border)"}`,
                     background: isSelected
-                      ? "linear-gradient(135deg, var(--accent), var(--accent-light, #5FC8EC))"
+                      ? "linear-gradient(135deg, var(--accent), var(--accent-light, var(--accent-light)))"
                       : unavailable
                         ? "transparent"
                         : "var(--bg-elevated)",
@@ -746,7 +746,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                     transition: "all 0.2s",
                     textAlign: "center",
                     borderStyle: unavailable ? "dashed" : "solid",
-                    boxShadow: isSelected ? "0 4px 14px rgba(54,177,223,0.35)" : "none"
+                    boxShadow: isSelected ? "0 4px 14px rgba(var(--accent-rgb),0.35)" : "none"
                   }}
                   onMouseEnter={e => {
                     if (!unavailable && !isSelected) {
@@ -877,14 +877,14 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
             type="checkbox"
             checked={acceptPrivacy}
             onChange={e => setAcceptPrivacy(e.target.checked)}
-            style={{ marginTop: 3, accentColor: "#36B1DF", width: 16, height: 16, cursor: "pointer" }}
+            style={{ marginTop: 3, accentColor: "var(--accent)", width: 16, height: 16, cursor: "pointer" }}
           />
           <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
             Acepto el{' '}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setShowPrivacyModal(true); }}
-              style={{ background: "transparent", border: "none", color: "#36B1DF", padding: 0, textDecoration: "underline", cursor: "pointer", font: "inherit" }}
+              style={{ background: "transparent", border: "none", color: "var(--accent)", padding: 0, textDecoration: "underline", cursor: "pointer", font: "inherit" }}
             >
               aviso de privacidad
             </button>

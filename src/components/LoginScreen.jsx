@@ -38,7 +38,7 @@ function ClientLanding({ slug }) {
           borderRadius: 20,
           display: "flex", alignItems: "center", justifyContent: "center",
           margin: "0 auto 32px",
-          boxShadow: "0 10px 40px rgba(54,177,223,0.3)"
+          boxShadow: "0 10px 40px rgba(var(--accent-rgb),0.3)"
         }}>
           <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
             <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
@@ -173,7 +173,7 @@ function AdminLanding({ slug }) {
           borderRadius: 20,
           display: "flex", alignItems: "center", justifyContent: "center",
           margin: "0 auto 32px",
-          boxShadow: "0 10px 40px rgba(54,177,223,0.3)"
+          boxShadow: "0 10px 40px rgba(var(--accent-rgb),0.3)"
         }}>
           <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
             <path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 110 4 2 2 0 010-4z"/>
@@ -246,7 +246,7 @@ function GlobalLogin() {
           borderRadius: 20,
           display: "flex", alignItems: "center", justifyContent: "center",
           margin: "0 auto 32px",
-          boxShadow: "0 10px 40px rgba(54,177,223,0.3)"
+          boxShadow: "0 10px 40px rgba(var(--accent-rgb),0.3)"
         }}>
           <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
             <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
