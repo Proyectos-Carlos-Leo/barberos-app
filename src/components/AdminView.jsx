@@ -11,6 +11,7 @@ import ReportsView from './ReportsView';
 import ConfirmModal from './ConfirmModal';
 import { STATUS_COLORS } from '../utils/data';
 import { initNotifications, notifyNewAppointment, updateTabTitle } from '../utils/notifications';
+import { imageToBase64 } from '../utils/imageUpload';
 import {
   getTodayStr,
   filterAppointments,
@@ -707,12 +708,33 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) {
   const [showForm, setShowForm] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [form, setForm] = useState({ name: "", specialty: "" });
+  const [form, setForm] = useState({ name: "", specialty: "", photo: null });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoError('');
+    setUploadingPhoto(true);
+    try {
+      const base64 = await imageToBase64(file, 200, 0.85);
+      setForm(f => ({ ...f, photo: base64 }));
+    } catch (err) {
+      setPhotoError(err.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleAdd = () => {
     if (!form.name.trim() || !form.specialty.trim()) return;
-    onAdd({ name: form.name.trim(), specialty: form.specialty.trim() });
-    setForm({ name: "", specialty: "" });
+    onAdd({
+      name: form.name.trim(),
+      specialty: form.specialty.trim(),
+      photo: form.photo || null
+    });
+    setForm({ name: "", specialty: "", photo: null });
     setShowForm(false);
   };
 
@@ -773,9 +795,55 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
               <input value={form.specialty} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Ej. Degradados" />
             </div>
           </div>
-          <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button className="btn-ghost" onClick={() => { setShowForm(false); setForm({ name: "", specialty: "" }); }}>Cancelar</button>
-            <button className="btn-gold" onClick={handleAdd} disabled={!form.name || !form.specialty}>Agregar</button>
+
+          {/* Foto del barbero */}
+          <div style={{ marginTop: 18 }}>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 8, fontWeight: 600, textTransform: "uppercase" }}>
+              📸 Foto del barbero (opcional)
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <div style={{
+                width: 60, height: 60, borderRadius: "50%",
+                background: form.photo ? "transparent" : "var(--bg-elevated-2)",
+                border: "2px solid var(--accent)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden", fontSize: 22, color: "var(--text-tertiary)",
+                flexShrink: 0
+              }}>
+                {form.photo ? <img src={form.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{
+                  background: "var(--accent-bg)",
+                  border: "1px solid var(--accent-border)",
+                  color: "var(--accent)",
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: uploadingPhoto ? "not-allowed" : "pointer",
+                  opacity: uploadingPhoto ? 0.6 : 1
+                }}>
+                  {uploadingPhoto ? '⏳ Procesando...' : (form.photo ? '🔄 Cambiar foto' : '📷 Subir foto')}
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ display: "none" }} />
+                </label>
+                {form.photo && (
+                  <button type="button" onClick={() => setForm(f => ({ ...f, photo: null }))} style={{
+                    background: "transparent", border: "1px solid var(--danger-bg)",
+                    color: "var(--danger)", padding: "6px 12px", borderRadius: 6,
+                    fontSize: 11, fontWeight: 600, cursor: "pointer"
+                  }}>
+                    🗑 Quitar
+                  </button>
+                )}
+              </div>
+            </div>
+            {photoError && <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 8 }}>⚠ {photoError}</p>}
+          </div>
+
+          <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button className="btn-ghost" onClick={() => { setShowForm(false); setForm({ name: "", specialty: "", photo: null }); setPhotoError(''); }}>Cancelar</button>
+            <button className="btn-gold" onClick={handleAdd} disabled={!form.name || !form.specialty || uploadingPhoto}>Agregar</button>
           </div>
         </div>
       )}
@@ -813,12 +881,17 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
               <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
                 <div style={{
                   width: 60, height: 60, borderRadius: "50%",
-                  background: b.bg,
+                  background: b.photo ? "transparent" : b.bg,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontWeight: 800, fontSize: 20, color: b.color,
                   flexShrink: 0,
-                  border: isTop ? `2px solid #f59e0b` : `2px solid ${b.color}22`
-                }}>{b.avatar}</div>
+                  border: isTop ? `2px solid #f59e0b` : `2px solid ${b.color}22`,
+                  overflow: "hidden"
+                }}>
+                  {b.photo ? (
+                    <img src={b.photo} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : b.avatar}
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 700, fontSize: 17, marginBottom: 3, color: "var(--text-primary)" }}>{b.name}</p>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{b.specialty}</p>
@@ -1395,6 +1468,7 @@ function LoyaltyView({ appointments }) {
   const loyaltyConfig = barbershopConfig?.loyalty_config || {};
   const REQUIRED_STAMPS = loyaltyConfig.required_stamps || 10;
   const REWARD_NAME = loyaltyConfig.reward_name || 'Corte gratis';
+  const STAMP_IMAGE = loyaltyConfig.stamp_image || null;
 
   const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
 
@@ -1568,7 +1642,7 @@ function LoyaltyView({ appointments }) {
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
               {filtered.map((client, i) => (
-                <ClientLoyaltyCard key={client.phone + i} client={client} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} />
+                <ClientLoyaltyCard key={client.phone + i} client={client} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} stampImage={STAMP_IMAGE} />
               ))}
             </div>
           )}
@@ -1592,8 +1666,32 @@ function LoyaltyView({ appointments }) {
 function LoyaltyConfig({ slug, currentConfig }) {
   const [stamps, setStamps] = useState(currentConfig.required_stamps || 10);
   const [reward, setReward] = useState(currentConfig.reward_name || 'Corte gratis');
+  const [stampImage, setStampImage] = useState(currentConfig.stamp_image || null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError('');
+    setUploading(true);
+    try {
+      const base64 = await imageToBase64(file, 200, 0.85);
+      setStampImage(base64);
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (confirm('¿Quitar imagen y usar ✂️ por defecto?')) {
+      setStampImage(null);
+    }
+  };
 
   const handleSave = async () => {
     if (stamps < 2 || stamps > 50) { alert('Sellos entre 2 y 50'); return; }
@@ -1602,7 +1700,8 @@ function LoyaltyConfig({ slug, currentConfig }) {
     try {
       await update(ref(db, `barberias/${slug}/config/loyalty_config`), {
         required_stamps: Number(stamps),
-        reward_name: reward.trim()
+        reward_name: reward.trim(),
+        stamp_image: stampImage || null
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -1623,6 +1722,70 @@ function LoyaltyConfig({ slug, currentConfig }) {
       }}>
         ⚙️ Configurar programa de lealtad
       </h3>
+
+      {/* Imagen del sello */}
+      <div style={{ marginBottom: 22 }}>
+        <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+          🎨 Imagen del sello (opcional)
+        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          {/* Preview */}
+          <div style={{
+            width: 64, height: 64, borderRadius: "50%",
+            background: stampImage ? "transparent" : "linear-gradient(135deg, var(--accent), var(--accent-light))",
+            border: `2px solid var(--accent)`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden", fontSize: 24, flexShrink: 0
+          }}>
+            {stampImage ? <img src={stampImage} alt="Sello" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "✂️"}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{
+              background: "var(--accent-bg)",
+              border: "1px solid var(--accent-border)",
+              color: "var(--accent)",
+              padding: "8px 14px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.6 : 1,
+              fontFamily: "'Barlow', sans-serif"
+            }}>
+              {uploading ? '⏳ Procesando...' : (stampImage ? '🔄 Cambiar imagen' : '📷 Subir imagen')}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{ display: "none" }}
+              />
+            </label>
+            {stampImage && (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--danger-bg)",
+                  color: "var(--danger)",
+                  padding: "6px 12px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer"
+                }}
+              >
+                🗑 Quitar imagen
+              </button>
+            )}
+          </div>
+        </div>
+        {uploadError && <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 8 }}>⚠ {uploadError}</p>}
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
+          Sube el logo de tu barbería como sello. Tamaño máx 5 MB, se redimensiona automáticamente.
+        </p>
+      </div>
 
       <div style={{ marginBottom: 18 }}>
         <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
@@ -1853,7 +2016,7 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
   );
 }
 
-function ClientLoyaltyCard({ client, requiredStamps, rewardName }) {
+function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
   const REQ = requiredStamps || 10;
   const stampsForNext = REQ - (client.stamps % REQ);
   const initials = (client.client || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -1933,12 +2096,17 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName }) {
               <div key={idx} style={{
                 aspectRatio: "1",
                 borderRadius: "50%",
-                background: filled ? "linear-gradient(135deg, #36B1DF, #5FC8EC)" : "var(--bg-track)",
-                border: `2px solid ${filled ? "#36B1DF" : "var(--border)"}`,
+                background: filled
+                  ? (stampImage ? "transparent" : "linear-gradient(135deg, var(--accent), var(--accent-light))")
+                  : "var(--bg-track)",
+                border: `2px solid ${filled ? "var(--accent)" : "var(--border)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 14, color: filled ? "#fff" : "transparent"
+                fontSize: 14, color: filled ? "#fff" : "transparent",
+                overflow: "hidden"
               }}>
-                {filled ? "✂️" : "·"}
+                {filled && stampImage ? (
+                  <img src={stampImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : filled ? "✂️" : "·"}
               </div>
             );
           })}

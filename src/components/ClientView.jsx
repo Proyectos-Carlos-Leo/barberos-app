@@ -343,14 +343,17 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
               )}
               <div style={{
                 width: 56, height: 56, borderRadius: "50%",
-                background: b.bg,
+                background: b.photo ? "transparent" : b.bg,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontWeight: 800, fontSize: 20,
                 color: b.color,
                 marginBottom: 12,
-                border: isSelected ? `2px solid ${b.color}` : "none"
+                border: isSelected ? `2px solid ${b.color}` : "none",
+                overflow: "hidden"
               }}>
-                {b.avatar}
+                {b.photo ? (
+                  <img src={b.photo} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : b.avatar}
               </div>
               <p style={{
                 fontWeight: 700, fontSize: 15,

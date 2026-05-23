@@ -23,6 +23,7 @@ export default function MyStamps() {
   const loyaltyConfig = barbershopConfig?.loyalty_config || {};
   const REQUIRED_STAMPS = loyaltyConfig.required_stamps || 10;
   const REWARD_NAME = loyaltyConfig.reward_name || 'Corte gratis';
+  const STAMP_IMAGE = loyaltyConfig.stamp_image || null; // base64 imagen custom
 
   const normalizePhone = (p) => (p || '').replace(/[\s\-().]/g, '');
 
@@ -249,7 +250,7 @@ export default function MyStamps() {
                   </div>
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: `repeat(${Math.min(REQUIRED_STAMPS, 10)}, 1fr)`,
+                    gridTemplateColumns: `repeat(${Math.min(REQUIRED_STAMPS, 5)}, minmax(0, 1fr))`,
                     gap: 8
                   }}>
                     {Array.from({ length: REQUIRED_STAMPS }).map((_, idx) => {
@@ -259,14 +260,17 @@ export default function MyStamps() {
                           aspectRatio: "1",
                           borderRadius: "50%",
                           background: filled
-                            ? (canRedeem ? "linear-gradient(135deg, #f59e0b, #fbbf24)" : "linear-gradient(135deg, #36B1DF, #5FC8EC)")
+                            ? (STAMP_IMAGE ? "transparent" : (canRedeem ? "linear-gradient(135deg, #f59e0b, #fbbf24)" : "linear-gradient(135deg, var(--accent), var(--accent-light))"))
                             : "var(--bg-track)",
-                          border: `2px solid ${filled ? (canRedeem ? "#f59e0b" : "#36B1DF") : "var(--border)"}`,
+                          border: `2px solid ${filled ? (canRedeem ? "#f59e0b" : "var(--accent)") : "var(--border)"}`,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: 16,
-                          boxShadow: filled ? "0 4px 12px rgba(54,177,223,0.3)" : "none"
+                          boxShadow: filled ? "0 4px 12px rgba(54,177,223,0.3)" : "none",
+                          overflow: "hidden"
                         }}>
-                          {filled ? "✂️" : ""}
+                          {filled && STAMP_IMAGE ? (
+                            <img src={STAMP_IMAGE} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : filled ? "✂️" : ""}
                         </div>
                       );
                     })}

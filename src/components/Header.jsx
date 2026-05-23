@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import AdminSettings from './AdminSettings';
 
 export default function Header({ userType, navItems = [] }) {
   const navigate = useNavigate();
   const { slug } = useParams();
   const { appointments } = useApp();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const pendingCount = appointments.filter(a => a.status === "pendiente").length;
   const home = slug
@@ -114,17 +117,42 @@ export default function Header({ userType, navItems = [] }) {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          {/* Badge rol */}
-          <span style={{
-            fontSize: 11, color: "var(--text-tertiary)",
-            fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
-            background: userType === 'admin' ? "var(--accent-bg)" : "var(--bg-elevated)",
-            padding: "4px 8px", borderRadius: 4,
-            border: `1px solid ${userType === 'admin' ? "var(--accent-border)" : "var(--border)"}`,
-            whiteSpace: "nowrap",
-          }}>
-            {userType === 'admin' ? '⚙️' : '👤'}
-          </span>
+          {/* Badge rol — clickeable para admin */}
+          {userType === 'admin' ? (
+            <button
+              onClick={() => setSettingsOpen(true)}
+              title="Configuración de la barbería"
+              style={{
+                fontSize: 14,
+                background: "var(--accent-bg)",
+                padding: "6px 10px", borderRadius: 6,
+                border: "1px solid var(--accent-border)",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                color: "var(--accent)",
+                fontFamily: "inherit"
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = "var(--accent)";
+                e.currentTarget.style.transform = "rotate(45deg)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "var(--accent-bg)";
+                e.currentTarget.style.transform = "rotate(0)";
+              }}
+            >⚙️</button>
+          ) : (
+            <span style={{
+              fontSize: 11, color: "var(--text-tertiary)",
+              fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
+              background: "var(--bg-elevated)",
+              padding: "4px 8px", borderRadius: 4,
+              border: "1px solid var(--border)",
+              whiteSpace: "nowrap",
+            }}>
+              👤
+            </span>
+          )}
 
           {/* Botón salir / inicio */}
           {userType === 'admin' ? (
@@ -171,6 +199,7 @@ export default function Header({ userType, navItems = [] }) {
           ))}
         </div>
       )}
+      {userType === 'admin' && <AdminSettings open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
     </header>
   );
 }

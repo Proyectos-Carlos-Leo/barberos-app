@@ -43,6 +43,26 @@ export function AppProvider({ children, slug }) {
     return () => unsub();
   }, [slug, basePath]);
 
+  // Aplicar color custom desde la config
+  useEffect(() => {
+    const root = document.documentElement;
+    const theme = barbershopConfig?.theme_color;
+    if (theme && theme.primary) {
+      root.style.setProperty('--accent', theme.primary);
+      root.style.setProperty('--accent-light', theme.light || theme.primary);
+      root.style.setProperty('--accent-dark', theme.dark || theme.primary);
+      root.style.setProperty('--accent-bg', theme.bg || '#051520');
+      root.style.setProperty('--accent-border', theme.border || theme.primary + '44');
+    } else {
+      // Restaurar default si no hay config
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--accent-light');
+      root.style.removeProperty('--accent-dark');
+      root.style.removeProperty('--accent-bg');
+      root.style.removeProperty('--accent-border');
+    }
+  }, [barbershopConfig?.theme_color]);
+
   // ========== CITAS ==========
   useEffect(() => {
     if (!basePath || notFound) return;
