@@ -635,7 +635,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           const sc = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
           const isOpen = selected === appt.id;
           return (
-            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "var(--accent)33" : "var(--border)"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
+            <div key={appt.id} className="card appt-card" style={{ cursor: "pointer", border: `1px solid ${isOpen ? "rgba(var(--accent-rgb), 0.2)" : "var(--border)"}`, transition: "all 0.2s" }} onClick={() => setSelected(isOpen ? null : appt.id)}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "var(--accent)", minWidth: 56 }}>{appt.time}</div>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "var(--text-faint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
