@@ -117,6 +117,7 @@ export default function ClientView() {
     const newAppt = await addAppointment({
       client: cleanName,
       phone: cleanPhone,
+      client_email: form.email.trim().toLowerCase(),
       barberId: form.barberId,
       service: selectedService,
       date: form.date,
@@ -130,7 +131,7 @@ export default function ClientView() {
   };
 
   const reset = () => {
-    setForm({ client: "", phone: "", barberId: "", serviceId: "", date: "", time: "", notes: "" });
+    setForm({ client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: "" });
     setStep(1);
     setDone(false);
     setCompletedAppointment(null);
