@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import LoadingScreen from './LoadingScreen';
 import ConfirmModal from './ConfirmModal';
 
 const DEFAULT_SERVICES = [
@@ -23,7 +22,12 @@ export default function ClientView() {
   const { appointments, barbers, blocks, services: firebaseServices, addAppointment, loading, slug, barbershopConfig } = useApp();
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
+      <div style={{ width: 48, height: 48, border: '3px solid var(--border)', borderTop: '3px solid var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   const activeBarbers = barbers.filter(b => b.active);
   const selectedBarber = activeBarbers.find(b => b.id === form.barberId);
