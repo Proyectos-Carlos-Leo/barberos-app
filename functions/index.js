@@ -190,30 +190,30 @@ exports.sendAppointmentConfirmation = onValueCreated(
               <div class="section">
                 <div class="section-title">Detalles de tu cita</div>
                 <div class="detail">
-                  <span class="detail-label">Fecha</span>
+                  <span class="detail-label">Fecha:</span>
                   <span class="detail-value">${formattedDate}</span>
                 </div>
                 <div class="detail">
-                  <span class="detail-label">Hora</span>
+                  <span class="detail-label">Hora:</span>
                   <span class="detail-value">${appointment.time || "No especificada"}</span>
                 </div>
                 <div class="detail">
-                  <span class="detail-label">Servicio</span>
+                  <span class="detail-label">Servicio:</span>
                   <span class="detail-value">${service.name || "No especificado"}</span>
                 </div>
                 <div class="detail">
-                  <span class="detail-label">Barbero</span>
+                  <span class="detail-label">Barbero:</span>
                   <span class="detail-value">${barber.name || "Por asignar"}</span>
                 </div>
                 ${service.duration ? `
                 <div class="detail">
-                  <span class="detail-label">Duración</span>
+                  <span class="detail-label">Duración:</span>
                   <span class="detail-value">${service.duration} minutos</span>
                 </div>
                 ` : ""}
                 ${service.price ? `
                 <div class="detail">
-                  <span class="detail-label">Precio</span>
+                  <span class="detail-label">Precio:</span>
                   <span class="detail-value">$${service.price}</span>
                 </div>
                 ` : ""}
@@ -224,13 +224,13 @@ exports.sendAppointmentConfirmation = onValueCreated(
                 <div class="section-title">Ubicación e información</div>
                 ${config.direccion ? `
                 <div class="detail">
-                  <span class="detail-label">Dirección</span>
+                  <span class="detail-label">Dirección:</span>
                   <span class="detail-value">${config.direccion}</span>
                 </div>
                 ` : ""}
                 ${config.telefono ? `
                 <div class="detail">
-                  <span class="detail-label">Teléfono</span>
+                  <span class="detail-label">Teléfono:</span>
                   <span class="detail-value"><a href="tel:${config.telefono}" style="color: #36B1DF; text-decoration: none;">${config.telefono}</a></span>
                 </div>
                 ` : ""}
