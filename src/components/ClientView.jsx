@@ -8,10 +8,12 @@ const DEFAULT_SERVICES = [
   { id: '3', name: 'Barba completa', duration: 30, price: 100 },
 ];
 
+const STEP_LABELS = ['Privacidad', 'Tus datos', 'Servicio', 'Fecha y hora', 'Confirmar'];
+
 export default function ClientView() {
-  const [step, setStep] = useState(1); // 1: Privacy, 2: Personal, 3: Barber, 4: Service, 5: DateTime, 6: Confirm
-  const [form, setForm] = useState({ client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: "" });
-  const [citas, setCitas] = useState([]); // Array de citas agendadas en esta sesión
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({ client: '', phone: '', email: '', barberId: '', serviceId: '', date: '', time: '', notes: '' });
+  const [citas, setCitas] = useState([]);
   const [errors, setErrors] = useState({});
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -19,7 +21,7 @@ export default function ClientView() {
   const [completedAppointment, setCompletedAppointment] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const { appointments, barbers, blocks, services: firebaseServices, addAppointment, loading, slug, barbershopConfig } = useApp();
+  const { appointments, barbers, blocks, services: firebaseServices, addAppointment, loading, barbershopConfig } = useApp();
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
   if (loading) return (
@@ -33,52 +35,40 @@ export default function ClientView() {
   const selectedBarber = activeBarbers.find(b => b.id === form.barberId);
   const selectedService = SERVICES.find(s => String(s.id) === String(form.serviceId));
 
-  const getTakenTimes = (appts, barberId, date) => {
-    return appts.filter(a => a.barberId === barberId && a.date === date && a.status !== 'cancelada').map(a => a.time);
-  };
+  const getTakenTimes = (appts, barberId, date) =>
+    appts.filter(a => a.barberId === barberId && a.date === date && a.status !== 'cancelada').map(a => a.time);
 
-  const getBlockedTimes = (blocks, barberId, date) => {
-    return blocks.filter(b => b.barberId === barberId && b.date === date).flatMap(b => {
+  const getBlockedTimes = (blks, barberId, date) =>
+    blks.filter(b => b.barberId === barberId && b.date === date).flatMap(b => {
       const times = [];
-      const [h1, m1] = b.horaInicio.split(':');
-      const [h2, m2] = b.horaFin.split(':');
-      for (let h = parseInt(h1); h <= parseInt(h2); h++) {
-        times.push(`${String(h).padStart(2, '0')}:00`);
-      }
+      const h1 = parseInt(b.horaInicio?.split(':')[0] || 0);
+      const h2 = parseInt(b.horaFin?.split(':')[0] || 0);
+      for (let h = h1; h <= h2; h++) times.push(`${String(h).padStart(2, '0')}:00`);
       return times;
     });
-  };
 
-  const validateName = (name) => name && name.trim().length >= 3;
-  const validatePhone = (phone) => /^\d{8,20}$/.test(phone.replace(/\D/g, ''));
+  const validateName = name => name && name.trim().length >= 3;
+  const validatePhone = phone => /^\d{8,20}$/.test(phone.replace(/\D/g, ''));
 
   const handleNext = () => {
     if (step === 1) {
-      if (!acceptPrivacy) {
-        setErrors({ privacy: "Debes aceptar el aviso de privacidad" });
-        return;
-      }
-      setErrors({});
-      setStep(2);
+      if (!acceptPrivacy) { setErrors({ privacy: 'Debes aceptar el aviso de privacidad para continuar' }); return; }
+      setErrors({}); setStep(2);
     } else if (step === 2) {
       const errs = {};
-      if (!validateName(form.client)) errs.client = "Nombre completo requerido (3+ caracteres)";
-      if (!form.phone || !validatePhone(form.phone)) errs.phone = "Teléfono inválido";
-      if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Email válido requerido";
-      if (!form.barberId) errs.barberId = "Selecciona un barbero";
+      if (!validateName(form.client)) errs.client = 'Ingresa tu nombre completo';
+      if (!form.phone || !validatePhone(form.phone)) errs.phone = 'Ingresa un número de teléfono válido';
+      if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Ingresa tu correo electrónico';
+      if (!form.barberId) errs.barberId = 'Elige con quién quieres tu cita';
       setErrors(errs);
       if (Object.keys(errs).length === 0) setStep(3);
     } else if (step === 3) {
-      if (!form.serviceId) {
-        setErrors({ serviceId: "Selecciona un servicio" });
-        return;
-      }
-      setErrors({});
-      setStep(4);
+      if (!form.serviceId) { setErrors({ serviceId: 'Elige uno de los servicios disponibles' }); return; }
+      setErrors({}); setStep(4);
     } else if (step === 4) {
       const errs = {};
-      if (!form.date) errs.date = "Selecciona una fecha";
-      if (!form.time) errs.time = "Selecciona una hora";
+      if (!form.date) errs.date = 'Selecciona el día de tu cita';
+      if (!form.time) errs.time = 'Elige un horario disponible';
       setErrors(errs);
       if (Object.keys(errs).length === 0) setStep(5);
     }
@@ -87,12 +77,9 @@ export default function ClientView() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const cleanName = form.client.trim().replace(/\s+/g, ' ');
-      const cleanPhone = form.phone.replace(/\D/g, '');
-
       const newAppt = await addAppointment({
-        client: cleanName,
-        phone: cleanPhone,
+        client: form.client.trim().replace(/\s+/g, ' '),
+        phone: form.phone.replace(/\D/g, ''),
         client_email: form.email.trim().toLowerCase(),
         barberId: form.barberId,
         service: selectedService,
@@ -100,7 +87,6 @@ export default function ClientView() {
         time: form.time,
         notes: form.notes.trim().slice(0, 500)
       });
-
       if (newAppt) {
         setCitas([...citas, { ...newAppt, barber: selectedBarber }]);
         setCompletedAppointment({ ...newAppt, barber: selectedBarber });
@@ -108,25 +94,22 @@ export default function ClientView() {
       }
     } catch (err) {
       console.error('Error:', err);
-      setErrors({ submit: 'Error al agendar cita' });
+      setErrors({ submit: 'Ocurrió un error, intenta de nuevo' });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleAddAnother = () => {
-    setForm({ client: form.client, phone: form.phone, email: form.email, barberId: "", serviceId: "", date: "", time: "", notes: "" });
+    setForm({ client: form.client, phone: form.phone, email: form.email, barberId: '', serviceId: '', date: '', time: '', notes: '' });
     setDone(false);
     setCompletedAppointment(null);
-    setStep(3); // Vuelve a seleccionar barbero (datos personales ya están)
+    setStep(3);
   };
 
   const handleReset = () => {
-    setForm({ client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: "" });
-    setStep(1);
-    setDone(false);
-    setCitas([]);
-    setAcceptPrivacy(false);
+    setForm({ client: '', phone: '', email: '', barberId: '', serviceId: '', date: '', time: '', notes: '' });
+    setStep(1); setDone(false); setCitas([]); setAcceptPrivacy(false);
   };
 
   const update = (field, value) => {
@@ -134,125 +117,130 @@ export default function ClientView() {
     if (errors[field]) setErrors({ ...errors, [field]: null });
   };
 
-  if (done) {
-    return (
-      <div style={{ minHeight: "100vh", background: "var(--bg-main)", padding: "40px 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ maxWidth: 600, textAlign: "center" }}>
-          <div style={{ fontSize: 64, marginBottom: 20 }}>✓</div>
-          <h1 className="section-title">Cita Agendada</h1>
-          <p style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 16 }}>Te esperamos, {completedAppointment?.client}</p>
-
-          <div style={{
-            background: "var(--accent-bg)",
-            border: "1px solid var(--accent-border)",
-            borderRadius: 12,
-            padding: 20,
-            marginBottom: 24,
-            textAlign: "left"
-          }}>
-            <p style={{ color: "var(--text-muted)", fontSize: 12, marginBottom: 8 }}>FOLIO</p>
-            <p style={{ color: "var(--accent)", fontSize: 32, fontWeight: 800, fontFamily: "'Courier New', monospace", marginBottom: 16 }}>
-              {completedAppointment?.folio}
-            </p>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-              <p><strong>Fecha:</strong> {new Date(completedAppointment?.date + 'T12:00:00').toLocaleDateString('es-MX')}</p>
-              <p><strong>Hora:</strong> {completedAppointment?.time}</p>
-              <p><strong>Barbero:</strong> {completedAppointment?.barber?.name}</p>
-            </div>
-          </div>
-
-          {citas.length === 1 ? (
-            <div style={{ display: "flex", gap: 12 }}>
-              <button className="btn-ghost" onClick={handleAddAnother} style={{ flex: 1 }}>Agregar otra cita</button>
-              <button className="btn-gold" onClick={handleReset} style={{ flex: 1 }}>Terminar</button>
-            </div>
-          ) : (
-            <div>
-              <p style={{ color: "var(--text-tertiary)", marginBottom: 16 }}>Citas agendadas: {citas.length}</p>
-              <button className="btn-gold" onClick={handleReset} style={{ width: "100%" }}>Listo</button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   const takenTimes = getTakenTimes(appointments, form.barberId, form.date);
   const blockedTimes = getBlockedTimes(blocks, form.barberId, form.date);
 
-  return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-main)", padding: "20px" }}>
-      <div style={{ maxWidth: 600, margin: "0 auto" }}>
-        {/* STEP 1: PRIVACY */}
-        {step === 1 && (
-          <div className="fade-in" style={{ paddingTop: 20 }}>
-            <h1 className="section-title" style={{ textAlign: "center", marginBottom: 32 }}>Antes de agendar</h1>
+  // ─── PANTALLA DE ÉXITO ───────────────────────────────────────────────────
+  if (done) return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-main)', padding: '40px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
 
-            <div style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-strong)",
-              borderRadius: 12,
-              padding: 20,
-              marginBottom: 20
-            }}>
-              <p style={{ color: "var(--text-secondary)", marginBottom: 16, fontSize: 14, lineHeight: 1.6 }}>
-                Para agendar tu cita, necesitamos que aceptes nuestro aviso de privacidad. Tus datos serán utilizados únicamente para gestionar tu cita y contactarte si es necesario.
+        <div style={{
+          width: 72, height: 72, borderRadius: '50%',
+          background: 'var(--accent-bg)', border: '2px solid var(--accent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 24px', fontSize: 32
+        }}>✓</div>
+
+        <h1 className="section-title" style={{ marginBottom: 6 }}>¡Cita confirmada!</h1>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: 16 }}>
+          Nos vemos pronto, <strong>{completedAppointment?.client}</strong>
+        </p>
+
+        <div style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', borderRadius: 12, padding: 24, marginBottom: 24, textAlign: 'left' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 11, letterSpacing: 1.5, marginBottom: 8 }}>NÚMERO DE REFERENCIA</p>
+          <p style={{ color: 'var(--accent)', fontSize: 34, fontWeight: 800, fontFamily: "'Courier New', monospace", marginBottom: 16, letterSpacing: 4 }}>
+            {completedAppointment?.folio}
+          </p>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 2 }}>
+            <p><strong>Fecha:</strong> {new Date(completedAppointment?.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p><strong>Hora:</strong> {completedAppointment?.time}</p>
+            <p><strong>Barbero:</strong> {completedAppointment?.barber?.name}</p>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 16 }}>
+            Te enviamos la confirmación a tu correo.
+          </p>
+        </div>
+
+        {citas.length === 1 ? (
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn-ghost" onClick={handleAddAnother} style={{ flex: 1 }}>Agendar otra cita</button>
+            <button className="btn-gold" onClick={handleReset} style={{ flex: 1 }}>Listo</button>
+          </div>
+        ) : (
+          <div>
+            <p style={{ color: 'var(--text-tertiary)', marginBottom: 16, fontSize: 13 }}>{citas.length} citas agendadas en esta sesión</p>
+            <button className="btn-gold" onClick={handleReset} style={{ width: '100%' }}>Finalizar</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ─── BARRA DE PROGRESO ───────────────────────────────────────────────────
+  const Progress = () => (
+    <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
+      {[1,2,3,4,5].map(s => (
+        <div key={s} style={{
+          flex: 1, height: 3, borderRadius: 2,
+          background: s <= step ? 'var(--accent)' : 'var(--border)',
+          transition: 'background 0.3s'
+        }} />
+      ))}
+    </div>
+  );
+
+  // ─── FORMULARIO ──────────────────────────────────────────────────────────
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-main)', padding: '20px' }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', paddingTop: 20 }}>
+
+        <Progress />
+
+        {/* ── STEP 1: PRIVACIDAD ── */}
+        {step === 1 && (
+          <div className="fade-in">
+            <h1 className="section-title" style={{ marginBottom: 6 }}>
+              {barbershopConfig?.nombre ? `Agenda en ${barbershopConfig.nombre}` : 'Agenda tu cita'}
+            </h1>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 28 }}>
+              Solo te tomará un par de minutos.
+            </p>
+
+            <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
+                Usaremos tu nombre, teléfono y correo únicamente para confirmar tu cita y avisarte si hay algún cambio. No compartimos tu información con nadie.
               </p>
 
-              <div style={{
-                background: "var(--bg-input)",
-                border: `1px solid ${acceptPrivacy ? "var(--accent)" : "var(--border)"}`,
-                borderRadius: 8,
-                padding: 16,
-                marginBottom: 20,
-                cursor: "pointer",
-                transition: "border-color 0.2s"
-              }}
+              <div
                 onClick={() => setAcceptPrivacy(!acceptPrivacy)}
+                style={{
+                  background: 'var(--bg-input)',
+                  border: `1.5px solid ${acceptPrivacy ? 'var(--accent)' : 'var(--border)'}`,
+                  borderRadius: 8, padding: '14px 16px',
+                  cursor: 'pointer', transition: 'border-color 0.2s', marginBottom: 20
+                }}
               >
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
                   <input
-                    type="checkbox"
-                    checked={acceptPrivacy}
+                    type="checkbox" checked={acceptPrivacy}
                     onChange={e => setAcceptPrivacy(e.target.checked)}
-                    style={{ marginTop: 4, accentColor: "var(--accent)", width: 18, height: 18, cursor: "pointer" }}
+                    style={{ accentColor: 'var(--accent)', width: 18, height: 18, cursor: 'pointer', flexShrink: 0 }}
                   />
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                     Acepto el{' '}
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); setShowPrivacyModal(true); }}
-                      style={{ background: "transparent", border: "none", color: "var(--accent)", padding: 0, textDecoration: "underline", cursor: "pointer", font: "inherit", fontWeight: 600 }}
-                    >
-                      aviso de privacidad
-                    </button>
-                    {' '}y autorizo el procesamiento de mis datos personales.
+                      onClick={e => { e.stopPropagation(); setShowPrivacyModal(true); }}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--accent)', padding: 0, textDecoration: 'underline', cursor: 'pointer', font: 'inherit', fontWeight: 600 }}
+                    >aviso de privacidad</button>
+                    {' '}y el uso de mis datos para gestionar mi cita.
                   </span>
                 </label>
               </div>
 
-              {errors.privacy && (
-                <p style={{ color: "var(--danger)", fontSize: 12, marginBottom: 16 }}>{errors.privacy}</p>
-              )}
+              {errors.privacy && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 12 }}>{errors.privacy}</p>}
 
-              <button className="btn-gold" onClick={handleNext} disabled={!acceptPrivacy} style={{ width: "100%" }}>
-                Continuar
+              <button className="btn-gold" onClick={handleNext} disabled={!acceptPrivacy} style={{ width: '100%' }}>
+                Comenzar
               </button>
             </div>
 
-            {/* Modal Privacidad */}
             {showPrivacyModal && (
               <ConfirmModal
                 open={showPrivacyModal}
                 title="Aviso de Privacidad"
-                message={`Tus datos personales serán utilizados para:
-                
-• Agendar y gestionar tu cita
-• Enviarte confirmación por correo
-• Contactarte si es necesario
-• Mejorar nuestros servicios
-
-No compartimos tus datos con terceros. Puedes solicitar la eliminación de tus datos en cualquier momento.`}
+                message={`Tus datos personales serán usados para:\n\n• Confirmar y gestionar tu cita\n• Enviarte un correo de confirmación\n• Contactarte si hay algún cambio\n\nNo vendemos ni compartimos tu información con terceros. Puedes pedir que eliminemos tus datos en cualquier momento.`}
                 confirmText="Entendido"
                 onConfirm={() => setShowPrivacyModal(false)}
                 cancelText=""
@@ -261,119 +249,141 @@ No compartimos tus datos con terceros. Puedes solicitar la eliminación de tus d
           </div>
         )}
 
-        {/* STEP 2: PERSONAL INFO */}
+        {/* ── STEP 2: DATOS PERSONALES ── */}
         {step === 2 && (
-          <div className="fade-in" style={{ paddingTop: 20 }}>
-            <h1 className="section-title" style={{ marginBottom: 8 }}>Tus datos</h1>
-            <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginBottom: 24 }}>
-              Información para tu cita
+          <div className="fade-in">
+            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Cómo te contactamos?</h1>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 28 }}>
+              Te enviaremos la confirmación de tu cita.
             </p>
 
-            <div style={{ display: "grid", gap: 16, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gap: 18, marginBottom: 28 }}>
               <div>
-                <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Nombre completo *</label>
-                <input value={form.client} onChange={e => update("client", e.target.value)} placeholder="Tu nombre" />
-                {errors.client && <p style={{ color: "var(--danger)", fontSize: 11, marginTop: 6 }}>{errors.client}</p>}
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+                  Tu nombre
+                </label>
+                <input value={form.client} onChange={e => update('client', e.target.value)} placeholder="Nombre completo" autoFocus />
+                {errors.client && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.client}</p>}
               </div>
 
               <div>
-                <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Teléfono *</label>
-                <input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="81 1234 5678" type="tel" />
-                {errors.phone && <p style={{ color: "var(--danger)", fontSize: 11, marginTop: 6 }}>{errors.phone}</p>}
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+                  Teléfono
+                </label>
+                <input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="81 1234 5678" type="tel" />
+                {errors.phone && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.phone}</p>}
               </div>
 
               <div>
-                <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Email *</label>
-                <input value={form.email} onChange={e => update("email", e.target.value)} placeholder="tu@email.com" type="email" />
-                {errors.email && <p style={{ color: "var(--danger)", fontSize: 11, marginTop: 6 }}>{errors.email}</p>}
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+                  Correo electrónico
+                </label>
+                <input value={form.email} onChange={e => update('email', e.target.value)} placeholder="tu@correo.com" type="email" />
+                {errors.email && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.email}</p>}
               </div>
 
               <div>
-                <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Barbero *</label>
-                <select value={form.barberId} onChange={e => update("barberId", e.target.value)}>
-                  <option value="">Selecciona un barbero</option>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+                  ¿Con quién quieres tu cita?
+                </label>
+                <select value={form.barberId} onChange={e => update('barberId', e.target.value)}>
+                  <option value="">Elige tu barbero</option>
                   {activeBarbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
-                {errors.barberId && <p style={{ color: "var(--danger)", fontSize: 11, marginTop: 6 }}>{errors.barberId}</p>}
+                {errors.barberId && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.barberId}</p>}
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 12 }}>
-              <button className="btn-ghost" onClick={() => setStep(1)} style={{ flex: 1 }}>Atrás</button>
-              <button className="btn-gold" onClick={handleNext} style={{ flex: 1 }}>Siguiente</button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-ghost" onClick={() => setStep(1)} style={{ flex: 1 }}>← Volver</button>
+              <button className="btn-gold" onClick={handleNext} style={{ flex: 1 }}>Continuar →</button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: SERVICE */}
+        {/* ── STEP 3: SERVICIO ── */}
         {step === 3 && (
-          <div className="fade-in" style={{ paddingTop: 20 }}>
-            <h1 className="section-title" style={{ marginBottom: 8 }}>Selecciona servicio</h1>
-            <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginBottom: 20 }}>
-              Elige el servicio para {form.client}
+          <div className="fade-in">
+            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Qué servicio necesitas?</h1>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
+              Con <strong style={{ color: 'var(--text-secondary)' }}>{selectedBarber?.name || 'tu barbero'}</strong>
             </p>
 
-            <div style={{ display: "grid", gap: 12, marginBottom: 24 }}>
-              {SERVICES.map(s => (
-                <div
-                  key={s.id}
-                  onClick={() => update("serviceId", String(s.id))}
-                  style={{
-                    background: String(s.id) === String(form.serviceId) ? "var(--accent-bg)" : "var(--bg-elevated)",
-                    border: `1px solid ${String(s.id) === String(form.serviceId) ? "var(--accent)" : "var(--border)"}`,
-                    borderRadius: 10,
-                    padding: 16,
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <p style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>{s.name}</p>
-                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{s.duration} min — ${s.price}</p>
-                </div>
-              ))}
+            <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+              {SERVICES.map(s => {
+                const isSelected = String(s.id) === String(form.serviceId);
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => update('serviceId', String(s.id))}
+                    style={{
+                      background: isSelected ? 'var(--accent-bg)' : 'var(--bg-elevated)',
+                      border: `1.5px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                      borderRadius: 10, padding: '14px 18px',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                    }}
+                  >
+                    <div>
+                      <p style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 15 }}>{s.name}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.duration} min</p>
+                    </div>
+                    <p style={{ fontWeight: 800, color: isSelected ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 16 }}>
+                      ${s.price}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
 
-            {errors.serviceId && <p style={{ color: "var(--danger)", fontSize: 12, marginBottom: 16 }}>{errors.serviceId}</p>}
+            {errors.serviceId && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{errors.serviceId}</p>}
 
-            <div style={{ display: "flex", gap: 12 }}>
-              <button className="btn-ghost" onClick={() => setStep(2)} style={{ flex: 1 }}>Atrás</button>
-              <button className="btn-gold" onClick={handleNext} style={{ flex: 1 }}>Siguiente</button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-ghost" onClick={() => setStep(2)} style={{ flex: 1 }}>← Volver</button>
+              <button className="btn-gold" onClick={handleNext} style={{ flex: 1 }}>Continuar →</button>
             </div>
           </div>
         )}
 
-        {/* STEP 4: DATE & TIME */}
+        {/* ── STEP 4: FECHA Y HORA ── */}
         {step === 4 && (
-          <div className="fade-in" style={{ paddingTop: 20 }}>
-            <h1 className="section-title" style={{ marginBottom: 24 }}>Elige fecha y hora</h1>
+          <div className="fade-in">
+            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Cuándo te viene bien?</h1>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
+              {selectedService?.name} · {selectedService?.duration} min
+            </p>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Fecha *</label>
-              <input type="date" value={form.date} onChange={e => update("date", e.target.value)} />
-              {errors.date && <p style={{ color: "var(--danger)", fontSize: 11, marginTop: 6 }}>{errors.date}</p>}
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+                Selecciona el día
+              </label>
+              <input type="date" value={form.date} onChange={e => { update('date', e.target.value); update('time', ''); }} />
+              {errors.date && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.date}</p>}
             </div>
 
             {form.date && (
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Hora *</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 8 }}>
-                  {["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"].map(time => {
+              <div style={{ marginBottom: 22 }}>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 10 }}>
+                  Elige el horario
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(78px, 1fr))', gap: 8 }}>
+                  {['08:00','09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'].map(time => {
                     const isTaken = takenTimes.includes(time) || blockedTimes.includes(time);
+                    const isSelected = form.time === time;
                     return (
                       <button
                         key={time}
-                        onClick={() => !isTaken && update("time", time)}
+                        onClick={() => !isTaken && update('time', time)}
                         disabled={isTaken}
                         style={{
-                          background: form.time === time ? "var(--accent)" : isTaken ? "var(--border)" : "var(--bg-elevated)",
-                          color: form.time === time ? "white" : "var(--text-secondary)",
-                          border: "1px solid var(--border)",
-                          borderRadius: 6,
-                          padding: "10px 8px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: isTaken ? "not-allowed" : "pointer",
-                          opacity: isTaken ? 0.5 : 1
+                          background: isSelected ? 'var(--accent)' : isTaken ? 'var(--bg-elevated)' : 'var(--bg-elevated)',
+                          color: isSelected ? 'white' : isTaken ? 'var(--border)' : 'var(--text-secondary)',
+                          border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                          borderRadius: 8, padding: '11px 6px',
+                          fontSize: 13, fontWeight: 600,
+                          cursor: isTaken ? 'not-allowed' : 'pointer',
+                          textDecoration: isTaken ? 'line-through' : 'none',
+                          transition: 'all 0.15s'
                         }}
                       >
                         {time}
@@ -381,54 +391,74 @@ No compartimos tus datos con terceros. Puedes solicitar la eliminación de tus d
                     );
                   })}
                 </div>
+                {errors.time && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 8 }}>{errors.time}</p>}
               </div>
             )}
 
-            <div>
-              <label style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Notas (opcional)</label>
-              <textarea value={form.notes} onChange={e => update("notes", e.target.value)} placeholder="Ej: alergia a algún producto..." style={{ minHeight: 80 }} />
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
+                ¿Alguna indicación especial? <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span>
+              </label>
+              <textarea
+                value={form.notes}
+                onChange={e => update('notes', e.target.value)}
+                placeholder="Ej: quiero algo específico, tengo alergia a algún producto..."
+                style={{ minHeight: 80 }}
+              />
             </div>
 
-            <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-              <button className="btn-ghost" onClick={() => setStep(3)} style={{ flex: 1 }}>Atrás</button>
-              <button className="btn-gold" onClick={handleNext} disabled={!form.date || !form.time} style={{ flex: 1 }}>Confirmar</button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-ghost" onClick={() => setStep(3)} style={{ flex: 1 }}>← Volver</button>
+              <button className="btn-gold" onClick={handleNext} disabled={!form.date || !form.time} style={{ flex: 1 }}>Ver resumen →</button>
             </div>
           </div>
         )}
 
-        {/* STEP 5: FINAL CONFIRMATION */}
+        {/* ── STEP 5: CONFIRMACIÓN ── */}
         {step === 5 && (
-          <div className="fade-in" style={{ paddingTop: 20 }}>
-            <h1 className="section-title" style={{ marginBottom: 24, textAlign: "center" }}>Confirmación</h1>
+          <div className="fade-in">
+            <h1 className="section-title" style={{ marginBottom: 6 }}>Todo listo</h1>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
+              Revisa los detalles antes de confirmar tu cita.
+            </p>
 
-            <div style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-strong)",
-              borderRadius: 12,
-              padding: 24,
-              marginBottom: 24
-            }}>
-              <p style={{ fontSize: 12, color: "var(--text-tertiary)", fontWeight: 600, marginBottom: 8 }}>RESUMEN</p>
-              <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.8 }}>
-                <p><strong>Cliente:</strong> {form.client}</p>
-                <p><strong>Teléfono:</strong> {form.phone}</p>
-                <p><strong>Email:</strong> {form.email}</p>
-                <p><strong>Barbero:</strong> {selectedBarber?.name}</p>
-                <p><strong>Servicio:</strong> {selectedService?.name}</p>
-                <p><strong>Fecha:</strong> {new Date(form.date + 'T12:00:00').toLocaleDateString('es-MX')}</p>
-                <p><strong>Hora:</strong> {form.time}</p>
-                {selectedService?.price && <p style={{ fontSize: 16, fontWeight: 800, color: "var(--accent)", marginTop: 12 }}>Total: ${selectedService.price}</p>}
+            <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+              {[
+                ['Nombre', form.client],
+                ['Teléfono', form.phone],
+                ['Correo', form.email],
+                ['Barbero', selectedBarber?.name],
+                ['Servicio', selectedService?.name],
+                ['Duración', selectedService?.duration ? `${selectedService.duration} min` : null],
+                ['Día', form.date ? new Date(form.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }) : null],
+                ['Hora', form.time],
+              ].filter(([,v]) => v).map(([label, value], i, arr) => (
+                <div key={label} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '13px 20px',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none'
+                }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{label}</span>
+                  <span style={{ color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, textAlign: 'right', maxWidth: '60%' }}>{value}</span>
+                </div>
+              ))}
+              <div style={{ padding: '16px 20px', background: 'var(--accent-bg)', borderTop: '1px solid var(--accent-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 14 }}>Total a pagar en sucursal</span>
+                <span style={{ color: 'var(--accent)', fontWeight: 800, fontSize: 22 }}>${selectedService?.price}</span>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 12 }}>
-              <button className="btn-ghost" onClick={() => setStep(4)} disabled={submitting} style={{ flex: 1 }}>Editar</button>
+            {errors.submit && <p style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{errors.submit}</p>}
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-ghost" onClick={() => setStep(4)} disabled={submitting} style={{ flex: 1 }}>← Editar</button>
               <button className="btn-gold" onClick={handleSubmit} disabled={submitting} style={{ flex: 1 }}>
-                {submitting ? "Guardando..." : "Agendar cita"}
+                {submitting ? 'Agendando...' : 'Confirmar cita'}
               </button>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
