@@ -8,8 +8,6 @@ const DEFAULT_SERVICES = [
   { id: '3', name: 'Barba completa', duration: 30, price: 100 },
 ];
 
-const STEP_LABELS = ['Privacidad', 'Tus datos', 'Servicio', 'Fecha y hora', 'Confirmar'];
-
 export default function ClientView() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ client: '', phone: '', email: '', barberId: '', serviceId: '', date: '', time: '', notes: '' });
@@ -59,18 +57,20 @@ export default function ClientView() {
       if (!validateName(form.client)) errs.client = 'Ingresa tu nombre completo';
       if (!form.phone || !validatePhone(form.phone)) errs.phone = 'Ingresa un número de teléfono válido';
       if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Ingresa tu correo electrónico';
-      if (!form.barberId) errs.barberId = 'Elige con quién quieres tu cita';
       setErrors(errs);
       if (Object.keys(errs).length === 0) setStep(3);
     } else if (step === 3) {
-      if (!form.serviceId) { setErrors({ serviceId: 'Elige uno de los servicios disponibles' }); return; }
+      if (!form.barberId) { setErrors({ barberId: 'Elige con quién quieres tu cita' }); return; }
       setErrors({}); setStep(4);
     } else if (step === 4) {
+      if (!form.serviceId) { setErrors({ serviceId: 'Elige uno de los servicios' }); return; }
+      setErrors({}); setStep(5);
+    } else if (step === 5) {
       const errs = {};
-      if (!form.date) errs.date = 'Selecciona el día de tu cita';
-      if (!form.time) errs.time = 'Elige un horario disponible';
+      if (!form.date) errs.date = 'Selecciona el día';
+      if (!form.time) errs.time = 'Elige un horario';
       setErrors(errs);
-      if (Object.keys(errs).length === 0) setStep(5);
+      if (Object.keys(errs).length === 0) setStep(6);
     }
   };
 
@@ -120,23 +120,20 @@ export default function ClientView() {
   const takenTimes = getTakenTimes(appointments, form.barberId, form.date);
   const blockedTimes = getBlockedTimes(blocks, form.barberId, form.date);
 
-  // ─── PANTALLA DE ÉXITO ───────────────────────────────────────────────────
+  // ─── PANTALLA DE ÉXITO ───
   if (done) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-main)', padding: '40px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
-
         <div style={{
           width: 72, height: 72, borderRadius: '50%',
           background: 'var(--accent-bg)', border: '2px solid var(--accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 24px', fontSize: 32
+          margin: '0 auto 24px', fontSize: 32, color: 'var(--accent)', fontWeight: 800
         }}>✓</div>
-
         <h1 className="section-title" style={{ marginBottom: 6 }}>¡Cita confirmada!</h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: 16 }}>
           Nos vemos pronto, <strong>{completedAppointment?.client}</strong>
         </p>
-
         <div style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', borderRadius: 12, padding: 24, marginBottom: 24, textAlign: 'left' }}>
           <p style={{ color: 'var(--text-muted)', fontSize: 11, letterSpacing: 1.5, marginBottom: 8 }}>NÚMERO DE REFERENCIA</p>
           <p style={{ color: 'var(--accent)', fontSize: 34, fontWeight: 800, fontFamily: "'Courier New', monospace", marginBottom: 16, letterSpacing: 4 }}>
@@ -147,11 +144,7 @@ export default function ClientView() {
             <p><strong>Hora:</strong> {completedAppointment?.time}</p>
             <p><strong>Barbero:</strong> {completedAppointment?.barber?.name}</p>
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 16 }}>
-            Te enviamos la confirmación a tu correo.
-          </p>
         </div>
-
         {citas.length === 1 ? (
           <div style={{ display: 'flex', gap: 12 }}>
             <button className="btn-ghost" onClick={handleAddAnother} style={{ flex: 1 }}>Agendar otra cita</button>
@@ -167,25 +160,20 @@ export default function ClientView() {
     </div>
   );
 
-  // ─── BARRA DE PROGRESO ───────────────────────────────────────────────────
-  const Progress = () => (
-    <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
-      {[1,2,3,4,5].map(s => (
-        <div key={s} style={{
-          flex: 1, height: 3, borderRadius: 2,
-          background: s <= step ? 'var(--accent)' : 'var(--border)',
-          transition: 'background 0.3s'
-        }} />
-      ))}
-    </div>
-  );
-
-  // ─── FORMULARIO ──────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-main)', padding: '20px' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', paddingTop: 20 }}>
+      <div style={{ maxWidth: 600, margin: '0 auto', paddingTop: 20 }}>
 
-        <Progress />
+        {/* Progreso */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
+          {[1,2,3,4,5,6].map(s => (
+            <div key={s} style={{
+              flex: 1, height: 3, borderRadius: 2,
+              background: s <= step ? 'var(--accent)' : 'var(--border)',
+              transition: 'background 0.3s'
+            }} />
+          ))}
+        </div>
 
         {/* ── STEP 1: PRIVACIDAD ── */}
         {step === 1 && (
@@ -249,7 +237,7 @@ export default function ClientView() {
           </div>
         )}
 
-        {/* ── STEP 2: DATOS PERSONALES ── */}
+        {/* ── STEP 2: DATOS ── */}
         {step === 2 && (
           <div className="fade-in">
             <h1 className="section-title" style={{ marginBottom: 6 }}>¿Cómo te contactamos?</h1>
@@ -259,38 +247,19 @@ export default function ClientView() {
 
             <div style={{ display: 'grid', gap: 18, marginBottom: 28 }}>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
-                  Tu nombre
-                </label>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>Tu nombre</label>
                 <input value={form.client} onChange={e => update('client', e.target.value)} placeholder="Nombre completo" autoFocus />
                 {errors.client && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.client}</p>}
               </div>
-
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
-                  Teléfono
-                </label>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>Teléfono</label>
                 <input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="81 1234 5678" type="tel" />
                 {errors.phone && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.phone}</p>}
               </div>
-
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
-                  Correo electrónico
-                </label>
+                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>Correo electrónico</label>
                 <input value={form.email} onChange={e => update('email', e.target.value)} placeholder="tu@correo.com" type="email" />
                 {errors.email && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.email}</p>}
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 }}>
-                  ¿Con quién quieres tu cita?
-                </label>
-                <select value={form.barberId} onChange={e => update('barberId', e.target.value)}>
-                  <option value="">Elige tu barbero</option>
-                  {activeBarbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-                {errors.barberId && <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{errors.barberId}</p>}
               </div>
             </div>
 
@@ -301,42 +270,61 @@ export default function ClientView() {
           </div>
         )}
 
-        {/* ── STEP 3: SERVICIO ── */}
+        {/* ── STEP 3: BARBERO (cards interactivas) ── */}
         {step === 3 && (
           <div className="fade-in">
-            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Qué servicio necesitas?</h1>
+            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Con quién quieres tu cita?</h1>
             <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
-              Con <strong style={{ color: 'var(--text-secondary)' }}>{selectedBarber?.name || 'tu barbero'}</strong>
+              Elige tu barbero
             </p>
 
-            <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
-              {SERVICES.map(s => {
-                const isSelected = String(s.id) === String(form.serviceId);
+            <div style={{ display: 'grid', gap: 12, marginBottom: 24 }}>
+              {activeBarbers.map(b => {
+                const isSelected = b.id === form.barberId;
                 return (
                   <div
-                    key={s.id}
-                    onClick={() => update('serviceId', String(s.id))}
+                    key={b.id}
+                    onClick={() => update('barberId', b.id)}
                     style={{
                       background: isSelected ? 'var(--accent-bg)' : 'var(--bg-elevated)',
-                      border: `1.5px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
-                      borderRadius: 10, padding: '14px 18px',
-                      cursor: 'pointer', transition: 'all 0.15s',
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                      border: `2px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                      borderRadius: 12, padding: 16,
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', gap: 16,
+                      transform: isSelected ? 'scale(1.02)' : 'scale(1)'
                     }}
                   >
-                    <div>
-                      <p style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 15 }}>{s.name}</p>
-                      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.duration} min</p>
+                    <div style={{
+                      width: 56, height: 56, borderRadius: '50%',
+                      background: isSelected ? 'var(--accent)' : 'var(--bg-input)',
+                      border: `2px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 22, fontWeight: 800,
+                      color: isSelected ? 'white' : 'var(--text-secondary)',
+                      flexShrink: 0,
+                      backgroundImage: b.avatar ? `url(${b.avatar})` : 'none',
+                      backgroundSize: 'cover', backgroundPosition: 'center'
+                    }}>
+                      {!b.avatar && b.name?.charAt(0).toUpperCase()}
                     </div>
-                    <p style={{ fontWeight: 800, color: isSelected ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 16 }}>
-                      ${s.price}
-                    </p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 2 }}>{b.name}</p>
+                      {b.specialty && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{b.specialty}</p>}
+                    </div>
+                    {isSelected && (
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: 'var(--accent)', color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 800, fontSize: 16, flexShrink: 0
+                      }}>✓</div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            {errors.serviceId && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{errors.serviceId}</p>}
+            {errors.barberId && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{errors.barberId}</p>}
 
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn-ghost" onClick={() => setStep(2)} style={{ flex: 1 }}>← Volver</button>
@@ -345,10 +333,69 @@ export default function ClientView() {
           </div>
         )}
 
-        {/* ── STEP 4: FECHA Y HORA ── */}
+        {/* ── STEP 4: SERVICIO (cards interactivas) ── */}
         {step === 4 && (
           <div className="fade-in">
-            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Cuándo te viene bien?</h1>
+            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Qué servicio necesitas?</h1>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
+              Con <strong style={{ color: 'var(--text-secondary)' }}>{selectedBarber?.name}</strong>
+            </p>
+
+            <div style={{ display: 'grid', gap: 12, marginBottom: 24 }}>
+              {SERVICES.map(s => {
+                const isSelected = String(s.id) === String(form.serviceId);
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => update('serviceId', String(s.id))}
+                    style={{
+                      background: isSelected ? 'var(--accent-bg)' : 'var(--bg-elevated)',
+                      border: `2px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                      borderRadius: 12, padding: 18,
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 4 }}>{s.name}</p>
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                        <span style={{ marginRight: 12 }}>⏱ {s.duration} min</span>
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <p style={{
+                        fontWeight: 800, fontSize: 22,
+                        color: isSelected ? 'var(--accent)' : 'var(--text-primary)',
+                        fontFamily: "'Barlow Condensed', sans-serif"
+                      }}>${s.price}</p>
+                      {isSelected && (
+                        <div style={{
+                          width: 24, height: 24, borderRadius: '50%',
+                          background: 'var(--accent)', color: 'white',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          fontWeight: 800, fontSize: 14, marginTop: 4
+                        }}>✓</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {errors.serviceId && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{errors.serviceId}</p>}
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-ghost" onClick={() => setStep(3)} style={{ flex: 1 }}>← Volver</button>
+              <button className="btn-gold" onClick={handleNext} style={{ flex: 1 }}>Continuar →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 5: FECHA Y HORA ── */}
+        {step === 5 && (
+          <div className="fade-in">
+            <h1 className="section-title" style={{ marginBottom: 6 }}>¿Cuándo estás disponible?</h1>
             <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
               {selectedService?.name} · {selectedService?.duration} min
             </p>
@@ -376,7 +423,7 @@ export default function ClientView() {
                         onClick={() => !isTaken && update('time', time)}
                         disabled={isTaken}
                         style={{
-                          background: isSelected ? 'var(--accent)' : isTaken ? 'var(--bg-elevated)' : 'var(--bg-elevated)',
+                          background: isSelected ? 'var(--accent)' : 'var(--bg-elevated)',
                           color: isSelected ? 'white' : isTaken ? 'var(--border)' : 'var(--text-secondary)',
                           border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
                           borderRadius: 8, padding: '11px 6px',
@@ -408,14 +455,14 @@ export default function ClientView() {
             </div>
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn-ghost" onClick={() => setStep(3)} style={{ flex: 1 }}>← Volver</button>
+              <button className="btn-ghost" onClick={() => setStep(4)} style={{ flex: 1 }}>← Volver</button>
               <button className="btn-gold" onClick={handleNext} disabled={!form.date || !form.time} style={{ flex: 1 }}>Ver resumen →</button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 5: CONFIRMACIÓN ── */}
-        {step === 5 && (
+        {/* ── STEP 6: CONFIRMACIÓN ── */}
+        {step === 6 && (
           <div className="fade-in">
             <h1 className="section-title" style={{ marginBottom: 6 }}>Todo listo</h1>
             <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 24 }}>
@@ -451,7 +498,7 @@ export default function ClientView() {
             {errors.submit && <p style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{errors.submit}</p>}
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn-ghost" onClick={() => setStep(4)} disabled={submitting} style={{ flex: 1 }}>← Editar</button>
+              <button className="btn-ghost" onClick={() => setStep(5)} disabled={submitting} style={{ flex: 1 }}>← Editar</button>
               <button className="btn-gold" onClick={handleSubmit} disabled={submitting} style={{ flex: 1 }}>
                 {submitting ? 'Agendando...' : 'Confirmar cita'}
               </button>
