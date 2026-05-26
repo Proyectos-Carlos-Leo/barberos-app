@@ -343,7 +343,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
     }
     setSavingEmail(true);
     try {
-      await update(ref(db, `barberias/${slug}/config/email_confirmacion`), emailConfirm.trim());
+      await update(ref(db, `barberias/${slug}/config`), { email_confirmacion: emailConfirm.trim() });
       setShowEmailConfig(false);
       alert('Email guardado. Desde ahora se enviarán confirmaciones desde este email.');
     } catch (err) {

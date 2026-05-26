@@ -57,22 +57,41 @@ export function AppProvider({ children, slug }) {
       return `${r}, ${g}, ${b}`;
     };
 
-    if (theme && theme.primary) {
-      root.style.setProperty('--accent', theme.primary);
-      root.style.setProperty('--accent-rgb', hexToRgb(theme.primary));
-      root.style.setProperty('--accent-light', theme.light || theme.primary);
-      root.style.setProperty('--accent-dark', theme.dark || theme.primary);
-      root.style.setProperty('--accent-bg', theme.bg || '#051520');
-      root.style.setProperty('--accent-border', theme.border || theme.primary + '44');
-    } else {
-      // Restaurar default si no hay config
-      root.style.removeProperty('--accent');
-      root.style.removeProperty('--accent-rgb');
-      root.style.removeProperty('--accent-light');
-      root.style.removeProperty('--accent-dark');
-      root.style.removeProperty('--accent-bg');
-      root.style.removeProperty('--accent-border');
-    }
+    // Helper: detectar si estamos en modo claro
+    const isLightMode = () => document.documentElement.getAttribute('data-theme') === 'light';
+
+    const applyTheme = () => {
+      if (theme && theme.primary) {
+        const rgbStr = hexToRgb(theme.primary);
+        root.style.setProperty('--accent', theme.primary);
+        root.style.setProperty('--accent-rgb', rgbStr);
+        root.style.setProperty('--accent-light', theme.light || theme.primary);
+        root.style.setProperty('--accent-dark', theme.dark || theme.primary);
+        
+        // En modo claro: usar color del tema con opacidad baja (no el bg oscuro)
+        if (isLightMode()) {
+          root.style.setProperty('--accent-bg', `rgba(${rgbStr}, 0.1)`);
+          root.style.setProperty('--accent-border', `rgba(${rgbStr}, 0.4)`);
+        } else {
+          root.style.setProperty('--accent-bg', theme.bg || '#051520');
+          root.style.setProperty('--accent-border', theme.border || theme.primary + '44');
+        }
+      } else {
+        root.style.removeProperty('--accent');
+        root.style.removeProperty('--accent-rgb');
+        root.style.removeProperty('--accent-light');
+        root.style.removeProperty('--accent-dark');
+        root.style.removeProperty('--accent-bg');
+        root.style.removeProperty('--accent-border');
+      }
+    };
+
+    applyTheme();
+
+    // Observar cambios en data-theme (light/dark) para reaplicar
+    const observer = new MutationObserver(applyTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
   }, [barbershopConfig?.theme_color]);
 
   // ========== CITAS ==========
