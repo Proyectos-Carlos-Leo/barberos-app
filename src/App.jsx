@@ -13,12 +13,17 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginScreen />} />
       <Route path="/founders" element={<SuperAdminPanel />} />
+
+      {/* Rutas de cliente — se bloquean si la barbería está suspendida */}
       <Route path="/:slug" element={<SlugWrapper><LoginScreen mode="client" /></SlugWrapper>} />
       <Route path="/:slug/cliente" element={<SlugWrapper><ClientView /></SlugWrapper>} />
       <Route path="/:slug/mi-cita" element={<SlugWrapper><CheckAppointment /></SlugWrapper>} />
       <Route path="/:slug/sellos" element={<SlugWrapper><MyStamps /></SlugWrapper>} />
-      <Route path="/:slug/admin" element={<SlugWrapper><LoginScreen mode="admin" /></SlugWrapper>} />
-      <Route path="/:slug/admin/panel" element={<SlugWrapper><AdminView /></SlugWrapper>} />
+
+      {/* Rutas de admin — siguen accesibles aunque esté suspendida */}
+      <Route path="/:slug/admin" element={<SlugWrapper isAdmin={true}><LoginScreen mode="admin" /></SlugWrapper>} />
+      <Route path="/:slug/admin/panel" element={<SlugWrapper isAdmin={true}><AdminView /></SlugWrapper>} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

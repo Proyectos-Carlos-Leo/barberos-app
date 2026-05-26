@@ -152,8 +152,10 @@ function SuperAdminDashboard({ onLogout }) {
         const list = Object.keys(data).map(slug => ({
           slug,
           nombre: data[slug]?.config?.nombre || slug,
-          email_admin: data[slug]?.config?.email_admin || '—',
-          lealtad_activa: data[slug]?.config?.lealtad_activa !== false
+          email_admin: data[slug]?.config?.email_admin || '---',
+          telefono: data[slug]?.config?.telefono || '---',
+          lealtad_activa: data[slug]?.config?.lealtad_activa !== false,
+          activa: data[slug]?.config?.activa !== false,
         }));
         setBarberias(list.sort((a, b) => a.nombre.localeCompare(b.nombre)));
       }
@@ -173,6 +175,20 @@ function SuperAdminDashboard({ onLogout }) {
     }
   };
 
+
+  const toggleActiva = async (slug, currentValue) => {
+    const nombre = barberias.find(b => b.slug === slug)?.nombre || slug;
+    const msg = currentValue
+      ? `Suspender la barberia "${nombre}"?\n\nSu pagina quedara inaccesible hasta que la reactives.`
+      : `Activar la barberia "${nombre}"?\n\nSu pagina sera accesible nuevamente.`;
+    if (!window.confirm(msg)) return;
+    try {
+      await update(ref(db, `barberias/${slug}/config`), { activa: !currentValue });
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error al actualizar.");
+    }
+  };
   return (
     <div style={{
       minHeight: '100vh', background: '#0a0a0a',
@@ -267,8 +283,19 @@ function SuperAdminDashboard({ onLogout }) {
                       {barber.nombre.charAt(0).toUpperCase()}
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ color: '#ccc', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {barber.nombre}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ color: '#ccc', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {barber.nombre}
+                        </div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                          background: barber.activa ? '#10b98115' : '#ef444415',
+                          color: barber.activa ? '#10b981' : '#ef4444',
+                          border: `1px solid ${barber.activa ? '#10b98144' : '#ef444444'}`,
+                          flexShrink: 0
+                        }}>
+                          {barber.activa ? 'ACTIVA' : 'SUSPENDIDA'}
+                        </span>
                       </div>
                       <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         /{barber.slug}
@@ -298,6 +325,27 @@ function SuperAdminDashboard({ onLogout }) {
                       }}
                     >
                       {barber.lealtad_activa ? '⭐ Lealtad ON' : '☆ Lealtad OFF'}
+                    </button>
+                    <button
+                      onClick={() => toggleActiva(barber.slug, barber.activa)}
+                      title={barber.activa ? 'Suspender barberia' : 'Activar barberia'}
+                      style={{
+                        background: barber.activa ? '#ef444415' : '#10b98115',
+                        border: `1px solid ${barber.activa ? '#ef444444' : '#10b98144'}`,
+                        color: barber.activa ? '#ef4444' : '#10b981',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        transition: 'all 0.15s',
+                        fontFamily: "'Barlow', sans-serif"
+                      }}
+                    >
+                      {barber.activa ? '⏸ Suspender' : '▶ Activar'}
                     </button>
                     <a
                       href={`/${barber.slug}`}

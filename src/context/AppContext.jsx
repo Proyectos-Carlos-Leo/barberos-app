@@ -22,6 +22,7 @@ export function AppProvider({ children, slug }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [suspended, setSuspended] = useState(false);
 
   const basePath = slug ? `barberias/${slug}` : null;
 
@@ -34,9 +35,11 @@ export function AppProvider({ children, slug }) {
       if (data) {
         setBarbershopConfig({ ...data, slug });
         setNotFound(false);
+        setSuspended(data.activa === false);
       } else {
         setNotFound(true);
         setBarbershopConfig(null);
+        setSuspended(false);
       }
       setLoading(false);
     });
@@ -210,7 +213,7 @@ export function AppProvider({ children, slug }) {
   }, [basePath, addNotification]);
 
   const value = {
-    slug, basePath, barbershopConfig,
+    slug, basePath, barbershopConfig, suspended,
     appointments, barbers, blocks, services,
     notifications, loading, notFound,
     addAppointment, updateAppointmentStatus, deleteAppointment,
