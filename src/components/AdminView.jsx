@@ -2729,7 +2729,9 @@ function ProductsView({ slug }) {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
-  const [form, setForm] = useState({ name: '', price: '', description: '', image: '', cantidad: '' });
+  const [form, setForm] = useState({ name: '', price: '', costo: '', description: '', image: '', cantidad: '' });
+  const [showCalc, setShowCalc] = useState(false);
+  const [calc, setCalc] = useState({ costo: '', precio: '' });
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -2747,13 +2749,13 @@ function ProductsView({ slug }) {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: '', price: '', description: '', image: '' });
+    setForm({ name: '', price: '', costo: '', description: '', image: '', cantidad: '' });
     setShowForm(true);
   };
 
   const openEdit = (p) => {
     setEditing(p.id);
-    setForm({ name: p.name || '', price: String(p.price || ''), description: p.description || '', image: p.image || '', cantidad: String(p.cantidad ?? '') });
+    setForm({ name: p.name || '', price: String(p.price || ''), costo: String(p.costo ?? ''), description: p.description || '', image: p.image || '', cantidad: String(p.cantidad ?? '') });
     setShowForm(true);
   };
 
@@ -2775,6 +2777,7 @@ function ProductsView({ slug }) {
       const data = {
         name: form.name.trim(),
         price: Number(form.price),
+        costo: form.costo !== '' ? Number(form.costo) : null,
         description: form.description.trim(),
         image: form.image || '',
         cantidad: form.cantidad !== '' ? Number(form.cantidad) : null,
@@ -2804,21 +2807,127 @@ function ProductsView({ slug }) {
 
   const labelStyle = { fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 };
 
+  // Export products CSV
+  const exportProductos = () => {
+    const rows = [['Nombre', 'Precio Venta', 'Costo Adquisición', 'Ganancia Neta', 'Margen %', 'Stock', 'Descripción']];
+    products.forEach(p => {
+      const ganancia = p.costo != null ? p.price - p.costo : '';
+      const margen = p.costo != null ? (((p.price - p.costo) / p.price) * 100).toFixed(1) : '';
+      rows.push([p.name, p.price, p.costo ?? '', ganancia, margen, p.cantidad ?? '', p.description || '']);
+    });
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'productos.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Summary stats
+  const totalProductos = products.length;
+  const productosConCosto = products.filter(p => p.costo != null);
+  const gananciaTotal = productosConCosto.reduce((s, p) => s + (p.price - p.costo) * (p.cantidad || 1), 0);
+  const margenPromedio = productosConCosto.length > 0
+    ? (productosConCosto.reduce((s, p) => s + ((p.price - p.costo) / p.price * 100), 0) / productosConCosto.length).toFixed(1)
+    : null;
+
+  // Calc results
+  const calcPrecio = Number(calc.precio) || 0;
+  const calcCosto = Number(calc.costo) || 0;
+  const calcGanancia = calcPrecio - calcCosto;
+  const calcMargen = calcPrecio > 0 ? ((calcGanancia / calcPrecio) * 100).toFixed(1) : 0;
+  const calcROI = calcCosto > 0 ? ((calcGanancia / calcCosto) * 100).toFixed(1) : 0;
+
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: '32px 24px', maxWidth: 960, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 className="section-title" style={{ marginBottom: 4 }}>Productos</h2>
           <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
             {products.length} producto{products.length !== 1 ? 's' : ''} en el catálogo
           </p>
         </div>
-        <button className="btn-gold" onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          + Agregar producto
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => setShowCalc(c => !c)} style={{
+            background: showCalc ? 'var(--accent-bg)' : 'var(--bg-elevated)',
+            border: `1px solid ${showCalc ? 'var(--accent)' : 'var(--border)'}`,
+            color: showCalc ? 'var(--accent)' : 'var(--text-secondary)',
+            borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+          }}>
+            🧮 Calculadora
+          </button>
+          <button onClick={exportProductos} style={{
+            background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+            color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 14px',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+          }}>
+            ↓ Exportar
+          </button>
+          <button className="btn-gold" onClick={openNew}>+ Agregar producto</button>
+        </div>
       </div>
+
+      {/* KPIs de ganancias */}
+      {productosConCosto.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
+          {[
+            { label: 'Ganancia neta potencial', value: `$${gananciaTotal.toLocaleString()}`, color: '#4ade80', sub: 'Si vendes todo el stock' },
+            { label: 'Margen promedio', value: `${margenPromedio}%`, color: 'var(--accent)', sub: 'Sobre precio de venta' },
+            { label: 'Productos con costo', value: `${productosConCosto.length}/${totalProductos}`, color: '#a78bfa', sub: 'Tienen costo registrado' },
+          ].map(({ label, value, color, sub }) => (
+            <div key={label} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>{label}</p>
+              <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Calculadora de ganancias */}
+      {showCalc && (
+        <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--accent-border)', borderRadius: 14, padding: 20, marginBottom: 24 }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>🧮 Calculadora de ganancias</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={labelStyle}>Costo de adquisición</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700 }}>$</span>
+                <input value={calc.costo} onChange={e => setCalc(c => ({ ...c, costo: e.target.value }))} type="number" min="0" placeholder="0" style={{ paddingLeft: 28 }} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Precio de venta</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700 }}>$</span>
+                <input value={calc.precio} onChange={e => setCalc(c => ({ ...c, precio: e.target.value }))} type="number" min="0" placeholder="0" style={{ paddingLeft: 28 }} />
+              </div>
+            </div>
+          </div>
+          {calcPrecio > 0 && calcCosto > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {[
+                { label: 'Ganancia neta', value: `$${calcGanancia.toLocaleString()}`, color: calcGanancia > 0 ? '#4ade80' : '#ef4444' },
+                { label: 'Margen', value: `${calcMargen}%`, color: 'var(--accent)' },
+                { label: 'ROI', value: `${calcROI}%`, color: '#a78bfa' },
+              ].map(({ label, value, color }) => (
+                <div key={label} style={{ background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>{label}</p>
+                  <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {calcPrecio > 0 && calcCosto > 0 && (
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12, textAlign: 'center' }}>
+              Por cada ${calcPrecio} que vendes, ganas ${calcGanancia > 0 ? calcGanancia : 0} después de recuperar tu inversión de ${calcCosto}.
+            </p>
+          )}
+        </div>
+      )}
+
 
       {/* Grid de productos */}
       {loading ? (
@@ -2857,10 +2966,28 @@ function ProductsView({ slug }) {
               <div style={{ padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, gap: 8 }}>
                   <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.3 }}>{p.name}</p>
-                  <p style={{ fontWeight: 800, fontSize: 18, color: 'var(--accent)', flexShrink: 0, fontFamily: "'Barlow Condensed', sans-serif" }}>
-                    ${p.price}
-                  </p>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{ fontWeight: 800, fontSize: 18, color: 'var(--accent)', fontFamily: "'Barlow Condensed', sans-serif" }}>
+                      ${p.price}
+                    </p>
+                    {p.costo != null && (
+                      <p style={{ fontSize: 11, color: '#4ade80', fontWeight: 700 }}>
+                        +${(p.price - p.costo).toLocaleString()} neto
+                      </p>
+                    )}
+                  </div>
                 </div>
+                {/* Costo + margen */}
+                {p.costo != null && (
+                  <div style={{ marginBottom: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: '#1a1a1a', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                      Costo: ${p.costo}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: '#4ade8015', color: '#4ade80', border: '1px solid #4ade8040' }}>
+                      {(((p.price - p.costo) / p.price) * 100).toFixed(0)}% margen
+                    </span>
+                  </div>
+                )}
                 {/* Stock badge */}
                 {p.cantidad !== null && p.cantidad !== undefined && (
                   <div style={{ marginBottom: 8 }}>
@@ -2962,23 +3089,33 @@ function ProductsView({ slug }) {
               />
             </div>
 
-            {/* Precio */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Precio *</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{
-                  position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)', fontWeight: 700, fontSize: 16
-                }}>$</span>
-                <input
-                  value={form.price}
-                  onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                  placeholder="0"
-                  type="number" min="0"
-                  style={{ paddingLeft: 30 }}
-                />
+            {/* Precio y Costo — lado a lado */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={labelStyle}>Precio de venta *</label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 16 }}>$</span>
+                  <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0" type="number" min="0" style={{ paddingLeft: 30 }} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Costo adquisición <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 16 }}>$</span>
+                  <input value={form.costo} onChange={e => setForm(f => ({ ...f, costo: e.target.value }))} placeholder="0" type="number" min="0" style={{ paddingLeft: 30 }} />
+                </div>
               </div>
             </div>
+
+            {/* Preview ganancia */}
+            {form.price && form.costo && Number(form.price) > 0 && Number(form.costo) > 0 && (
+              <div style={{ marginBottom: 16, background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Ganancia neta por unidad</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#4ade80', fontFamily: "'Barlow Condensed', sans-serif" }}>
+                  ${(Number(form.price) - Number(form.costo)).toLocaleString()} ({(((Number(form.price) - Number(form.costo)) / Number(form.price)) * 100).toFixed(0)}%)
+                </span>
+              </div>
+            )}
 
             {/* Cantidad en stock */}
             <div style={{ marginBottom: 16 }}>

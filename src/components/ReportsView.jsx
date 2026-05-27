@@ -962,29 +962,38 @@ function ProductosStats({ appointments, compact = false }) {
     cutoff.setDate(cutoff.getDate() - range);
     const cutoffStr = cutoff.toISOString().split('T')[0];
 
-    // Citas con productos en el rango
     const withProducts = appointments.filter(a =>
       a.productos && a.productos.length > 0 &&
       a.date >= cutoffStr &&
       a.status !== 'cancelada'
     );
 
-    // Agrupar por producto
     const byProduct = {};
     withProducts.forEach(a => {
       (a.productos || []).forEach(p => {
-        if (!byProduct[p.id]) byProduct[p.id] = { name: p.name, qty: 0, revenue: 0, image: p.image || '' };
-        byProduct[p.id].qty += p.qty || 1;
-        byProduct[p.id].revenue += (p.price || 0) * (p.qty || 1);
+        if (!byProduct[p.id]) byProduct[p.id] = { name: p.name, qty: 0, revenue: 0, ganancia: 0, hasCosto: false, image: p.image || '' };
+        const qty = p.qty || 1;
+        const rev = (p.price || 0) * qty;
+        const costo = p.costo != null ? p.costo * qty : null;
+        byProduct[p.id].qty += qty;
+        byProduct[p.id].revenue += rev;
+        if (costo != null) {
+          byProduct[p.id].ganancia += rev - costo;
+          byProduct[p.id].hasCosto = true;
+        } else {
+          byProduct[p.id].ganancia += rev; // si no hay costo, ganancia = revenue
+        }
       });
     });
 
-    const products = Object.values(byProduct).sort((a, b) => b.revenue - a.revenue);
+    const products = Object.values(byProduct).sort((a, b) => b.ganancia - a.ganancia);
     const totalRevenue = products.reduce((s, p) => s + p.revenue, 0);
+    const totalGanancia = products.reduce((s, p) => s + p.ganancia, 0);
     const totalQty = products.reduce((s, p) => s + p.qty, 0);
     const maxQty = Math.max(...products.map(p => p.qty), 1);
+    const tieneAlgunCosto = products.some(p => p.hasCosto);
 
-    return { products, totalRevenue, totalQty, maxQty, withProducts };
+    return { products, totalRevenue, totalGanancia, totalQty, maxQty, withProducts, tieneAlgunCosto };
   }, [appointments, range]);
 
   if (data.products.length === 0 && data.withProducts.length === 0) return compact ? null : null;
@@ -1033,18 +1042,37 @@ function ProductosStats({ appointments, compact = false }) {
             </button>
           ))}
         </div>
+        {/* Export button */}
+        {!compact && data.products.length > 0 && (
+          <button onClick={() => {
+            const rows = [['Producto', 'Unidades', 'Ingresos brutos', 'Ganancia neta']];
+            data.products.forEach(p => rows.push([p.name, p.qty, `$${p.revenue}`, `$${p.ganancia}`]));
+            const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'ventas-productos.csv'; a.click();
+            URL.revokeObjectURL(url);
+          }} style={{
+            background: 'var(--bg-input)', border: '1px solid var(--border)',
+            color: 'var(--text-secondary)', borderRadius: 8, padding: '6px 12px',
+            fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+          }}>
+            ↓ Exportar ventas
+          </button>
+        )}
       </div>
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: compact ? '1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: compact ? 8 : 12, marginBottom: compact ? 16 : 24 }}>
         {[
-          { label: 'Ingresos productos', value: `$${data.totalRevenue.toLocaleString()}`, color: 'var(--accent)' },
-          { label: 'Unidades vendidas', value: data.totalQty, color: 'var(--text-primary)' },
-          { label: 'Citas con productos', value: data.withProducts.length, color: 'var(--text-primary)' },
-        ].map(({ label, value, color }) => (
+          { label: data.tieneAlgunCosto ? 'Ganancia neta' : 'Ingresos productos', value: `$${data.totalGanancia.toLocaleString()}`, color: '#4ade80', sub: data.tieneAlgunCosto ? 'Después de costos' : 'Sin costos registrados' },
+          { label: 'Unidades vendidas', value: data.totalQty, color: 'var(--text-primary)', sub: null },
+          { label: 'Citas con productos', value: data.withProducts.length, color: 'var(--text-primary)', sub: null },
+        ].map(({ label, value, color, sub }) => (
           <div key={label} style={{ background: 'var(--bg-input)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--border)' }}>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</p>
             <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
+            {sub && <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</p>}
           </div>
         ))}
       </div>
@@ -1058,25 +1086,31 @@ function ProductosStats({ appointments, compact = false }) {
         <div style={{ display: 'grid', gap: 10 }}>
           {(compact ? data.products.slice(0, 4) : data.products).map((p, i) => (
             <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {/* Rank */}
               <span style={{ fontSize: 12, fontWeight: 800, color: i === 0 ? 'var(--accent)' : 'var(--text-muted)', width: 18, flexShrink: 0, textAlign: 'right' }}>
                 {i + 1}
               </span>
-              {/* Foto */}
               <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', background: 'var(--bg-input)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {p.image ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 18 }}>📦</span>}
               </div>
-              {/* Barra + info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{p.name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent)', fontFamily: "'Barlow Condensed', sans-serif", flexShrink: 0, marginLeft: 8 }}>${p.revenue.toLocaleString()}</span>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#4ade80', fontFamily: "'Barlow Condensed', sans-serif" }}>
+                      ${p.ganancia.toLocaleString()}
+                    </span>
+                    {p.hasCosto && (
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block' }}>
+                        bruto ${p.revenue.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', borderRadius: 3,
                     width: `${(p.qty / data.maxQty) * 100}%`,
-                    background: i === 0 ? 'var(--accent)' : 'var(--text-muted)',
+                    background: i === 0 ? '#4ade80' : 'var(--text-muted)',
                     transition: 'width 0.5s ease'
                   }} />
                 </div>
@@ -1084,6 +1118,7 @@ function ProductosStats({ appointments, compact = false }) {
               </div>
             </div>
           ))}
+
         </div>
       )}
     </div>
