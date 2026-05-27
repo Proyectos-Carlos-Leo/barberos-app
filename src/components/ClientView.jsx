@@ -146,7 +146,9 @@ export default function ClientView() {
       service: selectedService,
       date: form.date,
       time: form.time,
-      notes: form.notes.trim().slice(0, 500)
+      notes: form.notes.trim().slice(0, 500),
+      productos: carrito.length > 0 ? carrito.map(p => ({ id: p.id, name: p.name, price: p.price, qty: p.qty, image: p.image || '' })) : null,
+      totalProductos: carrito.length > 0 ? totalProductos : null,
     });
     if (newAppt) {
       setCompletedAppointment({ ...newAppt, barber: selectedBarber });

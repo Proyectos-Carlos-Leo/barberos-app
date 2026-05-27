@@ -758,7 +758,7 @@ export default function ReportsView({ appointments, barbers }) {
           return (
             <div style={{ padding: "16px 0 0" }}>
               {/* Histograma */}
-              <div style={{ position: "relative", height: 180, display: "flex", alignItems: "flex-end" }}>
+              <div style={{ position: "relative", height: 180, display: "flex", alignItems: "flex-end", paddingTop: 20, overflow: "visible" }}>
                 {/* Líneas guía Y */}
                 {[100, 75, 50, 25].map(pct => (
                   <div key={pct} style={{
@@ -1045,6 +1045,141 @@ export default function ReportsView({ appointments, barbers }) {
       </Card>
       </div>
       {/* Fin grid 2x2 inferior */}
+
+      {/* ===== SECCIÓN: PRODUCTOS VENDIDOS ===== */}
+      <ProductosStats appointments={appointments} />
+
+    </div>
+  );
+}
+
+// ========== PRODUCTOS STATS ==========
+function ProductosStats({ appointments }) {
+  const [range, setRange] = useState(30);
+
+  const data = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - range);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+
+    // Citas con productos en el rango
+    const withProducts = appointments.filter(a =>
+      a.productos && a.productos.length > 0 &&
+      a.date >= cutoffStr &&
+      a.status !== 'cancelada'
+    );
+
+    // Agrupar por producto
+    const byProduct = {};
+    withProducts.forEach(a => {
+      (a.productos || []).forEach(p => {
+        if (!byProduct[p.id]) byProduct[p.id] = { name: p.name, qty: 0, revenue: 0, image: p.image || '' };
+        byProduct[p.id].qty += p.qty || 1;
+        byProduct[p.id].revenue += (p.price || 0) * (p.qty || 1);
+      });
+    });
+
+    const products = Object.values(byProduct).sort((a, b) => b.revenue - a.revenue);
+    const totalRevenue = products.reduce((s, p) => s + p.revenue, 0);
+    const totalQty = products.reduce((s, p) => s + p.qty, 0);
+    const maxQty = Math.max(...products.map(p => p.qty), 1);
+
+    return { products, totalRevenue, totalQty, maxQty, withProducts };
+  }, [appointments, range]);
+
+  if (data.products.length === 0 && data.withProducts.length === 0) return null;
+
+  const sectionStyle = {
+    marginTop: 28,
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: 24,
+    overflow: 'hidden'
+  };
+
+  return (
+    <div style={sectionStyle}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 18 }}>🛍</span>
+            <h3 style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-primary)' }}>
+              Ventas de Productos
+            </h3>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+            Productos vendidos junto a citas
+          </p>
+        </div>
+        {/* Selector de rango */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[7, 30, 90].map(d => (
+            <button key={d} onClick={() => setRange(d)} style={{
+              padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              background: range === d ? 'var(--accent)' : 'var(--bg-input)',
+              color: range === d ? 'white' : 'var(--text-tertiary)',
+              border: `1px solid ${range === d ? 'var(--accent)' : 'var(--border)'}`,
+              fontFamily: "'Barlow', sans-serif"
+            }}>
+              {d}d
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
+        {[
+          { label: 'Ingresos productos', value: `$${data.totalRevenue.toLocaleString()}`, color: 'var(--accent)' },
+          { label: 'Unidades vendidas', value: data.totalQty, color: 'var(--text-primary)' },
+          { label: 'Citas con productos', value: data.withProducts.length, color: 'var(--text-primary)' },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ background: 'var(--bg-input)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--border)' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</p>
+            <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Lista de productos */}
+      {data.products.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
+          Sin ventas de productos en este período
+        </p>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {data.products.map((p, i) => (
+            <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {/* Rank */}
+              <span style={{ fontSize: 12, fontWeight: 800, color: i === 0 ? 'var(--accent)' : 'var(--text-muted)', width: 18, flexShrink: 0, textAlign: 'right' }}>
+                {i + 1}
+              </span>
+              {/* Foto */}
+              <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', background: 'var(--bg-input)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {p.image ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 18 }}>📦</span>}
+              </div>
+              {/* Barra + info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{p.name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--accent)', fontFamily: "'Barlow Condensed', sans-serif", flexShrink: 0, marginLeft: 8 }}>${p.revenue.toLocaleString()}</span>
+                </div>
+                <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 3,
+                    width: `${(p.qty / data.maxQty) * 100}%`,
+                    background: i === 0 ? 'var(--accent)' : 'var(--text-muted)',
+                    transition: 'width 0.5s ease'
+                  }} />
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{p.qty} unidad{p.qty !== 1 ? 'es' : ''} vendida{p.qty !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

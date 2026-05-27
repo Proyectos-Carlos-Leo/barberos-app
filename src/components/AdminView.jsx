@@ -558,6 +558,27 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                       {appt.service?.emoji || '✂️'} {appt.service?.name} · {barber?.name || 'Sin asignar'}
                     </p>
                   </div>
+                  {/* Badge de productos */}
+                  {appt.productos && appt.productos.length > 0 && (
+                    <div style={{
+                      width: '100%', marginTop: 6,
+                      background: 'rgba(var(--accent-rgb),0.08)',
+                      border: '1px solid var(--accent-border)',
+                      borderRadius: 8, padding: '6px 10px',
+                      display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap'
+                    }}>
+                      <span style={{ fontSize: 12 }}>🛍</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>
+                        Productos pedidos:
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        {appt.productos.map(p => `${p.name} x${p.qty}`).join(' · ')}
+                      </span>
+                      <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 800, color: 'var(--accent)', fontFamily: "'Barlow Condensed', sans-serif" }}>
+                        +${appt.totalProductos?.toLocaleString() || appt.productos.reduce((s,p)=>s+p.price*p.qty,0).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 6 }}>
                     {appt.status === 'pendiente' && (
                       <button
@@ -686,9 +707,16 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{appt.client}</p>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{appt.service?.name} · {barber?.name || "Sin asignar"}</p>
+                  {appt.productos && appt.productos.length > 0 && (
+                    <p style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, marginTop: 3 }}>
+                      🛍 {appt.productos.map(p => `${p.name} x${p.qty}`).join(' · ')}
+                    </p>
+                  )}
                 </div>
                 <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                  <span style={{ fontWeight: 700, color: "var(--accent)", fontSize: 16 }}>{formatCurrency(appt.service?.price || 0)}</span>
+                  <span style={{ fontWeight: 700, color: "var(--accent)", fontSize: 16 }}>
+                    {formatCurrency((appt.service?.price || 0) + (appt.totalProductos || 0))}
+                  </span>
                   <span className="tag" style={{ background: sc.bg, color: sc.text }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot, display: "inline-block" }}></span>
                     {sc.label}
