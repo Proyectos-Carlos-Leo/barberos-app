@@ -2696,7 +2696,7 @@ function ProductsView({ slug }) {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
-  const [form, setForm] = useState({ name: '', price: '', description: '', image: '' });
+  const [form, setForm] = useState({ name: '', price: '', description: '', image: '', cantidad: '' });
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -2720,7 +2720,7 @@ function ProductsView({ slug }) {
 
   const openEdit = (p) => {
     setEditing(p.id);
-    setForm({ name: p.name || '', price: String(p.price || ''), description: p.description || '', image: p.image || '' });
+    setForm({ name: p.name || '', price: String(p.price || ''), description: p.description || '', image: p.image || '', cantidad: String(p.cantidad ?? '') });
     setShowForm(true);
   };
 
@@ -2736,6 +2736,7 @@ function ProductsView({ slug }) {
   const handleSave = async () => {
     if (!form.name.trim()) { alert('El nombre del producto es obligatorio'); return; }
     if (!form.price || isNaN(Number(form.price)) || Number(form.price) < 0) { alert('Ingresa un precio válido'); return; }
+    if (form.cantidad !== '' && (isNaN(Number(form.cantidad)) || Number(form.cantidad) < 0)) { alert('Ingresa una cantidad válida'); return; }
     setSaving(true);
     try {
       const data = {
@@ -2743,6 +2744,7 @@ function ProductsView({ slug }) {
         price: Number(form.price),
         description: form.description.trim(),
         image: form.image || '',
+        cantidad: form.cantidad !== '' ? Number(form.cantidad) : null,
         updatedAt: Date.now()
       };
       if (editing) {
@@ -2826,6 +2828,19 @@ function ProductsView({ slug }) {
                     ${p.price}
                   </p>
                 </div>
+                {/* Stock badge */}
+                {p.cantidad !== null && p.cantidad !== undefined && (
+                  <div style={{ marginBottom: 8 }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20,
+                      background: p.cantidad === 0 ? '#ef444415' : p.cantidad <= 5 ? '#f59e0b15' : '#10b98115',
+                      color: p.cantidad === 0 ? '#ef4444' : p.cantidad <= 5 ? '#f59e0b' : '#10b981',
+                      border: `1px solid ${p.cantidad === 0 ? '#ef444440' : p.cantidad <= 5 ? '#f59e0b40' : '#10b98140'}`,
+                    }}>
+                      {p.cantidad === 0 ? 'Agotado' : p.cantidad <= 5 ? `Últimas ${p.cantidad} piezas` : `${p.cantidad} en stock`}
+                    </span>
+                  </div>
+                )}
                 {p.description && (
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
                     {p.description}
@@ -2930,6 +2945,23 @@ function ProductsView({ slug }) {
                   style={{ paddingLeft: 30 }}
                 />
               </div>
+            </div>
+
+            {/* Cantidad en stock */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>
+                Cantidad en inventario
+                <span style={{ textTransform: 'none', fontWeight: 400 }}> (opcional)</span>
+              </label>
+              <input
+                value={form.cantidad}
+                onChange={e => setForm(f => ({ ...f, cantidad: e.target.value }))}
+                placeholder="Ej: 10"
+                type="number" min="0"
+              />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                Deja vacío si no quieres mostrar stock. Con 0 aparecerá como "Agotado".
+              </p>
             </div>
 
             {/* Descripción */}

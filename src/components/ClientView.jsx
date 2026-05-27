@@ -993,6 +993,13 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
 function SuccessView({ appointment, barbershop, productos = [], onReset, onExit }) {
   const folioId = appointment?.folio || (appointment?.id ? String(appointment.id).slice(-6).toUpperCase() : "------");
 
+  // Leer carrito guardado desde la landing
+  const carritoRaw = sessionStorage.getItem('carrito_barberos');
+  const carrito = carritoRaw ? JSON.parse(carritoRaw) : [];
+  const totalProductos = carrito.reduce((s, i) => s + i.price * i.qty, 0);
+  const totalCorte = appointment.service?.price || 0;
+  const totalFinal = totalCorte + totalProductos;
+
   return (
     <div className="fade-in" style={{ textAlign: "center", padding: "40px 20px" }}>
       {/* Ícono de éxito */}
@@ -1078,10 +1085,62 @@ function SuccessView({ appointment, barbershop, productos = [], onReset, onExit 
         </div>
       )}
 
-      {/* Productos — mientras esperas tu cita */}
-      {productos.length > 0 && (
+      {/* Resumen de carrito si trajo productos */}
+      {carrito.length > 0 && (
+        <div style={{ maxWidth: 480, margin: "0 auto 28px", textAlign: "left" }}>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 24, marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+              Productos seleccionados
+            </p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              Menciona tu folio al llegar para reclamarlos
+            </p>
+          </div>
+
+          <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
+            {carrito.map((item, i) => (
+              <div key={item.id} style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+                borderBottom: i < carrito.length - 1 ? "1px solid var(--border)" : "none"
+              }}>
+                <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", background: "var(--bg-input)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {item.image ? <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 20 }}>📦</span>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{item.name}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>x{item.qty} · ${item.price} c/u</p>
+                </div>
+                <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                  ${(item.price * item.qty).toLocaleString()}
+                </p>
+              </div>
+            ))}
+
+            {/* Subtotales */}
+            <div style={{ padding: "12px 16px", background: "var(--bg-input)", borderTop: "1px dashed var(--border)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Corte / servicio</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>${totalCorte.toLocaleString()}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Productos ({carrito.reduce((s,i)=>s+i.qty,0)})</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>${totalProductos.toLocaleString()}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>Total a pagar en tienda</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                  ${totalFinal.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Productos sugeridos si NO trajo carrito */}
+      {carrito.length === 0 && productos.length > 0 && (
         <div style={{ maxWidth: 480, margin: "0 auto 32px", textAlign: "left" }}>
-          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 28, marginBottom: 20 }}>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 28, marginBottom: 16 }}>
             <p style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
               Mientras esperas tu cita
             </p>
@@ -1089,36 +1148,25 @@ function SuccessView({ appointment, barbershop, productos = [], onReset, onExit 
               Productos disponibles en nuestra barbería
             </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
             {productos.slice(0, 4).map(p => (
-              <div key={p.id} style={{
-                background: "var(--bg-elevated)", border: "1px solid var(--border)",
-                borderRadius: 12, overflow: "hidden"
-              }}>
-                <div style={{ height: 120, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {p.image
-                    ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <span style={{ fontSize: 32 }}>📦</span>
-                  }
+              <div key={p.id} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+                <div style={{ height: 100, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {p.image ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 28 }}>📦</span>}
                 </div>
-                <div style={{ padding: "10px 12px" }}>
-                  <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 4, lineHeight: 1.3 }}>{p.name}</p>
-                  <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
+                <div style={{ padding: "8px 10px" }}>
+                  <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text-primary)", marginBottom: 2 }}>{p.name}</p>
+                  <p style={{ fontWeight: 800, fontSize: 14, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
                 </div>
               </div>
             ))}
           </div>
-          {productos.length > 4 && (
-            <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginTop: 12 }}>
-              +{productos.length - 4} productos más disponibles en la barbería
-            </p>
-          )}
         </div>
       )}
 
       <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-        <button className="btn-ghost" onClick={onExit}>Volver al inicio</button>
-        <button className="btn-gold" onClick={onReset}>Agendar otra cita</button>
+        <button className="btn-ghost" onClick={() => { sessionStorage.removeItem('carrito_barberos'); onExit(); }}>Volver al inicio</button>
+        <button className="btn-gold" onClick={() => { sessionStorage.removeItem('carrito_barberos'); onReset(); }}>Agendar otra cita</button>
       </div>
     </div>
   );
