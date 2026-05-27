@@ -24,6 +24,30 @@ export default function ClientView() {
   const [form, setForm] = useState({
     client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
+  const [carrito, setCarrito] = useState([]); // [{...producto, qty}]
+
+  const agregarProducto = (p) => {
+    if (p.cantidad === 0) return;
+    setCarrito(prev => {
+      const existing = prev.find(i => i.id === p.id);
+      const maxQty = p.cantidad ?? 999;
+      if (existing) {
+        if (existing.qty >= maxQty) return prev;
+        return prev.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+      return [...prev, { ...p, qty: 1 }];
+    });
+  };
+
+  const quitarProducto = (id) => {
+    setCarrito(prev => {
+      const existing = prev.find(i => i.id === id);
+      if (existing?.qty > 1) return prev.map(i => i.id === id ? { ...i, qty: i.qty - 1 } : i);
+      return prev.filter(i => i.id !== id);
+    });
+  };
+
+  const totalProductos = carrito.reduce((s, i) => s + i.price * i.qty, 0);
 
   const { appointments, barbers, blocks, services: firebaseServices, productos, addAppointment, loading, slug, barbershopConfig } = useApp();
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
@@ -132,6 +156,7 @@ export default function ClientView() {
 
   const reset = () => {
     setForm({ client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: "" });
+    setCarrito([]);
     setStep(1);
     setDone(false);
     setCompletedAppointment(null);
@@ -146,6 +171,7 @@ export default function ClientView() {
           <SuccessView
             appointment={completedAppointment}
             barbershop={barbershopConfig}
+            carrito={carrito}
             productos={barbershopConfig?.productos_activos !== false ? productos : []}
             onReset={reset}
             onExit={() => navigate(`/${slug}`)}
@@ -165,6 +191,10 @@ export default function ClientView() {
             isFullDayBlocked={isFullDayBlocked}
             handleNext={handleNext}
             handleSubmit={handleSubmit}
+            carrito={carrito}
+            agregarProducto={agregarProducto}
+            quitarProducto={quitarProducto}
+            totalProductos={totalProductos}
           />
         )}
       </main>
@@ -173,7 +203,7 @@ export default function ClientView() {
 }
 
 // ==================== BOOKING FLOW ====================
-function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, blockedTimes, isFullDayBlocked, handleNext, handleSubmit }) {
+function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, blockedTimes, isFullDayBlocked, handleNext, handleSubmit, carrito, agregarProducto, quitarProducto, totalProductos }) {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 32 }}>
@@ -184,9 +214,9 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
       </div>
       <StepsIndicator currentStep={step} steps={STEPS} />
       {step === 1 && <Step1ClientInfo form={form} update={update} errors={errors} barbers={barbers} selectedBarber={selectedBarber} onNext={handleNext} />}
-      {step === 2 && <Step2Service form={form} update={update} onBack={() => setStep(1)} onNext={handleNext} />}
+      {step === 2 && <Step2Service form={form} update={update} carrito={carrito} agregarProducto={agregarProducto} quitarProducto={quitarProducto} onBack={() => setStep(1)} onNext={handleNext} />}
       {step === 3 && <Step3DateTime form={form} update={update} takenTimes={takenTimes} blockedTimes={blockedTimes} isFullDayBlocked={isFullDayBlocked} onBack={() => setStep(2)} onNext={handleNext} />}
-      {step === 4 && <Step4Confirm form={form} selectedBarber={selectedBarber} selectedService={selectedService} onBack={() => setStep(3)} onSubmit={handleSubmit} />}
+      {step === 4 && <Step4Confirm form={form} selectedBarber={selectedBarber} selectedService={selectedService} carrito={carrito} quitarProducto={quitarProducto} totalProductos={totalProductos} onBack={() => setStep(3)} onSubmit={handleSubmit} />}
     </div>
   );
 }
@@ -390,7 +420,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 }
 
 // ==================== STEP 2 ====================
-function Step2Service({ form, update, onBack, onNext }) {
+function Step2Service({ form, update, carrito = [], agregarProducto, quitarProducto, onBack, onNext }) {
   const { services: firebaseServices, productos, barbershopConfig } = useApp();
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
@@ -538,13 +568,16 @@ function Step2Service({ form, update, onBack, onNext }) {
           <p style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", marginBottom: 16 }}>
             Productos de la barbería
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
             {productos.map(p => {
               const agotado = p.cantidad === 0;
+              const enCarrito = carrito.find(i => i.id === p.id);
               return (
                 <div key={p.id} style={{
-                  background: "var(--bg-elevated)", border: "1px solid var(--border)",
-                  borderRadius: 10, overflow: "hidden", opacity: agotado ? 0.6 : 1
+                  background: enCarrito ? "var(--accent-bg)" : "var(--bg-elevated)",
+                  border: `1.5px solid ${enCarrito ? "var(--accent)" : "var(--border)"}`,
+                  borderRadius: 10, overflow: "hidden", opacity: agotado ? 0.6 : 1,
+                  transition: "all 0.2s"
                 }}>
                   <div style={{ height: 110, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     {p.image
@@ -552,7 +585,7 @@ function Step2Service({ form, update, onBack, onNext }) {
                       : <span style={{ fontSize: 30 }}>📦</span>
                     }
                     {agotado && (
-                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <span style={{ color: "#ef4444", fontWeight: 800, fontSize: 10, letterSpacing: 1 }}>AGOTADO</span>
                       </div>
                     )}
@@ -564,18 +597,42 @@ function Step2Service({ form, update, onBack, onNext }) {
                         {p.description}
                       </p>
                     )}
-                    {p.cantidad !== null && p.cantidad !== undefined && p.cantidad > 0 && p.cantidad <= 5 && (
-                      <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 2 }}>Últimas {p.cantidad}</p>
+                    {p.cantidad > 0 && p.cantidad <= 5 && (
+                      <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 4 }}>Últimas {p.cantidad}</p>
                     )}
-                    <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+                      <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
+                      {!agotado && (
+                        enCarrito ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <button onClick={() => quitarProducto(p.id)} style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--bg-input)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>−</button>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", minWidth: 16, textAlign: "center" }}>{enCarrito.qty}</span>
+                            <button onClick={() => agregarProducto(p)} style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent)", border: "none", color: "white", fontSize: 16, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>+</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => agregarProducto(p)} style={{ background: "var(--accent)", border: "none", color: "white", borderRadius: 6, padding: "5px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Barlow', sans-serif" }}>
+                            + Agregar
+                          </button>
+                        )
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12, textAlign: "center" }}>
-            Puedes adquirirlos directamente en la barbería al llegar
-          </p>
+
+          {/* Mini resumen del carrito */}
+          {carrito.length > 0 && (
+            <div style={{ marginTop: 14, background: "var(--accent-bg)", border: "1px solid var(--accent-border)", borderRadius: 10, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
+                {carrito.reduce((s, i) => s + i.qty, 0)} producto{carrito.reduce((s, i) => s + i.qty, 0) !== 1 ? "s" : ""} seleccionado{carrito.reduce((s, i) => s + i.qty, 0) !== 1 ? "s" : ""}
+              </span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                +${carrito.reduce((s, i) => s + i.price * i.qty, 0).toLocaleString()}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -862,7 +919,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
 }
 
 // ==================== STEP 4 ====================
-function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit }) {
+function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], quitarProducto, totalProductos = 0, onBack, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -906,14 +963,51 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
           </div>
         )}
       </div>
-      <div style={{ background: "var(--accent-bg)", border: "1px solid var(--accent-border)", borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <p style={{ color: "var(--accent)", fontSize: 14, fontWeight: 600 }}>Total a pagar</p>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
+      {/* Productos seleccionados */}
+      {carrito.length > 0 && (
+        <div style={{ background: "var(--bg-elevated-2)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, padding: "12px 16px 0" }}>
+            Productos seleccionados
+          </p>
+          {carrito.map((item, i) => (
+            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: i < carrito.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 6, overflow: "hidden", background: "var(--bg-input)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {item.image ? <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span>📦</span>}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>{item.name}</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)" }}>x{item.qty} · ${item.price} c/u</p>
+              </div>
+              <p style={{ fontWeight: 700, fontSize: 14, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${(item.price * item.qty).toLocaleString()}</p>
+              <button onClick={() => { for(let i = 0; i < item.qty; i++) quitarProducto(item.id); }} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16, padding: "2px 4px" }}>✕</button>
+            </div>
+          ))}
         </div>
-        <span style={{ color: "var(--accent)", fontSize: 28, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
-          {formatCurrency(selectedService?.price || 0)}
-        </span>
+      )}
+
+      {/* Total */}
+      <div style={{ background: "var(--accent-bg)", border: "1px solid var(--accent-border)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+        {carrito.length > 0 && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Corte / servicio</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(selectedService?.price || 0)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, paddingBottom: 12, borderBottom: "1px dashed var(--accent-border)" }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Productos ({carrito.reduce((s,i) => s+i.qty, 0)})</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(totalProductos)}</span>
+            </div>
+          </>
+        )}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{ color: "var(--accent)", fontSize: 14, fontWeight: 700 }}>Total a pagar</p>
+            <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
+          </div>
+          <span style={{ color: "var(--accent)", fontSize: 30, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
+            {formatCurrency((selectedService?.price || 0) + totalProductos)}
+          </span>
+        </div>
       </div>
 
       {/* Aviso de privacidad */}
@@ -1040,12 +1134,8 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
 }
 
 // ==================== SUCCESS VIEW ====================
-function SuccessView({ appointment, barbershop, productos = [], onReset, onExit }) {
+function SuccessView({ appointment, barbershop, carrito = [], productos = [], onReset, onExit }) {
   const folioId = appointment?.folio || (appointment?.id ? String(appointment.id).slice(-6).toUpperCase() : "------");
-
-  // Leer carrito guardado desde la landing
-  const carritoRaw = sessionStorage.getItem('carrito_barberos');
-  const carrito = carritoRaw ? JSON.parse(carritoRaw) : [];
   const totalProductos = carrito.reduce((s, i) => s + i.price * i.qty, 0);
   const totalCorte = appointment.service?.price || 0;
   const totalFinal = totalCorte + totalProductos;
@@ -1215,8 +1305,8 @@ function SuccessView({ appointment, barbershop, productos = [], onReset, onExit 
       )}
 
       <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-        <button className="btn-ghost" onClick={() => { sessionStorage.removeItem('carrito_barberos'); onExit(); }}>Volver al inicio</button>
-        <button className="btn-gold" onClick={() => { sessionStorage.removeItem('carrito_barberos'); onReset(); }}>Agendar otra cita</button>
+        <button className="btn-ghost" onClick={onExit}>Volver al inicio</button>
+        <button className="btn-gold" onClick={onReset}>Agendar otra cita</button>
       </div>
     </div>
   );
