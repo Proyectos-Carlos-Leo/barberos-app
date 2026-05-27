@@ -187,6 +187,7 @@ export default function AdminView() {
     { key: "schedule", label: "Horarios", active: view === "schedule", onClick: () => setView("schedule") },
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
+    { key: "products", label: "Productos", active: view === "products", onClick: () => setView("products") },
     ...(barbershopConfig?.lealtad_activa !== false ? [
       { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty"), badge: pendingRedemptionsCount > 0 ? pendingRedemptionsCount : null }
     ] : [])
@@ -251,6 +252,7 @@ export default function AdminView() {
         {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
         {view === "services" && <ServicesView slug={slug} />}
         {view === "loyalty" && <LoyaltyView appointments={appointments} />}
+        {view === "products" && <ProductsView slug={slug} />}
       </main>
     </div>
   );
@@ -2683,5 +2685,276 @@ function QuickAction({ icon, label, color, onClick }) {
         color: "var(--text-secondary)"
       }}>{label}</span>
     </button>
+  );
+}
+
+// ==================== PRODUCTS VIEW ====================
+function ProductsView({ slug }) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [form, setForm] = useState({ name: '', price: '', description: '', image: '' });
+  const fileRef = useRef(null);
+
+  useEffect(() => {
+    const unsubscribe = onValue(ref(db, `barberias/${slug}/productos`), snap => {
+      const data = snap.val();
+      if (data) {
+        setProducts(Object.entries(data).map(([id, p]) => ({ id, ...p })).sort((a,b) => (a.name||'').localeCompare(b.name||'')));
+      } else {
+        setProducts([]);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [slug]);
+
+  const openNew = () => {
+    setEditing(null);
+    setForm({ name: '', price: '', description: '', image: '' });
+    setShowForm(true);
+  };
+
+  const openEdit = (p) => {
+    setEditing(p.id);
+    setForm({ name: p.name || '', price: String(p.price || ''), description: p.description || '', image: p.image || '' });
+    setShowForm(true);
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('La imagen no debe pesar más de 5MB'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => setForm(f => ({ ...f, image: ev.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) { alert('El nombre del producto es obligatorio'); return; }
+    if (!form.price || isNaN(Number(form.price)) || Number(form.price) < 0) { alert('Ingresa un precio válido'); return; }
+    setSaving(true);
+    try {
+      const data = {
+        name: form.name.trim(),
+        price: Number(form.price),
+        description: form.description.trim(),
+        image: form.image || '',
+        updatedAt: Date.now()
+      };
+      if (editing) {
+        await update(ref(db, `barberias/${slug}/productos/${editing}`), data);
+      } else {
+        await push(ref(db, `barberias/${slug}/productos`), { ...data, createdAt: Date.now() });
+      }
+      setShowForm(false);
+    } catch (err) {
+      alert('Error al guardar el producto');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Eliminar este producto?')) return;
+    setDeleting(id);
+    try {
+      await remove(ref(db, `barberias/${slug}/productos/${id}`));
+    } catch { alert('Error al eliminar'); }
+    finally { setDeleting(null); }
+  };
+
+  const labelStyle = { fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 8 };
+
+  return (
+    <div style={{ padding: '32px 24px', maxWidth: 900, margin: '0 auto' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h2 className="section-title" style={{ marginBottom: 4 }}>Productos</h2>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
+            {products.length} producto{products.length !== 1 ? 's' : ''} en el catálogo
+          </p>
+        </div>
+        <button className="btn-gold" onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          + Agregar producto
+        </button>
+      </div>
+
+      {/* Grid de productos */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-tertiary)' }}>Cargando...</div>
+      ) : products.length === 0 ? (
+        <div style={{
+          textAlign: 'center', padding: 60,
+          background: 'var(--bg-elevated)', border: '2px dashed var(--border)',
+          borderRadius: 16, color: 'var(--text-tertiary)'
+        }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🛍</div>
+          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Sin productos aún</p>
+          <p style={{ fontSize: 14 }}>Agrega los productos que vendes en tu barbería</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+          {products.map(p => (
+            <div key={p.id} style={{
+              background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+              borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s'
+            }}>
+              {/* Imagen */}
+              <div style={{
+                height: 180, background: 'var(--bg-input)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', position: 'relative'
+              }}>
+                {p.image ? (
+                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 48 }}>📦</span>
+                )}
+              </div>
+
+              {/* Info */}
+              <div style={{ padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, gap: 8 }}>
+                  <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.3 }}>{p.name}</p>
+                  <p style={{ fontWeight: 800, fontSize: 18, color: 'var(--accent)', flexShrink: 0, fontFamily: "'Barlow Condensed', sans-serif" }}>
+                    ${p.price}
+                  </p>
+                </div>
+                {p.description && (
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+                    {p.description}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => openEdit(p)} style={{
+                    flex: 1, background: 'var(--bg-input)', border: '1px solid var(--border)',
+                    color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 0',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+                  }}>
+                    Editar
+                  </button>
+                  <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} style={{
+                    background: '#ef444410', border: '1px solid #ef444430',
+                    color: '#ef4444', borderRadius: 8, padding: '8px 14px',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+                  }}>
+                    {deleting === p.id ? '...' : '🗑'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal formulario */}
+      {showForm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: 20
+        }} onClick={e => e.target === e.currentTarget && setShowForm(false)}>
+          <div style={{
+            background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
+            borderRadius: 16, padding: 28, width: '100%', maxWidth: 480,
+            maxHeight: '90vh', overflowY: 'auto'
+          }}>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}>
+              {editing ? 'Editar producto' : 'Nuevo producto'}
+            </h3>
+
+            {/* Foto */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Fotografía del producto</label>
+              <div
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  width: '100%', height: 200, borderRadius: 12,
+                  border: `2px dashed ${form.image ? 'var(--accent)' : 'var(--border)'}`,
+                  background: 'var(--bg-input)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', overflow: 'hidden', transition: 'border-color 0.2s'
+                }}
+              >
+                {form.image ? (
+                  <img src={form.image} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>📷</div>
+                    <p style={{ fontSize: 13 }}>Click para subir imagen</p>
+                    <p style={{ fontSize: 11, marginTop: 4 }}>JPG, PNG · Máx 5MB</p>
+                  </div>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
+              {form.image && (
+                <button onClick={() => setForm(f => ({ ...f, image: '' }))} style={{
+                  marginTop: 8, background: 'transparent', border: 'none',
+                  color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+                }}>
+                  Quitar imagen
+                </button>
+              )}
+            </div>
+
+            {/* Nombre */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Nombre del producto *</label>
+              <input
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Ej: Pomada texturizante, aceite para barba..."
+                autoFocus
+              />
+            </div>
+
+            {/* Precio */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Precio *</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{
+                  position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)', fontWeight: 700, fontSize: 16
+                }}>$</span>
+                <input
+                  value={form.price}
+                  onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                  placeholder="0"
+                  type="number" min="0"
+                  style={{ paddingLeft: 30 }}
+                />
+              </div>
+            </div>
+
+            {/* Descripción */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={labelStyle}>Descripción <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></label>
+              <textarea
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Descripción breve del producto, uso, beneficios..."
+                style={{ minHeight: 80 }}
+              />
+            </div>
+
+            {/* Botones */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn-ghost" onClick={() => setShowForm(false)} disabled={saving} style={{ flex: 1 }}>
+                Cancelar
+              </button>
+              <button className="btn-gold" onClick={handleSave} disabled={saving} style={{ flex: 1 }}>
+                {saving ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agregar producto'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
