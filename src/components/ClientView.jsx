@@ -25,7 +25,7 @@ export default function ClientView() {
     client: "", phone: "", email: "", barberId: "", serviceId: "", date: "", time: "", notes: ""
   });
 
-  const { appointments, barbers, blocks, services: firebaseServices, addAppointment, loading, slug, barbershopConfig } = useApp();
+  const { appointments, barbers, blocks, services: firebaseServices, productos, addAppointment, loading, slug, barbershopConfig } = useApp();
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
@@ -146,6 +146,7 @@ export default function ClientView() {
           <SuccessView
             appointment={completedAppointment}
             barbershop={barbershopConfig}
+            productos={productos}
             onReset={reset}
             onExit={() => navigate(`/${slug}`)}
           />
@@ -989,7 +990,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, onBack, onSubmit 
 }
 
 // ==================== SUCCESS VIEW ====================
-function SuccessView({ appointment, barbershop, onReset, onExit }) {
+function SuccessView({ appointment, barbershop, productos = [], onReset, onExit }) {
   const folioId = appointment?.folio || (appointment?.id ? String(appointment.id).slice(-6).toUpperCase() : "------");
 
   return (
@@ -1074,6 +1075,44 @@ function SuccessView({ appointment, barbershop, onReset, onExit }) {
           <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 6 }}>📍 Ubicación</p>
           {barbershop.direccion && <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{barbershop.direccion}</p>}
           {barbershop.telefono && <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>📞 {barbershop.telefono}</p>}
+        </div>
+      )}
+
+      {/* Productos — mientras esperas tu cita */}
+      {productos.length > 0 && (
+        <div style={{ maxWidth: 480, margin: "0 auto 32px", textAlign: "left" }}>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 28, marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+              Mientras esperas tu cita
+            </p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
+              Productos disponibles en nuestra barbería
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+            {productos.slice(0, 4).map(p => (
+              <div key={p.id} style={{
+                background: "var(--bg-elevated)", border: "1px solid var(--border)",
+                borderRadius: 12, overflow: "hidden"
+              }}>
+                <div style={{ height: 120, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {p.image
+                    ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <span style={{ fontSize: 32 }}>📦</span>
+                  }
+                </div>
+                <div style={{ padding: "10px 12px" }}>
+                  <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 4, lineHeight: 1.3 }}>{p.name}</p>
+                  <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {productos.length > 4 && (
+            <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginTop: 12 }}>
+              +{productos.length - 4} productos más disponibles en la barbería
+            </p>
+          )}
         </div>
       )}
 

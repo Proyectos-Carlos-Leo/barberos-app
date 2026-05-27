@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 
 function ClientLanding({ slug }) {
   const { theme, toggleTheme } = useTheme();
-  const { barbershopConfig } = useApp();
+  const { barbershopConfig, productos } = useApp();
 
   const nombre = barbershopConfig?.nombre || 'BarberOS';
   const eslogan = barbershopConfig?.eslogan || 'Tu Barbería Digital';
@@ -127,6 +127,47 @@ function ClientLanding({ slug }) {
                 <span>📞</span><span>{barbershopConfig.telefono}</span>
               </p>
             )}
+          </div>
+        )}
+
+        {/* Catálogo de productos */}
+        {productos && productos.length > 0 && (
+          <div style={{ marginTop: 48, width: "100%", maxWidth: 480 }}>
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, marginBottom: 20, textAlign: "center" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>
+                Tienda
+              </p>
+              <p style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>
+                Productos disponibles
+              </p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
+              {productos.map(p => (
+                <div key={p.id} style={{
+                  background: "var(--bg-elevated)", border: "1px solid var(--border)",
+                  borderRadius: 12, overflow: "hidden",
+                  transition: "border-color 0.2s, transform 0.15s",
+                }}>
+                  <div style={{ height: 130, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {p.image
+                      ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontSize: 36 }}>📦</span>
+                    }
+                  </div>
+                  <div style={{ padding: "10px 12px" }}>
+                    <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 2, lineHeight: 1.3 }}>{p.name}</p>
+                    {p.description && (
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {p.description}
+                      </p>
+                    )}
+                    <p style={{ fontWeight: 800, fontSize: 16, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                      ${p.price}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

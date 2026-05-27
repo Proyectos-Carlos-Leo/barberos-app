@@ -18,6 +18,7 @@ export function AppProvider({ children, slug }) {
   const [barbers, setBarbers] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [services, setServices] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [barbershopConfig, setBarbershopConfig] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -137,6 +138,15 @@ export function AppProvider({ children, slug }) {
     return () => unsub();
   }, [basePath, notFound]);
 
+  useEffect(() => {
+    if (!basePath || notFound) return;
+    const unsub = onValue(ref(db, `${basePath}/productos`), (snapshot) => {
+      const data = snapshot.val();
+      setProductos(data ? Object.entries(data).map(([id, val]) => ({ ...val, id })).sort((a,b) => (a.name||'').localeCompare(b.name||'')) : []);
+    });
+    return () => unsub();
+  }, [basePath, notFound]);
+
   // ========== NOTIFICACIONES ==========
   const addNotification = useCallback((notification) => {
     const id = generateId();
@@ -214,7 +224,7 @@ export function AppProvider({ children, slug }) {
 
   const value = {
     slug, basePath, barbershopConfig, suspended,
-    appointments, barbers, blocks, services,
+    appointments, barbers, blocks, services, productos,
     notifications, loading, notFound,
     addAppointment, updateAppointmentStatus, deleteAppointment,
     addBarber, toggleBarber, deleteBarber,
