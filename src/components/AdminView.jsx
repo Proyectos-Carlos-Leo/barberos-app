@@ -433,19 +433,24 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             setFilterDate('all');
             setFilterStatus('pendiente');
             setFilterBarber('all');
-            // Scroll suave al listado
             setTimeout(() => {
               document.querySelector('.appointments-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
           } : null}
         />
         <StatCardPro
-          label="Ingresos hoy"
-          value={formatCurrency(stats.revenueToday)}
+          label="Ingresos por cortes"
+          value={formatCurrency(stats.revenueCortesToday)}
           color="#4ade80"
           change={revenueChange}
           spark={last7Days.map(d => d.revenue)}
           maxSpark={maxRev}
+        />
+        <StatCardPro
+          label="Ingresos por productos"
+          value={formatCurrency(stats.revenueProductosToday)}
+          color="#a78bfa"
+          subtitle={stats.revenueProductosToday > 0 ? "Del día" : "Sin ventas hoy"}
         />
         <StatCardPro
           label="Ocupación"

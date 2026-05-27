@@ -79,19 +79,20 @@ export const clearStorage = () => {
 export const calculateStats = (appointments) => {
   const today = getTodayStr();
   const todayAppts = appointments.filter(a => a.date === today);
+  const todayCompleted = todayAppts.filter(a => a.status === "completada");
   
   return {
     todayTotal: todayAppts.length,
     pending: appointments.filter(a => a.status === "pendiente").length,
     confirmed: appointments.filter(a => a.status === "confirmada").length,
-    completedToday: todayAppts.filter(a => a.status === "completada").length,
+    completedToday: todayCompleted.length,
     cancelledToday: todayAppts.filter(a => a.status === "cancelada").length,
-    revenueToday: todayAppts
-      .filter(a => a.status === "completada")
-      .reduce((sum, a) => sum + a.service.price, 0),
+    revenueToday: todayCompleted.reduce((sum, a) => sum + (a.service?.price || 0) + (a.totalProductos || 0), 0),
+    revenueCortesToday: todayCompleted.reduce((sum, a) => sum + (a.service?.price || 0), 0),
+    revenueProductosToday: todayCompleted.reduce((sum, a) => sum + (a.totalProductos || 0), 0),
     totalRevenue: appointments
       .filter(a => a.status === "completada")
-      .reduce((sum, a) => sum + a.service.price, 0)
+      .reduce((sum, a) => sum + (a.service?.price || 0) + (a.totalProductos || 0), 0)
   };
 };
 
