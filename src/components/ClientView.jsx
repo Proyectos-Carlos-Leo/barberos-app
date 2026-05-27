@@ -266,7 +266,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
           color: "var(--text-primary)",
           marginBottom: 4
         }}>
-          ¿Quién <span className="gold">eres</span>?
+          Datos <span className="gold">personales</span>
         </h3>
         <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
           Y elige a tu barbero preferido
@@ -605,7 +605,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           color: "var(--text-primary)",
           marginBottom: 4
         }}>
-          ¿Cuándo te <span className="gold">conviene</span>?
+          ¿Cuándo <span className="gold">puedes</span>?
         </h3>
         <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
           Elige fecha y hora disponibles
