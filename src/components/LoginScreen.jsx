@@ -131,7 +131,7 @@ function ClientLanding({ slug }) {
         )}
 
         {/* Catálogo de productos */}
-        {productos && productos.length > 0 && (
+        {barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
           <div style={{ marginTop: 48, width: "100%", maxWidth: 480 }}>
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, marginBottom: 20, textAlign: "center" }}>
               <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>

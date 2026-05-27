@@ -187,7 +187,7 @@ export default function AdminView() {
     { key: "schedule", label: "Horarios", active: view === "schedule", onClick: () => setView("schedule") },
     { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
     { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
-    { key: "products", label: "Productos", active: view === "products", onClick: () => setView("products") },
+    ...(barbershopConfig?.productos_activos !== false ? [{ key: "products", label: "Productos", active: view === "products", onClick: () => setView("products") }] : []),
     ...(barbershopConfig?.lealtad_activa !== false ? [
       { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty"), badge: pendingRedemptionsCount > 0 ? pendingRedemptionsCount : null }
     ] : [])

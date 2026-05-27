@@ -155,6 +155,7 @@ function SuperAdminDashboard({ onLogout }) {
           email_admin: data[slug]?.config?.email_admin || '---',
           telefono: data[slug]?.config?.telefono || '---',
           lealtad_activa: data[slug]?.config?.lealtad_activa !== false,
+          productos_activos: data[slug]?.config?.productos_activos !== false,
           activa: data[slug]?.config?.activa !== false,
         }));
         setBarberias(list.sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -172,6 +173,15 @@ function SuperAdminDashboard({ onLogout }) {
     } catch (error) {
       console.error('Error:', error);
       alert('Error al actualizar. Verifica las reglas de Firebase.');
+    }
+  };
+
+  const toggleProductos = async (slug, currentValue) => {
+    try {
+      await update(ref(db, `barberias/${slug}/config`), { productos_activos: !currentValue });
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al actualizar.');
     }
   };
 
@@ -325,6 +335,27 @@ function SuperAdminDashboard({ onLogout }) {
                       }}
                     >
                       {barber.lealtad_activa ? '⭐ Lealtad ON' : '☆ Lealtad OFF'}
+                    </button>
+                    <button
+                      onClick={() => toggleProductos(barber.slug, barber.productos_activos)}
+                      title={barber.productos_activos ? 'Desactivar productos' : 'Activar productos'}
+                      style={{
+                        background: barber.productos_activos ? '#8b5cf615' : '#2a2a2a',
+                        border: `1px solid ${barber.productos_activos ? '#8b5cf644' : '#3a3a3a'}`,
+                        color: barber.productos_activos ? '#a78bfa' : '#666',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        transition: 'all 0.15s',
+                        fontFamily: "'Barlow', sans-serif"
+                      }}
+                    >
+                      {barber.productos_activos ? '🛍 Productos ON' : '🛍 Productos OFF'}
                     </button>
                     <button
                       onClick={() => toggleActiva(barber.slug, barber.activa)}

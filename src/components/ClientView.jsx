@@ -146,7 +146,7 @@ export default function ClientView() {
           <SuccessView
             appointment={completedAppointment}
             barbershop={barbershopConfig}
-            productos={productos}
+            productos={barbershopConfig?.productos_activos !== false ? productos : []}
             onReset={reset}
             onExit={() => navigate(`/${slug}`)}
           />
