@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
@@ -5,6 +6,7 @@ import { useApp } from '../context/AppContext';
 function ClientLanding({ slug }) {
   const { theme, toggleTheme } = useTheme();
   const { barbershopConfig, productos } = useApp();
+  const [productosOpen, setProductosOpen] = useState(false);
 
   const nombre = barbershopConfig?.nombre || 'BarberOS';
   const eslogan = barbershopConfig?.eslogan || 'Tu Barbería Digital';
@@ -130,44 +132,85 @@ function ClientLanding({ slug }) {
           </div>
         )}
 
-        {/* Catálogo de productos */}
+        {/* Catálogo de productos — desplegable */}
         {barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
-          <div style={{ marginTop: 48, width: "100%", maxWidth: 480 }}>
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, marginBottom: 20, textAlign: "center" }}>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>
-                Tienda
-              </p>
-              <p style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>
-                Productos disponibles
-              </p>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
-              {productos.map(p => (
-                <div key={p.id} style={{
-                  background: "var(--bg-elevated)", border: "1px solid var(--border)",
-                  borderRadius: 12, overflow: "hidden",
-                  transition: "border-color 0.2s, transform 0.15s",
-                }}>
-                  <div style={{ height: 130, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {p.image
-                      ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontSize: 36 }}>📦</span>
-                    }
-                  </div>
-                  <div style={{ padding: "10px 12px" }}>
-                    <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 2, lineHeight: 1.3 }}>{p.name}</p>
-                    {p.description && (
-                      <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                        {p.description}
-                      </p>
-                    )}
-                    <p style={{ fontWeight: 800, fontSize: 16, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
-                      ${p.price}
-                    </p>
-                  </div>
+          <div style={{ marginTop: 40, width: "100%", maxWidth: 480 }}>
+
+            {/* Header clickeable */}
+            <button
+              onClick={() => setProductosOpen(o => !o)}
+              style={{
+                width: "100%",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border)",
+                borderRadius: productosOpen ? "12px 12px 0 0" : 12,
+                padding: "14px 20px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                transition: "border-radius 0.2s",
+                fontFamily: "'Barlow', sans-serif",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 18 }}>🛍</span>
+                <div style={{ textAlign: "left" }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                    Productos disponibles
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>
+                    {productos.length} producto{productos.length !== 1 ? "s" : ""} en tienda
+                  </p>
                 </div>
-              ))}
+              </div>
+              <svg
+                width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round"
+                style={{ transition: "transform 0.25s", transform: productosOpen ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {/* Contenido desplegable */}
+            <div style={{
+              overflow: "hidden",
+              maxHeight: productosOpen ? "2000px" : "0px",
+              transition: "max-height 0.35s ease",
+              background: "var(--bg-elevated)",
+              border: productosOpen ? "1px solid var(--border)" : "none",
+              borderTop: "none",
+              borderRadius: "0 0 12px 12px",
+            }}>
+              <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
+                {productos.map(p => (
+                  <div key={p.id} style={{
+                    background: "var(--bg-main)", border: "1px solid var(--border)",
+                    borderRadius: 10, overflow: "hidden",
+                  }}>
+                    <div style={{ height: 120, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {p.image
+                        ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <span style={{ fontSize: 32 }}>📦</span>
+                      }
+                    </div>
+                    <div style={{ padding: "10px 12px" }}>
+                      <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 2, lineHeight: 1.3 }}>{p.name}</p>
+                      {p.description && (
+                        <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {p.description}
+                        </p>
+                      )}
+                      <p style={{ fontWeight: 800, fontSize: 16, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                        ${p.price}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+
           </div>
         )}
 
