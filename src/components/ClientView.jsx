@@ -391,7 +391,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 
 // ==================== STEP 2 ====================
 function Step2Service({ form, update, onBack, onNext }) {
-  const { services: firebaseServices } = useApp();
+  const { services: firebaseServices, productos, barbershopConfig } = useApp();
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
   // Mapa de emojis por servicio (id puede ser número o string)
@@ -528,6 +528,56 @@ function Step2Service({ form, update, onBack, onNext }) {
           );
         })}
       </div>
+
+      {/* Productos disponibles */}
+      {barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
+        <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 28 }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
+            También disponible
+          </p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", marginBottom: 16 }}>
+            Productos de la barbería
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
+            {productos.map(p => {
+              const agotado = p.cantidad === 0;
+              return (
+                <div key={p.id} style={{
+                  background: "var(--bg-elevated)", border: "1px solid var(--border)",
+                  borderRadius: 10, overflow: "hidden", opacity: agotado ? 0.6 : 1
+                }}>
+                  <div style={{ height: 110, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                    {p.image
+                      ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontSize: 30 }}>📦</span>
+                    }
+                    {agotado && (
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ color: "#ef4444", fontWeight: 800, fontSize: 10, letterSpacing: 1 }}>AGOTADO</span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: "10px 12px" }}>
+                    <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text-primary)", marginBottom: 2, lineHeight: 1.3 }}>{p.name}</p>
+                    {p.description && (
+                      <p style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {p.description}
+                      </p>
+                    )}
+                    {p.cantidad !== null && p.cantidad !== undefined && p.cantidad > 0 && p.cantidad <= 5 && (
+                      <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 2 }}>Últimas {p.cantidad}</p>
+                    )}
+                    <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12, textAlign: "center" }}>
+            Puedes adquirirlos directamente en la barbería al llegar
+          </p>
+        </div>
+      )}
 
       <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between" }}>
         <button className="btn-ghost" onClick={onBack}>← Atrás</button>
