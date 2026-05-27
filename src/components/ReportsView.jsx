@@ -734,258 +734,13 @@ export default function ReportsView({ appointments, barbers }) {
       </div>
       {/* Fin grid 2x2 superior */}
 
-      {/* Grid 2x2 inferior */}
+      {/* Grid inferior: Comparativa + Productos mini */}
       <div className="reports-grid" style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
         gap: 16,
         marginBottom: 16
       }}>
-      {/* HISTOGRAMA: Horarios pico con AM/PM */}
-      <Card
-        title="⏰ Horarios pico"
-        subtitle="Distribución de citas por hora del día"
-        action={<RangePill value={hoursRange} onChange={setHoursRange} />}
-      >
-        {peakHours.length === 0 ? (
-          <EmptyState icon="📊" message="Aún no hay datos suficientes" />
-        ) : (() => {
-          // Separar AM y PM
-          const amHours = peakHours.filter(h => parseInt(h.time) < 12);
-          const pmHours = peakHours.filter(h => parseInt(h.time) >= 12);
-          const allHours = [...amHours, ...pmHours];
-
-          return (
-            <div style={{ padding: "16px 0 0" }}>
-              {/* Histograma */}
-              <div style={{ position: "relative", height: 180, display: "flex", alignItems: "flex-end", paddingTop: 20, overflow: "visible" }}>
-                {/* Líneas guía Y */}
-                {[100, 75, 50, 25].map(pct => (
-                  <div key={pct} style={{
-                    position: "absolute",
-                    left: 0, right: 0,
-                    bottom: `${pct}%`,
-                    borderTop: "1px dashed var(--border)"
-                  }}>
-                    <span style={{
-                      position: "absolute",
-                      left: -6,
-                      transform: "translateX(-100%)",
-                      fontSize: 9,
-                      color: "var(--text-faint)"
-                    }}>
-                      {Math.round(maxHourCount * pct / 100)}
-                    </span>
-                  </div>
-                ))}
-                {/* Barras */}
-                <div style={{
-                  display: "flex",
-                  flex: 1,
-                  alignItems: "flex-end",
-                  paddingLeft: 28,
-                  height: "100%",
-                  gap: 3
-                }}>
-                  {allHours.map((h, i) => {
-                    const isAM = parseInt(h.time) < 12;
-                    const heightPct = (h.count / maxHourCount) * 100;
-                    const isPeak = h.count === maxHourCount;
-                    // Separador visual entre AM y PM
-                    const prevIsAM = i > 0 ? parseInt(allHours[i - 1].time) < 12 : true;
-                    const showDivider = i > 0 && isAM !== prevIsAM;
-                    return (
-                      <div key={h.time} style={{
-                        display: "flex",
-                        alignItems: "flex-end",
-                        height: "100%",
-                        gap: 3
-                      }}>
-                        {/* Separador AM/PM */}
-                        {showDivider && (
-                          <div style={{
-                            width: 1,
-                            height: "100%",
-                            background: "#3d3d3d",
-                            marginRight: 4,
-                            position: "relative"
-                          }}>
-                            <span style={{
-                              position: "absolute",
-                              bottom: -20,
-                              left: "50%",
-                              transform: "translateX(-50%)",
-                              fontSize: 8,
-                              color: "var(--text-dim)",
-                              whiteSpace: "nowrap"
-                            }}>
-                              12PM
-                            </span>
-                          </div>
-                        )}
-                        <div style={{
-                          width: 28,
-                          height: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                          gap: 2
-                        }}>
-                          {/* Valor */}
-                          {h.count > 0 && (
-                            <span style={{
-                              fontSize: 9,
-                              color: isPeak ? (isAM ? "var(--accent-light)" : "#818cf8") : "var(--text-dim)",
-                              fontWeight: 700
-                            }}>
-                              {h.count}
-                            </span>
-                          )}
-                          {/* Barra con hover */}
-                          <div
-                            title={`${h.time} ${isAM ? 'AM' : 'PM'}: ${h.count} cita${h.count !== 1 ? 's' : ''}${isPeak ? ' (Hora pico)' : ''}`}
-                            style={{
-                              width: "100%",
-                              height: `${Math.max(heightPct, 3)}%`,
-                              background: isAM
-                                ? isPeak
-                                  ? "linear-gradient(180deg, #e0f4fc, var(--accent-light), var(--accent-dark))"
-                                  : "linear-gradient(180deg, var(--accent-dark), #0a3d56)"
-                                : isPeak
-                                  ? "linear-gradient(180deg, #c7d2fe, #818cf8, #4f46e5)"
-                                  : "linear-gradient(180deg, #4f46e5, #312e81)",
-                              borderRadius: "3px 3px 0 0",
-                              border: isPeak
-                                ? `1px solid ${isAM ? "var(--accent-light)" : "#818cf8"}`
-                                : "1px solid transparent",
-                              minHeight: 3,
-                              transition: "all 0.2s ease",
-                              cursor: h.count > 0 ? "pointer" : "default"
-                            }}
-                            onMouseEnter={e => {
-                              if (h.count > 0) {
-                                e.currentTarget.style.boxShadow = `0 0 14px ${isAM ? "rgba(95,200,236,0.8)" : "rgba(129,140,248,0.8)"}`;
-                                e.currentTarget.style.filter = "brightness(1.25)";
-                              }
-                            }}
-                            onMouseLeave={e => {
-                              e.currentTarget.style.boxShadow = "none";
-                              e.currentTarget.style.filter = "brightness(1)";
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Eje X con horas */}
-              <div style={{
-                display: "flex",
-                paddingLeft: 28,
-                gap: 3,
-                marginTop: 4,
-                borderTop: "2px solid var(--border-strong)",
-                paddingTop: 6
-              }}>
-                {allHours.map((h, i) => {
-                  const isAM = parseInt(h.time) < 12;
-                  const prevIsAM = i > 0 ? parseInt(allHours[i - 1].time) < 12 : true;
-                  const showDivider = i > 0 && isAM !== prevIsAM;
-                  return (
-                    <div key={h.time} style={{ display: "flex", gap: 3 }}>
-                      {showDivider && <div style={{ width: 5 }} />}
-                      <div style={{ width: 28, textAlign: "center" }}>
-                        <span style={{
-                          fontSize: 8,
-                          fontWeight: 600,
-                          color: isAM ? "var(--accent-dark)" : "#6366f1",
-                          display: "block"
-                        }}>
-                          {h.time.replace(":00", "").replace(":30", "³⁰")}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Bloques AM/PM */}
-              <div style={{
-                marginTop: 14,
-                display: "flex",
-                gap: 8,
-                flexWrap: "wrap"
-              }}>
-                {/* AM */}
-                <div style={{
-                  flex: 1,
-                  minWidth: 140,
-                  background: "var(--accent-bg)",
-                  border: "1px solid #0a3d56",
-                  borderRadius: 8,
-                  padding: "10px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10
-                }}>
-                  <div style={{ width: 10, height: 28, borderRadius: 2, background: "linear-gradient(180deg, var(--accent-light), var(--accent-dark))" }} />
-                  <div>
-                    <p style={{ fontSize: 11, color: "var(--accent-dark)", fontWeight: 700, textTransform: "uppercase" }}>
-                      ☀️ AM (9:00 - 13:30)
-                    </p>
-                    <p style={{ fontSize: 13, color: "var(--accent-light)", fontWeight: 800 }}>
-                      {amHours.reduce((s, h) => s + h.count, 0)} citas
-                    </p>
-                  </div>
-                </div>
-                {/* PM */}
-                <div style={{
-                  flex: 1,
-                  minWidth: 140,
-                  background: "#0f0f1a",
-                  border: "1px solid #312e81",
-                  borderRadius: 8,
-                  padding: "10px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10
-                }}>
-                  <div style={{ width: 10, height: 28, borderRadius: 2, background: "linear-gradient(180deg, #818cf8, #4f46e5)" }} />
-                  <div>
-                    <p style={{ fontSize: 11, color: "#6366f1", fontWeight: 700, textTransform: "uppercase" }}>
-                      🌙 PM (15:00 - 19:30)
-                    </p>
-                    <p style={{ fontSize: 13, color: "#818cf8", fontWeight: 800 }}>
-                      {pmHours.reduce((s, h) => s + h.count, 0)} citas
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Leyenda */}
-              <div style={{
-                marginTop: 10,
-                display: "flex",
-                gap: 14,
-                flexWrap: "wrap",
-                alignItems: "center"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "var(--accent-light)" }} />
-                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hora AM pico</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#818cf8" }} />
-                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hora PM pico</span>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-      </Card>
 
       {/* Comparativa mensual */}
       <Card title="📆 Comparativa mensual" subtitle="Este mes vs mes anterior">
@@ -1043,18 +798,163 @@ export default function ReportsView({ appointments, barbers }) {
           </div>
         )}
       </Card>
+
+      {/* Productos mini — dentro del grid */}
+      <ProductosStats appointments={appointments} compact={true} />
+
       </div>
       {/* Fin grid 2x2 inferior */}
 
-      {/* ===== SECCIÓN: PRODUCTOS VENDIDOS ===== */}
-      <ProductosStats appointments={appointments} />
+      {/* ===== HORARIOS PICO — Full width grande ===== */}
+      <HorariosPicoFullWidth peakHours={peakHours} maxHourCount={maxHourCount} hoursRange={hoursRange} setHoursRange={setHoursRange} />
 
     </div>
   );
 }
 
+// ========== HORARIOS PICO FULL WIDTH ==========
+function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRange }) {
+  if (!peakHours || peakHours.length === 0) return null;
+
+  const amHours = peakHours.filter(h => parseInt(h.time) < 12);
+  const pmHours = peakHours.filter(h => parseInt(h.time) >= 12);
+  const allHours = [...amHours, ...pmHours];
+  const amPeak = [...amHours].sort((a,b) => b.count - a.count).slice(0, 3);
+  const pmPeak = [...pmHours].sort((a,b) => b.count - a.count).slice(0, 3);
+
+  return (
+    <div style={{
+      marginTop: 16,
+      background: 'var(--bg-elevated)',
+      border: '1px solid var(--border)',
+      borderRadius: 16,
+      padding: 24,
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 20 }}>⏰</span>
+            <h3 style={{ fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-primary)' }}>
+              Horarios Pico
+            </h3>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Distribución de citas por hora del día</p>
+        </div>
+        <RangePill value={hoursRange} onChange={setHoursRange} />
+      </div>
+
+      {/* Chart grande */}
+      <div style={{ position: 'relative', height: 260, display: 'flex', alignItems: 'flex-end', paddingTop: 24, overflow: 'visible' }}>
+        {/* Líneas guía */}
+        {[100, 75, 50, 25].map(pct => (
+          <div key={pct} style={{ position: 'absolute', left: 32, right: 0, bottom: `${pct * 260/260}%`, borderTop: '1px dashed var(--border)' }}>
+            <span style={{ position: 'absolute', left: -32, fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>
+              {Math.round(maxHourCount * pct / 100)}
+            </span>
+          </div>
+        ))}
+
+        {/* Barras */}
+        <div style={{ display: 'flex', flex: 1, alignItems: 'flex-end', paddingLeft: 32, height: '100%', gap: 4 }}>
+          {allHours.map((h, i) => {
+            const isAM = parseInt(h.time) < 12;
+            const heightPct = (h.count / maxHourCount) * 100;
+            const isPeak = h.count === maxHourCount;
+            const prevIsAM = i > 0 ? parseInt(allHours[i-1].time) < 12 : true;
+            const showDivider = i > 0 && isAM !== prevIsAM;
+            return (
+              <div key={h.time} style={{ display: 'flex', alignItems: 'flex-end', height: '100%', gap: 4 }}>
+                {showDivider && (
+                  <div style={{ width: 1, height: '100%', background: 'var(--border-strong)', position: 'relative' }}>
+                    <span style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>12PM</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 3, flex: 1, minWidth: 32 }}>
+                  {h.count > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 800, color: isPeak ? (isAM ? 'var(--accent-light)' : '#818cf8') : 'var(--text-muted)' }}>
+                      {h.count}
+                    </span>
+                  )}
+                  <div
+                    title={`${h.time}: ${h.count} cita${h.count !== 1 ? 's' : ''}`}
+                    style={{
+                      width: '100%',
+                      height: `${Math.max(heightPct, h.count > 0 ? 2 : 0)}%`,
+                      background: isAM
+                        ? isPeak ? 'linear-gradient(180deg, #e0f4fc, var(--accent-light), var(--accent-dark))' : 'linear-gradient(180deg, var(--accent-dark), #0a3d56)'
+                        : isPeak ? 'linear-gradient(180deg, #c7d2fe, #818cf8, #4f46e5)' : 'linear-gradient(180deg, #4f46e5, #312e81)',
+                      borderRadius: '4px 4px 0 0',
+                      border: isPeak ? `1px solid ${isAM ? 'var(--accent-light)' : '#818cf8'}` : '1px solid transparent',
+                      minHeight: h.count > 0 ? 4 : 0,
+                      transition: 'all 0.2s',
+                      cursor: h.count > 0 ? 'pointer' : 'default'
+                    }}
+                    onMouseEnter={e => { if (h.count > 0) { e.currentTarget.style.filter = 'brightness(1.3)'; e.currentTarget.style.boxShadow = `0 0 14px ${isAM ? 'rgba(95,200,236,0.7)' : 'rgba(129,140,248,0.7)'}`; }}}
+                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Eje X */}
+      <div style={{ display: 'flex', paddingLeft: 32, gap: 4, marginTop: 6, borderTop: '2px solid var(--border-strong)', paddingTop: 8 }}>
+        {allHours.map((h, i) => {
+          const isAM = parseInt(h.time) < 12;
+          const prevIsAM = i > 0 ? parseInt(allHours[i-1].time) < 12 : true;
+          const showDivider = i > 0 && isAM !== prevIsAM;
+          return (
+            <div key={h.time} style={{ display: 'flex', gap: 4 }}>
+              {showDivider && <div style={{ width: 5 }} />}
+              <div style={{ minWidth: 32, textAlign: 'center' }}>
+                <span style={{ fontSize: 9, fontWeight: 600, color: isAM ? 'var(--accent-dark)' : '#6366f1' }}>
+                  {h.time.replace(':00', '').replace(':30', '³⁰')}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Resumen AM/PM */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 20 }}>
+        {[
+          { label: '☀️ AM (9:00 - 13:30)', peaks: amPeak, color: 'var(--accent)', bg: 'var(--accent-bg)', border: 'var(--accent-border)', count: amHours.reduce((s,h)=>s+h.count,0) },
+          { label: '🌙 PM (15:00 - 19:30)', peaks: pmPeak, color: '#818cf8', bg: '#4f46e510', border: '#4f46e540', count: pmHours.reduce((s,h)=>s+h.count,0) },
+        ].map(({ label, peaks, color, bg, border, count }) => (
+          <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 6 }}>{label}</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif", marginBottom: 4 }}>{count} citas</p>
+            {peaks.length > 0 && (
+              <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                Picos: {peaks.map(p => p.time).join(', ')}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Leyenda */}
+      <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--accent-dark)' }} />
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hora AM pico</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 12, height: 12, borderRadius: 2, background: '#4f46e5' }} />
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hora PM pico</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ========== PRODUCTOS STATS ==========
-function ProductosStats({ appointments }) {
+function ProductosStats({ appointments, compact = false }) {
   const [range, setRange] = useState(30);
 
   const data = useMemo(() => {
@@ -1087,9 +987,15 @@ function ProductosStats({ appointments }) {
     return { products, totalRevenue, totalQty, maxQty, withProducts };
   }, [appointments, range]);
 
-  if (data.products.length === 0 && data.withProducts.length === 0) return null;
+  if (data.products.length === 0 && data.withProducts.length === 0) return compact ? null : null;
 
-  const sectionStyle = {
+  const sectionStyle = compact ? {
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: 20,
+    overflow: 'hidden'
+  } : {
     marginTop: 28,
     background: 'var(--bg-elevated)',
     border: '1px solid var(--border)',
@@ -1130,7 +1036,7 @@ function ProductosStats({ appointments }) {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: compact ? '1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: compact ? 8 : 12, marginBottom: compact ? 16 : 24 }}>
         {[
           { label: 'Ingresos productos', value: `$${data.totalRevenue.toLocaleString()}`, color: 'var(--accent)' },
           { label: 'Unidades vendidas', value: data.totalQty, color: 'var(--text-primary)' },
@@ -1150,7 +1056,7 @@ function ProductosStats({ appointments }) {
         </p>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {data.products.map((p, i) => (
+          {(compact ? data.products.slice(0, 4) : data.products).map((p, i) => (
             <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               {/* Rank */}
               <span style={{ fontSize: 12, fontWeight: 800, color: i === 0 ? 'var(--accent)' : 'var(--text-muted)', width: 18, flexShrink: 0, textAlign: 'right' }}>
