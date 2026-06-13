@@ -40,12 +40,67 @@ exports.sendAppointmentConfirmation = onValueCreated(
       const serviceSnap = await admin.database().ref(`barberias/${slug}/servicios/${serviceId}`).once("value");
       const service = serviceSnap.val() || {};
 
-      const dateFormatter = new Intl.DateTimeFormat("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+      const idioma = config.idioma === "en" ? "en" : "es";
+      const dateFormatter = new Intl.DateTimeFormat(idioma === "en" ? "en-US" : "es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
       const formattedDate = dateFormatter.format(new Date(appointment.date + "T12:00:00"));
+
+      const T = idioma === "en" ? {
+        lang: "en",
+        headerTitle: "Appointment Confirmed",
+        refLabel: "Reference number",
+        refHelp: "Save this code to look up or modify your appointment",
+        sectionDetails: "Your appointment details",
+        date: "Date:",
+        time: "Time:",
+        service: "Service:",
+        barber: "Barber:",
+        duration: "Duration:",
+        durationUnit: "minutes",
+        price: "Price:",
+        sectionLocation: "Location & info",
+        address: "Address:",
+        phone: "Phone:",
+        infoBox: "You can look up or change your appointment details using the reference number above. If you have any questions, feel free to contact us directly.",
+        footerNote: "This is an automated email. Please do not reply to this message.",
+        timeNotSpecified: "Not specified",
+        serviceNotSpecified: "Not specified",
+        barberNotAssigned: "To be assigned",
+        addressNotSpecified: "Not specified",
+        phoneNotSpecified: "Not specified",
+        defaultName: "Your Barbershop",
+        subject: `Appointment Confirmed - Reference: ${appointment.folio}`,
+        textBody: `Appointment Confirmed\n\nReference: ${appointment.folio}\n\nDetails:`,
+      } : {
+        lang: "es",
+        headerTitle: "Cita Confirmada",
+        refLabel: "Número de referencia",
+        refHelp: "Guarda este código para consultar o modificar tu cita",
+        sectionDetails: "Detalles de tu cita",
+        date: "Fecha:",
+        time: "Hora:",
+        service: "Servicio:",
+        barber: "Barbero:",
+        duration: "Duración:",
+        durationUnit: "minutos",
+        price: "Precio:",
+        sectionLocation: "Ubicación e información",
+        address: "Dirección:",
+        phone: "Teléfono:",
+        infoBox: "Puedes consultar o cambiar los detalles de tu cita usando el número de referencia proporcionado. Si tienes preguntas, no dudes en comunicarte directamente con nosotros.",
+        footerNote: "Este es un correo automático. Por favor, no respondas a este mensaje.",
+        timeNotSpecified: "No especificada",
+        serviceNotSpecified: "No especificado",
+        barberNotAssigned: "Por asignar",
+        addressNotSpecified: "No especificada",
+        phoneNotSpecified: "No especificado",
+        defaultName: "Tu Barbería",
+        subject: `Cita confirmada - Folio: ${appointment.folio}`,
+        textBody: `Cita confirmada\n\nFolio: ${appointment.folio}\n\nDetalles:`,
+      };
 
       const emailHTML = `
         <!DOCTYPE html>
-        <html lang="es">
+        <html lang="${T.lang}">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -176,44 +231,44 @@ exports.sendAppointmentConfirmation = onValueCreated(
         <body>
           <div class="container">
             <div class="header">
-              <h1>Cita Confirmada</h1>
-              <p>${config.nombre || "Tu Barbería"}</p>
+              <h1>${T.headerTitle}</h1>
+              <p>${config.nombre || T.defaultName}</p>
             </div>
 
             <div class="folio-section">
-              <div class="folio-label">Número de referencia</div>
+              <div class="folio-label">${T.refLabel}</div>
               <div class="folio-value">${appointment.folio || "------"}</div>
-              <div class="folio-help">Guarda este código para consultar o modificar tu cita</div>
+              <div class="folio-help">${T.refHelp}</div>
             </div>
 
             <div class="content">
               <div class="section">
-                <div class="section-title">Detalles de tu cita</div>
+                <div class="section-title">${T.sectionDetails}</div>
                 <div class="detail">
-                  <span class="detail-label">Fecha:</span>
+                  <span class="detail-label">${T.date}</span>
                   <span class="detail-value">${formattedDate}</span>
                 </div>
                 <div class="detail">
-                  <span class="detail-label">Hora:</span>
-                  <span class="detail-value">${appointment.time || "No especificada"}</span>
+                  <span class="detail-label">${T.time}</span>
+                  <span class="detail-value">${appointment.time || T.timeNotSpecified}</span>
                 </div>
                 <div class="detail">
-                  <span class="detail-label">Servicio:</span>
-                  <span class="detail-value">${service.name || "No especificado"}</span>
+                  <span class="detail-label">${T.service}</span>
+                  <span class="detail-value">${service.name || T.serviceNotSpecified}</span>
                 </div>
                 <div class="detail">
-                  <span class="detail-label">Barbero:</span>
-                  <span class="detail-value">${barber.name || "Por asignar"}</span>
+                  <span class="detail-label">${T.barber}</span>
+                  <span class="detail-value">${barber.name || T.barberNotAssigned}</span>
                 </div>
                 ${service.duration ? `
                 <div class="detail">
-                  <span class="detail-label">Duración:</span>
-                  <span class="detail-value">${service.duration} minutos</span>
+                  <span class="detail-label">${T.duration}</span>
+                  <span class="detail-value">${service.duration} ${T.durationUnit}</span>
                 </div>
                 ` : ""}
                 ${service.price ? `
                 <div class="detail">
-                  <span class="detail-label">Precio:</span>
+                  <span class="detail-label">${T.price}</span>
                   <span class="detail-value">$${service.price}</span>
                 </div>
                 ` : ""}
@@ -221,16 +276,16 @@ exports.sendAppointmentConfirmation = onValueCreated(
 
               ${config.direccion || config.telefono ? `
               <div class="section">
-                <div class="section-title">Ubicación e información</div>
+                <div class="section-title">${T.sectionLocation}</div>
                 ${config.direccion ? `
                 <div class="detail">
-                  <span class="detail-label">Dirección:</span>
+                  <span class="detail-label">${T.address}</span>
                   <span class="detail-value">${config.direccion}</span>
                 </div>
                 ` : ""}
                 ${config.telefono ? `
                 <div class="detail">
-                  <span class="detail-label">Teléfono:</span>
+                  <span class="detail-label">${T.phone}</span>
                   <span class="detail-value"><a href="tel:${config.telefono}" style="color: #36B1DF; text-decoration: none;">${config.telefono}</a></span>
                 </div>
                 ` : ""}
@@ -238,13 +293,13 @@ exports.sendAppointmentConfirmation = onValueCreated(
               ` : ""}
 
               <div class="info-box">
-                Puedes consultar o cambiar los detalles de tu cita usando el número de referencia proporcionado. Si tienes preguntas, no dudes en comunicarte directamente con nosotros.
+                ${T.infoBox}
               </div>
             </div>
 
             <div class="footer">
               <div class="footer-brand">${config.nombre || "BarberOS"}</div>
-              <p>Este es un correo automático. Por favor, no respondas a este mensaje.</p>
+              <p>${T.footerNote}</p>
             </div>
           </div>
         </body>
@@ -259,9 +314,9 @@ exports.sendAppointmentConfirmation = onValueCreated(
       await transporter.sendMail({
         from: barbershopEmail,
         to: appointment.client_email,
-        subject: `Cita confirmada - Folio: ${appointment.folio}`,
+        subject: T.subject,
         html: emailHTML,
-        text: `Cita confirmada\n\nFolio: ${appointment.folio}\n\nDetalles:\nFecha: ${formattedDate}\nHora: ${appointment.time}\nServicio: ${service.name || "No especificado"}\nBarbero: ${barber.name || "Por asignar"}\n\nDirección: ${config.direccion || "No especificada"}\nTeléfono: ${config.telefono || "No especificado"}`
+        text: `${T.textBody}\n${T.date} ${formattedDate}\n${T.time} ${appointment.time}\n${T.service} ${service.name || T.serviceNotSpecified}\n${T.barber} ${barber.name || T.barberNotAssigned}\n\n${T.address} ${config.direccion || T.addressNotSpecified}\n${T.phone} ${config.telefono || T.phoneNotSpecified}`
       });
 
       console.log(`[${slug}] Email enviado desde ${barbershopEmail} a ${appointment.client_email}`);

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ref, update } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatCurrency } from '../utils/helpers';
 
@@ -11,6 +12,8 @@ export default function CheckAppointment() {
   const { slug } = useParams();
   const { appointments, barbers, barbershopConfig, loading } = useApp();
   const { theme, toggleTheme } = useTheme();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
 
   const [folio, setFolio] = useState('');
   const [phone, setPhone] = useState('');
@@ -26,7 +29,7 @@ export default function CheckAppointment() {
     const cleanPhone = phone.trim();
 
     if (cleanFolio.length !== 6) {
-      alert('⚠ El folio debe tener 6 caracteres');
+      alert(t('⚠ El folio debe tener 6 caracteres'));
       return;
     }
 
@@ -62,7 +65,7 @@ export default function CheckAppointment() {
       setShowCancelConfirm(false);
     } catch (error) {
       console.error('Error al cancelar:', error);
-      alert('Error al cancelar la cita. Intenta de nuevo.');
+      alert(t('Error al cancelar la cita. Intenta de nuevo.'));
     } finally {
       setCancelling(false);
     }
@@ -71,7 +74,7 @@ export default function CheckAppointment() {
   const handleReschedule = () => {
     // Llevar al cliente al flujo de agendar nueva cita
     // (sin cancelar la actual — el admin lo verá)
-    if (confirm('Para reagendar te llevamos a crear una nueva cita. ¿Deseas también cancelar la cita actual?')) {
+    if (confirm(t('Para reagendar te llevamos a crear una nueva cita. ¿Deseas también cancelar la cita actual?'))) {
       handleCancel().then(() => {
         navigate(`/${slug}/cliente`);
       });
@@ -81,10 +84,10 @@ export default function CheckAppointment() {
   };
 
   const STATUS_LABELS = {
-    pendiente: { label: 'Pendiente de confirmación', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-    confirmada: { label: 'Confirmada ✓', color: '#4ade80', bg: 'rgba(74,222,128,0.1)' },
-    completada: { label: 'Completada', color: 'var(--accent)', bg: 'rgba(var(--accent-rgb),0.1)' },
-    cancelada: { label: 'Cancelada', color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
+    pendiente: { label: t('Pendiente de confirmación'), color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    confirmada: { label: t('Confirmada ✓'), color: '#4ade80', bg: 'rgba(74,222,128,0.1)' },
+    completada: { label: t('Completada'), color: 'var(--accent)', bg: 'rgba(var(--accent-rgb),0.1)' },
+    cancelada: { label: t('Cancelada'), color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
   };
 
   // Solo permitir cancelar/reagendar si la cita no está completada/cancelada
@@ -137,7 +140,7 @@ export default function CheckAppointment() {
           cursor: "pointer"
         }}
       >
-        ← Volver
+        {t("← Volver")}
       </button>
 
       <div className="fade-in-up" style={{ width: "100%", maxWidth: 460 }}>
@@ -163,7 +166,7 @@ export default function CheckAppointment() {
                 letterSpacing: 1, textTransform: "uppercase",
                 color: "var(--text-primary)"
               }}>
-                ¡Cita <span className="gold">encontrada</span>!
+                {idioma === 'en' ? '' : '¡'}<span className="gold">{idioma === 'en' ? 'Appointment' : 'Cita'}</span> {t("encontrada!")}
               </h2>
             </div>
 
@@ -194,7 +197,7 @@ export default function CheckAppointment() {
               paddingBottom: 16,
               borderBottom: "1px dashed var(--border-strong)"
             }}>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Folio</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{t("Folio")}</p>
               <p style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontSize: 28, fontWeight: 800,
@@ -204,12 +207,12 @@ export default function CheckAppointment() {
 
             {/* Detalles */}
             <div style={{ display: "grid", gap: 12, marginBottom: 24 }}>
-              <Row label="Cliente" value={foundAppt.client} />
-              <Row label="Barbero" value={barbers.find(b => b.id === foundAppt.barberId)?.name || "Sin asignar"} />
-              <Row label="Servicio" value={foundAppt.service?.name || "—"} />
-              <Row label="Fecha" value={formatDate(foundAppt.date)} />
-              <Row label="Hora" value={foundAppt.time} />
-              <Row label="Total" value={formatCurrency(foundAppt.service?.price || 0)} highlight />
+              <Row label={t("Cliente")} value={foundAppt.client} />
+              <Row label={t("Barbero")} value={barbers.find(b => b.id === foundAppt.barberId)?.name || t("Sin asignar")} />
+              <Row label={t("Servicio")} value={foundAppt.service?.name || "—"} />
+              <Row label={t("Fecha")} value={formatDate(foundAppt.date, idioma)} />
+              <Row label={t("Hora")} value={foundAppt.time} />
+              <Row label={t("Total")} value={formatCurrency(foundAppt.service?.price || 0)} highlight />
             </div>
 
             {/* Ubicación */}
@@ -220,7 +223,7 @@ export default function CheckAppointment() {
                 borderRadius: 10, padding: 14,
                 marginBottom: 20, textAlign: "left"
               }}>
-                <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 6 }}>📍 Ubicación</p>
+                <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 6 }}>{t("📍 Ubicación")}</p>
                 {barbershopConfig.direccion && (
                   <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{barbershopConfig.direccion}</p>
                 )}
@@ -244,7 +247,7 @@ export default function CheckAppointment() {
                   fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
                   marginBottom: 10, textAlign: "center"
                 }}>
-                  ¿Necesitas cambios?
+                  {t("¿Necesitas cambios?")}
                 </p>
                 <div style={{ display: "grid", gap: 8 }}>
                   <button
@@ -264,7 +267,7 @@ export default function CheckAppointment() {
                       transition: "all 0.2s"
                     }}
                   >
-                    🔄 Reagendar mi cita
+                    {t("🔄 Reagendar mi cita")}
                   </button>
                   <button
                     onClick={() => setShowCancelConfirm(true)}
@@ -282,7 +285,7 @@ export default function CheckAppointment() {
                       transition: "all 0.2s"
                     }}
                   >
-                    ❌ Cancelar mi cita
+                    {t("❌ Cancelar mi cita")}
                   </button>
                 </div>
               </div>
@@ -298,17 +301,17 @@ export default function CheckAppointment() {
                 textAlign: "center"
               }}>
                 <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                  Esta cita ya pasó. Para cambios contacta a la barbería.
+                  {t("Esta cita ya pasó. Para cambios contacta a la barbería.")}
                 </p>
               </div>
             )}
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button className="btn-ghost" onClick={handleNewSearch} style={{ flex: 1, minWidth: 120 }}>
-                Buscar otra
+                {t("Buscar otra")}
               </button>
               <button className="btn-gold" onClick={() => navigate(`/${slug}`)} style={{ flex: 1, minWidth: 120 }}>
-                Volver al inicio
+                {t("Volver al inicio")}
               </button>
             </div>
           </div>
@@ -332,13 +335,13 @@ export default function CheckAppointment() {
               letterSpacing: 1, textTransform: "uppercase",
               color: "var(--text-primary)", marginBottom: 8
             }}>
-              No encontramos tu cita
+              {t("No encontramos tu cita")}
             </h2>
             <p style={{ color: "var(--text-tertiary)", fontSize: 14, marginBottom: 24, lineHeight: 1.5 }}>
-              El folio y/o teléfono no coinciden con ninguna cita registrada. Verifica los datos e intenta de nuevo.
+              {t("El folio y/o teléfono no coinciden con ninguna cita registrada. Verifica los datos e intenta de nuevo.")}
             </p>
             <button className="btn-gold" onClick={handleNewSearch} style={{ width: "100%" }}>
-              Intentar de nuevo
+              {t("Intentar de nuevo")}
             </button>
           </div>
         ) : (
@@ -360,10 +363,10 @@ export default function CheckAppointment() {
                 letterSpacing: 1, textTransform: "uppercase",
                 color: "var(--text-primary)", marginBottom: 6
               }}>
-                Buscar mi <span className="gold">cita</span>
+                {t("Buscar mi")} <span className="gold">{t("cita")}</span>
               </h2>
               <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-                Ingresa tu folio y teléfono para ver tu cita
+                {t("Ingresa tu folio y teléfono para ver tu cita")}
               </p>
             </div>
 
@@ -374,12 +377,12 @@ export default function CheckAppointment() {
                   display: "block", marginBottom: 8,
                   fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
                 }}>
-                  Folio de tu cita *
+                  {t("Folio de tu cita *")}
                 </label>
                 <input
                   value={folio}
                   onChange={e => setFolio(e.target.value.toUpperCase())}
-                  placeholder="Ej. ABC123"
+                  placeholder={t("Ej. ABC123")}
                   maxLength={6}
                   style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
@@ -391,7 +394,7 @@ export default function CheckAppointment() {
                   }}
                 />
                 <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-                  6 caracteres que recibiste al agendar
+                  {t("6 caracteres que recibiste al agendar")}
                 </p>
               </div>
 
@@ -401,7 +404,7 @@ export default function CheckAppointment() {
                   display: "block", marginBottom: 8,
                   fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
                 }}>
-                  Tu teléfono *
+                  {t("Tu teléfono *")}
                 </label>
                 <input
                   value={phone}
@@ -418,7 +421,7 @@ export default function CheckAppointment() {
               disabled={!folio || !phone}
               style={{ width: "100%" }}
             >
-              🔍 Buscar mi cita
+              {t("🔍 Buscar mi cita")}
             </button>
           </div>
         )}
@@ -460,14 +463,13 @@ export default function CheckAppointment() {
               fontSize: 22, fontWeight: 800,
               letterSpacing: 1, textTransform: "uppercase",
               marginBottom: 10, color: "var(--text-primary)"
-            }}>¿Cancelar cita?</h3>
+            }}>{t("¿Cancelar cita?")}</h3>
 
             <p style={{
               color: "var(--text-secondary)",
               fontSize: 14, marginBottom: 24, lineHeight: 1.5
             }}>
-              Tu cita del <strong>{formatDate(foundAppt.date)}</strong> a las <strong>{foundAppt.time}</strong> será cancelada.
-              Esta acción no se puede deshacer.
+              {t("Tu cita del")} <strong>{formatDate(foundAppt.date, idioma)}</strong> {t("a las")} <strong>{foundAppt.time}</strong> {t("será cancelada. Esta acción no se puede deshacer.")}
             </p>
 
             <div style={{ display: "flex", gap: 10 }}>
@@ -487,7 +489,7 @@ export default function CheckAppointment() {
                   cursor: cancelling ? "not-allowed" : "pointer"
                 }}
               >
-                No, regresar
+                {t("No, regresar")}
               </button>
               <button
                 onClick={handleCancel}
@@ -505,7 +507,7 @@ export default function CheckAppointment() {
                   cursor: cancelling ? "not-allowed" : "pointer"
                 }}
               >
-                {cancelling ? "Cancelando..." : "Sí, cancelar"}
+                {cancelling ? t("Cancelando...") : t("Sí, cancelar")}
               </button>
             </div>
           </div>

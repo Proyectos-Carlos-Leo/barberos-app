@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 import Header from './Header';
 import Notifications from './Notifications';
 import { SERVICES as DEFAULT_SERVICES } from '../utils/data';
@@ -50,6 +51,7 @@ export default function ClientView() {
   const totalProductos = carrito.reduce((s, i) => s + i.price * i.qty, 0);
 
   const { appointments, barbers, blocks, services: firebaseServices, productos, addAppointment, loading, slug, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
@@ -71,10 +73,10 @@ export default function ClientView() {
 
   const validateStep1 = () => {
     const errs = {};
-    if (!validateName(form.client)) errs.client = "Ingresa tu nombre completo (mínimo 3 caracteres)";
-    if (!form.phone || !validatePhone(form.phone)) errs.phone = "Teléfono obligatorio (mínimo 10 dígitos)";
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Email válido obligatorio";
-    if (!form.barberId) errs.barberId = "Selecciona un barbero";
+    if (!validateName(form.client)) errs.client = t("Ingresa tu nombre completo (mínimo 3 caracteres)");
+    if (!form.phone || !validatePhone(form.phone)) errs.phone = t("Teléfono obligatorio (mínimo 10 dígitos)");
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = t("Email válido obligatorio");
+    if (!form.barberId) errs.barberId = t("Selecciona un barbero");
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -91,25 +93,25 @@ export default function ClientView() {
     // 1. Validar teléfono (solo dígitos, espacios, +, -, paréntesis)
     const cleanPhone = form.phone.trim();
     if (!/^[\d\s+\-()]{8,20}$/.test(cleanPhone)) {
-      alert('⚠ Número de teléfono inválido');
+      alert(t('⚠ Número de teléfono inválido'));
       return;
     }
 
     // 2. Validar nombre (sin caracteres raros)
     const cleanName = form.client.trim();
     if (cleanName.length < 2 || cleanName.length > 100) {
-      alert('⚠ Nombre inválido');
+      alert(t('⚠ Nombre inválido'));
       return;
     }
     if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s.'-]+$/.test(cleanName)) {
-      alert('⚠ El nombre solo puede contener letras');
+      alert(t('⚠ El nombre solo puede contener letras'));
       return;
     }
 
     // 3. Validar que la fecha sea hoy o futuro
     const todayStr = new Date().toISOString().split('T')[0];
     if (form.date < todayStr) {
-      alert('⚠ No puedes agendar citas en fechas pasadas');
+      alert(t('⚠ No puedes agendar citas en fechas pasadas'));
       return;
     }
 
@@ -121,7 +123,7 @@ export default function ClientView() {
         a.status !== 'cancelada'
       );
       if (sameDayBookings.length >= 2) {
-        alert('⚠ Ya tienes 2 citas para esta fecha con este número. Si necesitas más, contacta directamente a la barbería.');
+        alert(t('⚠ Ya tienes 2 citas para esta fecha con este número. Si necesitas más, contacta directamente a la barbería.'));
         return;
       }
     }
@@ -134,7 +136,7 @@ export default function ClientView() {
       a.createdAt > oneHourAgo
     );
     if (recentBookings.length >= 5) {
-      alert('⚠ Demasiadas citas en poco tiempo. Espera unos minutos.');
+      alert(t('⚠ Demasiadas citas en poco tiempo. Espera unos minutos.'));
       return;
     }
 
@@ -206,15 +208,17 @@ export default function ClientView() {
 
 // ==================== BOOKING FLOW ====================
 function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, blockedTimes, isFullDayBlocked, handleNext, handleSubmit, carrito, agregarProducto, quitarProducto, totalProductos }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 32 }}>
         <h1 className="section-title" style={{ marginBottom: 6 }}>
-          Agenda tu <span className="gold">cita</span>
+          {t("Agenda tu")} <span className="gold">{t("cita")}</span>
         </h1>
-        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Reserva en línea de forma rápida y sencilla</p>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{t("Reserva en línea de forma rápida y sencilla")}</p>
       </div>
-      <StepsIndicator currentStep={step} steps={STEPS} />
+      <StepsIndicator currentStep={step} steps={STEPS} idioma={barbershopConfig?.idioma} />
       {step === 1 && <Step1ClientInfo form={form} update={update} errors={errors} barbers={barbers} selectedBarber={selectedBarber} onNext={handleNext} />}
       {step === 2 && <Step2Service form={form} update={update} carrito={carrito} agregarProducto={agregarProducto} quitarProducto={quitarProducto} onBack={() => setStep(1)} onNext={handleNext} />}
       {step === 3 && <Step3DateTime form={form} update={update} takenTimes={takenTimes} blockedTimes={blockedTimes} isFullDayBlocked={isFullDayBlocked} onBack={() => setStep(2)} onNext={handleNext} />}
@@ -224,7 +228,8 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
 }
 
 // ==================== STEPS INDICATOR ====================
-function StepsIndicator({ currentStep, steps }) {
+function StepsIndicator({ currentStep, steps, idioma }) {
+  const t = useT(idioma);
   return (
     <div style={{ display: "flex", marginBottom: 36, alignItems: "center" }}>
       {steps.map((s, i) => {
@@ -254,7 +259,7 @@ function StepsIndicator({ currentStep, steps }) {
                 textAlign: "center",
                 textTransform: "uppercase",
                 letterSpacing: 0.5
-              }}>{s.label}</span>
+              }}>{t(s.label)}</span>
             </div>
             {i < steps.length - 1 && (
               <div style={{
@@ -273,6 +278,8 @@ function StepsIndicator({ currentStep, steps }) {
 
 // ==================== STEP 1 ====================
 function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   return (
     <div className="fade-in card booking-card">
       <div style={{ marginBottom: 24 }}>
@@ -288,7 +295,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
           textTransform: "uppercase",
           marginBottom: 8
         }}>
-          Paso 1: Tus datos
+          {t("Paso 1: Tus datos")}
         </span>
         <h3 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
@@ -299,22 +306,22 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
           color: "var(--text-primary)",
           marginBottom: 4
         }}>
-          Datos <span className="gold">personales</span>
+          {t("Datos")} <span className="gold">{t("personales")}</span>
         </h3>
         <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-          Y elige a tu barbero preferido
+          {t("Y elige a tu barbero preferido")}
         </p>
       </div>
 
       <div style={{ display: "grid", gap: 18, marginBottom: 24 }}>
-        <FormField label="Nombre completo *" error={errors.client}>
-          <input value={form.client} onChange={e => update("client", e.target.value)} placeholder="Ej. Juan García" />
+        <FormField label={t("Nombre completo *")} error={errors.client}>
+          <input value={form.client} onChange={e => update("client", e.target.value)} placeholder={t("Ej. Juan García")} />
         </FormField>
-        <FormField label="Teléfono *" hint="Para confirmar tu cita por WhatsApp" error={errors.phone}>
+        <FormField label={t("Teléfono *")} hint={t("Para confirmar tu cita por WhatsApp")} error={errors.phone}>
           <input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="81 1234 5678" type="tel" />
         </FormField>
-        <FormField label="Email *" hint="Te enviaremos la confirmación de tu cita" error={errors.email}>
-          <input value={form.email} onChange={e => update("email", e.target.value)} placeholder="tu@email.com" type="email" />
+        <FormField label={t("Email *")} hint={t("Te enviaremos la confirmación de tu cita")} error={errors.email}>
+          <input value={form.email} onChange={e => update("email", e.target.value)} placeholder={t("tu@email.com")} type="email" />
         </FormField>
       </div>
 
@@ -326,7 +333,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
         letterSpacing: 0.5,
         marginBottom: 12
       }}>
-        Elige a tu barbero *
+        {t("Elige a tu barbero *")}
       </p>
 
       <div style={{
@@ -414,7 +421,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 
       <div style={{ marginTop: 28, display: "flex", justifyContent: "flex-end" }}>
         <button className="btn-gold" onClick={onNext} disabled={!form.client || !form.phone || !form.barberId}>
-          Siguiente →
+          {t("Siguiente →")}
         </button>
       </div>
     </div>
@@ -424,6 +431,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
 // ==================== STEP 2 ====================
 function Step2Service({ form, update, carrito = [], agregarProducto, quitarProducto, onBack, onNext }) {
   const { services: firebaseServices, productos, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
 
   // Mapa de emojis por servicio (id puede ser número o string)
@@ -449,7 +457,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
           textTransform: "uppercase",
           marginBottom: 8
         }}>
-          Paso 2: Servicio
+          {t("Paso 2: Servicio")}
         </span>
         <h3 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
@@ -460,10 +468,10 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
           color: "var(--text-primary)",
           marginBottom: 4
         }}>
-          ¿Qué te <span className="gold">haces</span> hoy?
+          {t("¿Qué te")} <span className="gold">{t("haces")}</span> {t("hoy?")}
         </h3>
         <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-          Selecciona el servicio que necesitas
+          {t("Selecciona el servicio que necesitas")}
         </p>
       </div>
 
@@ -541,7 +549,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
                   alignItems: "center",
                   gap: 4
                 }}>
-                  ⏱ {s.duration} min
+                  ⏱ {s.duration} {t("min")}
                 </span>
               </div>
               {isSelected && (
@@ -565,10 +573,10 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
       {barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
         <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 28 }}>
           <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
-            También disponible
+            {t("También disponible")}
           </p>
           <p style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", marginBottom: 16 }}>
-            Productos de la barbería
+            {t("Productos de la barbería")}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
             {productos.map(p => {
@@ -588,7 +596,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
                     }
                     {agotado && (
                       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ color: "#ef4444", fontWeight: 800, fontSize: 10, letterSpacing: 1 }}>AGOTADO</span>
+                        <span style={{ color: "#ef4444", fontWeight: 800, fontSize: 10, letterSpacing: 1 }}>{t("AGOTADO")}</span>
                       </div>
                     )}
                   </div>
@@ -600,7 +608,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
                       </p>
                     )}
                     {p.cantidad > 0 && p.cantidad <= 5 && (
-                      <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 4 }}>Últimas {p.cantidad}</p>
+                      <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 4 }}>{t("Últimas")} {p.cantidad}</p>
                     )}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
                       <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
@@ -613,7 +621,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
                           </div>
                         ) : (
                           <button onClick={() => agregarProducto(p)} style={{ background: "var(--accent)", border: "none", color: "white", borderRadius: 6, padding: "5px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Barlow', sans-serif" }}>
-                            + Agregar
+                            {t("+ Agregar")}
                           </button>
                         )
                       )}
@@ -628,7 +636,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
           {carrito.length > 0 && (
             <div style={{ marginTop: 14, background: "var(--accent-bg)", border: "1px solid var(--accent-border)", borderRadius: 10, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-                {carrito.reduce((s, i) => s + i.qty, 0)} producto{carrito.reduce((s, i) => s + i.qty, 0) !== 1 ? "s" : ""} seleccionado{carrito.reduce((s, i) => s + i.qty, 0) !== 1 ? "s" : ""}
+                {carrito.reduce((s, i) => s + i.qty, 0)} {t(carrito.reduce((s, i) => s + i.qty, 0) !== 1 ? "productos" : "producto")} {barbershopConfig?.idioma === 'en' ? 'selected' : (carrito.reduce((s, i) => s + i.qty, 0) !== 1 ? 'seleccionados' : 'seleccionado')}
               </span>
               <span style={{ fontSize: 16, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
                 +${carrito.reduce((s, i) => s + i.price * i.qty, 0).toLocaleString()}
@@ -639,8 +647,8 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
       )}
 
       <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between" }}>
-        <button className="btn-ghost" onClick={onBack}>← Atrás</button>
-        <button className="btn-gold" onClick={onNext} disabled={!form.serviceId}>Siguiente →</button>
+        <button className="btn-ghost" onClick={onBack}>{t("← Atrás")}</button>
+        <button className="btn-gold" onClick={onNext} disabled={!form.serviceId}>{t("Siguiente →")}</button>
       </div>
     </div>
   );
@@ -649,6 +657,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
 // ==================== STEP 3 ====================
 function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocked, onBack, onNext }) {
   const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const horario = barbershopConfig?.horario || {};
 
   // Generar slots dinámicamente desde la config
@@ -684,7 +693,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
   };
 
   // Obtener solo días activos para los próximos 14 días
-  const allDays = getNext7Days(14); // extendemos a 14 para tener suficientes días activos
+  const allDays = getNext7Days(14, barbershopConfig?.idioma); // extendemos a 14 para tener suficientes días activos
   const days = allDays.filter(d => isDayActive(d.date)).slice(0, 7);
 
   const blockedHoursOnly = (blockedTimes || []).filter(t => t !== 'FULL_DAY');
@@ -704,7 +713,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           textTransform: "uppercase",
           marginBottom: 8
         }}>
-          Paso 3: Fecha y hora
+          {t("Paso 3: Fecha y hora")}
         </span>
         <h3 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
@@ -715,10 +724,10 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           color: "var(--text-primary)",
           marginBottom: 4
         }}>
-          ¿Cuándo <span className="gold">puedes</span>?
+          {t("¿Cuándo")} <span className="gold">{t("puedes")}</span>?
         </h3>
         <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-          Elige fecha y hora disponibles
+          {t("Elige fecha y hora disponibles")}
         </p>
       </div>
 
@@ -729,7 +738,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           display: "block", marginBottom: 12,
           fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
         }}>
-          📅 Fecha
+          {t("📅 Fecha")}
         </label>
         <div style={{
           display: "flex",
@@ -803,10 +812,10 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
         }}>
           <p style={{ fontSize: 32, marginBottom: 8 }}>🚫</p>
           <p style={{ color: "var(--danger)", fontWeight: 700, fontSize: 15 }}>
-            Este día no está disponible
+            {t("Este día no está disponible")}
           </p>
           <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginTop: 4 }}>
-            Por favor elige otra fecha
+            {t("Por favor elige otra fecha")}
           </p>
         </div>
       )}
@@ -819,7 +828,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
             display: "block", marginBottom: 12,
             fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
           }}>
-            ⏰ Hora disponible
+            {t("⏰ Hora disponible")}
           </label>
           <div style={{
             display: "grid",
@@ -896,25 +905,25 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
                 border: "1.5px dashed var(--border)",
                 borderRadius: 3
               }}></span>
-              Los horarios tachados no están disponibles
+              {t("Los horarios tachados no están disponibles")}
             </p>
           )}
         </div>
       )}
 
-      <FormField label="Notas adicionales (opcional)">
+      <FormField label={t("Notas adicionales (opcional)")}>
         <textarea
           value={form.notes}
           onChange={e => update("notes", e.target.value)}
-          placeholder="Ej. Degradado bajo, barba recortada..."
+          placeholder={t("Ej. Degradado bajo, barba recortada...")}
           rows={3}
           style={{ resize: "none" }}
         />
       </FormField>
 
       <div style={{ marginTop: 28, display: "flex", justifyContent: "space-between" }}>
-        <button className="btn-ghost" onClick={onBack}>← Atrás</button>
-        <button className="btn-gold" onClick={onNext} disabled={!form.date || !form.time || isFullDayBlocked}>Siguiente →</button>
+        <button className="btn-ghost" onClick={onBack}>{t("← Atrás")}</button>
+        <button className="btn-gold" onClick={onNext} disabled={!form.date || !form.time || isFullDayBlocked}>{t("Siguiente →")}</button>
       </div>
     </div>
   );
@@ -922,13 +931,15 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
 
 // ==================== STEP 4 ====================
 function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], quitarProducto, totalProductos = 0, onBack, onSubmit }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [submitting, setSubmitting] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const handleClick = async () => {
     if (!acceptPrivacy) {
-      alert('⚠ Debes aceptar el aviso de privacidad para continuar');
+      alert(t('⚠ Debes aceptar el aviso de privacidad para continuar'));
       return;
     }
     setSubmitting(true);
@@ -937,18 +948,18 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
   };
 
   const summary = [
-    ["Cliente", form.client],
-    ["Teléfono", form.phone || "—"],
-    ["Barbero", selectedBarber?.name || "—"],
-    ["Servicio", selectedService?.name || "—"],
-    ["Duración", `${selectedService?.duration || 0} min`],
-    ["Fecha", formatDate(form.date)],
-    ["Hora", form.time],
+    [t("Cliente"), form.client],
+    [t("Teléfono"), form.phone || "—"],
+    [t("Barbero"), selectedBarber?.name || "—"],
+    [t("Servicio"), selectedService?.name || "—"],
+    [t("Duración"), `${selectedService?.duration || 0} ${t("min")}`],
+    [t("Fecha"), formatDate(form.date, barbershopConfig?.idioma)],
+    [t("Hora"), form.time],
   ];
 
   return (
     <div className="fade-in card booking-card">
-      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "var(--text-secondary)" }}>Confirma tu cita</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, color: "var(--text-secondary)" }}>{t("Confirma tu cita")}</h3>
       <div style={{ background: "var(--bg-elevated-2)", borderRadius: 12, padding: 22, marginBottom: 20, border: "1px solid var(--border)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
           {summary.map(([label, val]) => (
@@ -960,7 +971,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
         </div>
         {form.notes && (
           <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{t("Notas")}</p>
             <p style={{ fontSize: 14, fontStyle: "italic" }}>"{form.notes}"</p>
           </div>
         )}
@@ -969,7 +980,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
       {carrito.length > 0 && (
         <div style={{ background: "var(--bg-elevated-2)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
           <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, padding: "12px 16px 0" }}>
-            Productos seleccionados
+            {t("Productos seleccionados")}
           </p>
           {carrito.map((item, i) => (
             <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: i < carrito.length - 1 ? "1px solid var(--border)" : "none" }}>
@@ -978,7 +989,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>{item.name}</p>
-                <p style={{ fontSize: 11, color: "var(--text-muted)" }}>x{item.qty} · ${item.price} c/u</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)" }}>x{item.qty} · ${item.price} {barbershopConfig?.idioma === "en" ? "each" : "c/u"}</p>
               </div>
               <p style={{ fontWeight: 700, fontSize: 14, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${(item.price * item.qty).toLocaleString()}</p>
               <button onClick={() => { for(let i = 0; i < item.qty; i++) quitarProducto(item.id); }} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16, padding: "2px 4px" }}>✕</button>
@@ -992,19 +1003,19 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
         {carrito.length > 0 && (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Corte / servicio</span>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("Corte / servicio")}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(selectedService?.price || 0)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, paddingBottom: 12, borderBottom: "1px dashed var(--accent-border)" }}>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Productos ({carrito.reduce((s,i) => s+i.qty, 0)})</span>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("Productos")} ({carrito.reduce((s,i) => s+i.qty, 0)})</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{formatCurrency(totalProductos)}</span>
             </div>
           </>
         )}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <p style={{ color: "var(--accent)", fontSize: 14, fontWeight: 700 }}>Total a pagar</p>
-            <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>Pago en sucursal</p>
+            <p style={{ color: "var(--accent)", fontSize: 14, fontWeight: 700 }}>{t("Total a pagar")}</p>
+            <p style={{ color: "var(--text-tertiary)", fontSize: 11, marginTop: 2 }}>{t("Pago en sucursal")}</p>
           </div>
           <span style={{ color: "var(--accent)", fontSize: 30, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
             {formatCurrency((selectedService?.price || 0) + totalProductos)}
@@ -1032,23 +1043,23 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
             style={{ marginTop: 3, accentColor: "var(--accent)", width: 16, height: 16, cursor: "pointer" }}
           />
           <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            Acepto el{' '}
+            {t("Acepto el")}{' '}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setShowPrivacyModal(true); }}
               style={{ background: "transparent", border: "none", color: "var(--accent)", padding: 0, textDecoration: "underline", cursor: "pointer", font: "inherit" }}
             >
-              aviso de privacidad
+              {t("aviso de privacidad")}
             </button>
-            {' '}y autorizo el uso de mis datos para gestionar mi cita.
+            {' '}{t("y autorizo el uso de mis datos para gestionar mi cita.")}
           </span>
         </label>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <button className="btn-ghost" onClick={onBack} disabled={submitting}>← Editar</button>
+        <button className="btn-ghost" onClick={onBack} disabled={submitting}>{t("← Editar")}</button>
         <button className="btn-gold" onClick={handleClick} disabled={submitting || !acceptPrivacy}>
-          {submitting ? "Guardando..." : "Confirmar cita ✓"}
+          {submitting ? t("Guardando...") : t("Confirmar cita ✓")}
         </button>
       </div>
 
@@ -1080,7 +1091,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
                 fontSize: 22, fontWeight: 800, letterSpacing: 1,
                 textTransform: "uppercase", color: "var(--text-primary)"
               }}>
-                🔒 Aviso de Privacidad
+                {t("🔒 Aviso de Privacidad")}
               </h2>
               <button
                 onClick={() => setShowPrivacyModal(false)}
@@ -1089,43 +1100,43 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-secondary)" }}>
               <p style={{ marginBottom: 12 }}>
-                <strong>Responsable del tratamiento de datos:</strong> La barbería con la que estás agendando tu cita.
+                <strong>{t("Responsable del tratamiento de datos:")}</strong> {t("La barbería con la que estás agendando tu cita.")}
               </p>
               <p style={{ marginBottom: 12 }}>
-                <strong>Datos que recabamos:</strong>
-              </p>
-              <ul style={{ marginLeft: 20, marginBottom: 12 }}>
-                <li>Nombre completo</li>
-                <li>Número de teléfono</li>
-                <li>Fecha y hora de cita</li>
-                <li>Servicio solicitado</li>
-              </ul>
-              <p style={{ marginBottom: 12 }}>
-                <strong>Finalidad:</strong> Tus datos son usados ÚNICAMENTE para:
+                <strong>{t("Datos que recabamos:")}</strong>
               </p>
               <ul style={{ marginLeft: 20, marginBottom: 12 }}>
-                <li>Confirmar y gestionar tu cita</li>
-                <li>Contactarte si hay cambios o cancelaciones</li>
-                <li>Llevar un historial de servicios prestados</li>
+                <li>{t("Nombre completo")}</li>
+                <li>{t("Número de teléfono")}</li>
+                <li>{t("Fecha y hora de cita")}</li>
+                <li>{t("Servicio solicitado")}</li>
               </ul>
               <p style={{ marginBottom: 12 }}>
-                <strong>No compartimos:</strong> Tus datos NO se venden, NO se comparten con terceros ni se usan para fines publicitarios o de marketing sin tu consentimiento expreso.
+                <strong>{t("Finalidad:")}</strong> {t("Tus datos son usados ÚNICAMENTE para:")}
+              </p>
+              <ul style={{ marginLeft: 20, marginBottom: 12 }}>
+                <li>{t("Confirmar y gestionar tu cita")}</li>
+                <li>{t("Contactarte si hay cambios o cancelaciones")}</li>
+                <li>{t("Llevar un historial de servicios prestados")}</li>
+              </ul>
+              <p style={{ marginBottom: 12 }}>
+                <strong>{t("No compartimos:")}</strong> {t("Tus datos NO se venden, NO se comparten con terceros ni se usan para fines publicitarios o de marketing sin tu consentimiento expreso.")}
               </p>
               <p style={{ marginBottom: 12 }}>
-                <strong>Tus derechos (ARCO):</strong> Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos en cualquier momento. Solo contacta directamente a la barbería.
+                <strong>{t("Tus derechos (ARCO):")}</strong> {t("Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos en cualquier momento. Solo contacta directamente a la barbería.")}
               </p>
               <p style={{ marginBottom: 12 }}>
-                <strong>Almacenamiento:</strong> Los datos se almacenan de forma segura en servidores con cifrado. Solo el administrador autorizado de la barbería puede acceder a la información completa.
+                <strong>{t("Almacenamiento:")}</strong> {t("Los datos se almacenan de forma segura en servidores con cifrado. Solo el administrador autorizado de la barbería puede acceder a la información completa.")}
               </p>
               <p style={{ marginBottom: 16, fontSize: 12, color: "var(--text-muted)" }}>
-                Este aviso cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México.
+                {t("Este aviso cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México.")}
               </p>
               <button
                 onClick={() => { setAcceptPrivacy(true); setShowPrivacyModal(false); }}
                 className="btn-gold"
                 style={{ width: "100%" }}
               >
-                Aceptar y cerrar
+                {t("Aceptar y cerrar")}
               </button>
             </div>
           </div>
@@ -1137,6 +1148,9 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
 
 // ==================== SUCCESS VIEW ====================
 function SuccessView({ appointment, barbershop, carrito = [], productos = [], onReset, onExit }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
   const folioId = appointment?.folio || (appointment?.id ? String(appointment.id).slice(-6).toUpperCase() : "------");
   const totalProductos = carrito.reduce((s, i) => s + i.price * i.qty, 0);
   const totalCorte = appointment.service?.price || 0;
@@ -1149,9 +1163,9 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
 
-      <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>¡<span className="gold">Cita</span> agendada!</h2>
+      <h2 className="section-title" style={{ fontSize: 36, marginBottom: 12 }}>{idioma === 'en' ? '' : '¡'}<span className="gold">{t("Cita")}</span> {t("agendada!")}</h2>
       <p style={{ color: "var(--text-tertiary)", marginBottom: 28, fontSize: 16 }}>
-        Te esperamos, <strong style={{ color: "var(--text-primary)" }}>{appointment.client}</strong>
+        {t("Te esperamos,")} <strong style={{ color: "var(--text-primary)" }}>{appointment.client}</strong>
       </p>
 
       {/* Tarjeta del barbero */}
@@ -1181,7 +1195,7 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>
-              Te atenderá
+              {t("Te atenderá")}
             </p>
             <p style={{ fontWeight: 700, fontSize: 18, color: "var(--text-primary)" }}>
               {appointment.barber.name}
@@ -1196,18 +1210,18 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
       {/* Comprobante */}
       <div className="card" style={{ padding: 24, marginBottom: 24, textAlign: "left", maxWidth: 480, margin: "0 auto 24px", border: "1px solid var(--accent-border)" }}>
         <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 20, borderBottom: "1px dashed var(--border-strong)" }}>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Comprobante</p>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{t("Comprobante")}</p>
           <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 800, color: "var(--accent)", letterSpacing: 1 }}>#{folioId}</p>
         </div>
         <div style={{ display: "grid", gap: 12 }}>
-          <ReceiptRow label="Servicio" value={appointment.service?.name || "—"} />
-          <ReceiptRow label="Barbero" value={appointment.barber?.name || "—"} />
-          <ReceiptRow label="Fecha" value={formatDate(appointment.date)} />
-          <ReceiptRow label="Hora" value={appointment.time} />
-          <ReceiptRow label="Duración" value={`${appointment.service?.duration || 0} min`} />
+          <ReceiptRow label={t("Servicio")} value={appointment.service?.name || "—"} />
+          <ReceiptRow label={t("Barbero")} value={appointment.barber?.name || "—"} />
+          <ReceiptRow label={t("Fecha")} value={formatDate(appointment.date, idioma)} />
+          <ReceiptRow label={t("Hora")} value={appointment.time} />
+          <ReceiptRow label={t("Duración")} value={`${appointment.service?.duration || 0} ${t("min")}`} />
         </div>
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--border-strong)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Total</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{t("Total")}</span>
           <span style={{ color: "var(--accent)", fontSize: 22, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>{formatCurrency(appointment.service?.price || 0)}</span>
         </div>
       </div>
@@ -1221,7 +1235,7 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
           maxWidth: 480, margin: "0 auto 28px",
           textAlign: "left"
         }}>
-          <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 6 }}>📍 Ubicación</p>
+          <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 6 }}>{t("📍 Ubicación")}</p>
           {barbershop.direccion && <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>{barbershop.direccion}</p>}
           {barbershop.telefono && <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>📞 {barbershop.telefono}</p>}
         </div>
@@ -1232,10 +1246,10 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
         <div style={{ maxWidth: 480, margin: "0 auto 28px", textAlign: "left" }}>
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 24, marginBottom: 16 }}>
             <p style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-              Productos seleccionados
+              {t("Productos seleccionados")}
             </p>
             <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Menciona tu folio al llegar para reclamarlos
+              {t("Menciona tu folio al llegar para reclamarlos")}
             </p>
           </div>
 
@@ -1250,7 +1264,7 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{item.name}</p>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>x{item.qty} · ${item.price} c/u</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>x{item.qty} · ${item.price} {idioma === "en" ? "each" : "c/u"}</p>
                 </div>
                 <p style={{ fontWeight: 800, fontSize: 15, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
                   ${(item.price * item.qty).toLocaleString()}
@@ -1261,15 +1275,15 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
             {/* Subtotales */}
             <div style={{ padding: "12px 16px", background: "var(--bg-input)", borderTop: "1px dashed var(--border)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Corte / servicio</span>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t("Corte / servicio")}</span>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>${totalCorte.toLocaleString()}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Productos ({carrito.reduce((s,i)=>s+i.qty,0)})</span>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t("Productos")} ({carrito.reduce((s,i)=>s+i.qty,0)})</span>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>${totalProductos.toLocaleString()}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-                <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>Total a pagar en tienda</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>{t("Total a pagar en tienda")}</span>
                 <span style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
                   ${totalFinal.toLocaleString()}
                 </span>
@@ -1284,10 +1298,10 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
         <div style={{ maxWidth: 480, margin: "0 auto 32px", textAlign: "left" }}>
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 28, marginBottom: 16 }}>
             <p style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-              Mientras esperas tu cita
+              {t("Mientras esperas tu cita")}
             </p>
             <p style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
-              Productos disponibles en nuestra barbería
+              {t("Productos disponibles en nuestra barbería")}
             </p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
@@ -1307,8 +1321,8 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
       )}
 
       <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-        <button className="btn-ghost" onClick={onExit}>Volver al inicio</button>
-        <button className="btn-gold" onClick={onReset}>Agendar otra cita</button>
+        <button className="btn-ghost" onClick={onExit}>{t("Volver al inicio")}</button>
+        <button className="btn-gold" onClick={onReset}>{t("Agendar otra cita")}</button>
       </div>
     </div>
   );

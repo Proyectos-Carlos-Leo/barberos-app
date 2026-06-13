@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 
 function ClientLanding({ slug }) {
   const { theme, toggleTheme } = useTheme();
   const { barbershopConfig, productos } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [productosOpen, setProductosOpen] = useState(false);
 
   const nombre = barbershopConfig?.nombre || 'BarberOS';
@@ -76,12 +78,12 @@ function ClientLanding({ slug }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360, margin: "0 auto" }}>
           <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
             <button className="btn-large" style={{ width: "100%", fontSize: 16, padding: "16px 32px" }}>
-              ✂️ Agendar mi cita
+              {t("✂️ Agendar mi cita")}
             </button>
           </Link>
           <Link to={`/${slug}/mi-cita`} style={{ textDecoration: "none" }}>
             <button className="btn-large gray" style={{ width: "100%", fontSize: 15, padding: "14px 32px" }}>
-              🎫 Ya tengo cita
+              {t("🎫 Ya tengo cita")}
             </button>
           </Link>
           {barbershopConfig?.lealtad_activa !== false && (
@@ -110,7 +112,7 @@ function ClientLanding({ slug }) {
                   e.currentTarget.style.borderColor = "var(--accent-border)";
                 }}
               >
-                ⭐ Ver mis sellos
+                {t("⭐ Ver mis sellos")}
               </button>
             </Link>
           )}
@@ -157,10 +159,10 @@ function ClientLanding({ slug }) {
                 <span style={{ fontSize: 18 }}>🛍</span>
                 <div style={{ textAlign: "left" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                    Productos disponibles
+                    {t("Productos disponibles")}
                   </p>
                   <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>
-                    {productos.length} producto{productos.length !== 1 ? "s" : ""} en tienda
+                    {productos.length} {t(productos.length !== 1 ? "productos" : "producto")} {t("en tienda")}
                   </p>
                 </div>
               </div>
@@ -198,7 +200,7 @@ function ClientLanding({ slug }) {
                         }
                         {agotado && (
                           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ color: "#ef4444", fontWeight: 800, fontSize: 10, letterSpacing: 1 }}>AGOTADO</span>
+                            <span style={{ color: "#ef4444", fontWeight: 800, fontSize: 10, letterSpacing: 1 }}>{t("AGOTADO")}</span>
                           </div>
                         )}
                       </div>
@@ -210,7 +212,7 @@ function ClientLanding({ slug }) {
                           </p>
                         )}
                         {p.cantidad !== null && p.cantidad !== undefined && p.cantidad > 0 && p.cantidad <= 5 && (
-                          <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 2 }}>Últimas {p.cantidad}</p>
+                          <p style={{ fontSize: 10, color: "#f59e0b", fontWeight: 700, marginBottom: 2 }}>{t("Últimas")} {p.cantidad}</p>
                         )}
                         <p style={{ fontWeight: 800, fontSize: 14, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>${p.price}</p>
                       </div>

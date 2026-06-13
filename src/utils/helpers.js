@@ -3,23 +3,32 @@ export const getTodayStr = () => {
   return new Date().toISOString().split("T")[0];
 };
 
-export const getNext7Days = (n = 7) => {
-  const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+export const getNext7Days = (n = 7, idioma = 'es') => {
+  const days = idioma === 'en'
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
   return Array.from({ length: n }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return {
       date: d.toISOString().split("T")[0],
-      label: i === 0 ? "Hoy" : days[d.getDay()],
+      label: i === 0 ? (idioma === 'en' ? "Today" : "Hoy") : days[d.getDay()],
       num: d.getDate(),
       fullDate: d
     };
   });
 };
 
-export const formatDate = (dateStr) => {
+export const formatDate = (dateStr, idioma = 'es') => {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
+  if (idioma === 'en') {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  }
   const months = [
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"

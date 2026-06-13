@@ -156,6 +156,7 @@ function SuperAdminDashboard({ onLogout }) {
           telefono: data[slug]?.config?.telefono || '---',
           lealtad_activa: data[slug]?.config?.lealtad_activa !== false,
           productos_activos: data[slug]?.config?.productos_activos !== false,
+          idioma: data[slug]?.config?.idioma || 'es',
           activa: data[slug]?.config?.activa !== false,
         }));
         setBarberias(list.sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -179,6 +180,15 @@ function SuperAdminDashboard({ onLogout }) {
   const toggleProductos = async (slug, currentValue) => {
     try {
       await update(ref(db, `barberias/${slug}/config`), { productos_activos: !currentValue });
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al actualizar.');
+    }
+  };
+
+  const toggleIdioma = async (slug, currentValue) => {
+    try {
+      await update(ref(db, `barberias/${slug}/config`), { idioma: currentValue === 'en' ? 'es' : 'en' });
     } catch (error) {
       console.error('Error:', error);
       alert('Error al actualizar.');
@@ -356,6 +366,27 @@ function SuperAdminDashboard({ onLogout }) {
                       }}
                     >
                       {barber.productos_activos ? '🛍 Productos ON' : '🛍 Productos OFF'}
+                    </button>
+                    <button
+                      onClick={() => toggleIdioma(barber.slug, barber.idioma)}
+                      title={barber.idioma === 'en' ? 'Cambiar a Español' : 'Switch to English'}
+                      style={{
+                        background: barber.idioma === 'en' ? '#3b82f615' : '#2a2a2a',
+                        border: `1px solid ${barber.idioma === 'en' ? '#3b82f644' : '#3a3a3a'}`,
+                        color: barber.idioma === 'en' ? '#60a5fa' : '#999',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        transition: 'all 0.15s',
+                        fontFamily: "'Barlow', sans-serif"
+                      }}
+                    >
+                      {barber.idioma === 'en' ? '🇺🇸 English' : '🇲🇽 Español'}
                     </button>
                     <button
                       onClick={() => toggleActiva(barber.slug, barber.activa)}

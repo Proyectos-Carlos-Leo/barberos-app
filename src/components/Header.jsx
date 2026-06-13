@@ -128,19 +128,26 @@ export default function Header({ userType, navItems = [] }) {
                 padding: "6px 10px", borderRadius: 6,
                 border: "1px solid var(--accent-border)",
                 cursor: "pointer",
-                transition: "all 0.15s",
+                transition: "background 0.15s",
                 color: "var(--accent)",
-                fontFamily: "inherit"
+                fontFamily: "inherit",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center"
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.background = "var(--accent)";
-                e.currentTarget.style.transform = "rotate(45deg)";
+                const icon = e.currentTarget.querySelector('.gear-icon');
+                if (icon) icon.style.transform = "rotate(75deg)";
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.background = "var(--accent-bg)";
-                e.currentTarget.style.transform = "rotate(0)";
+                const icon = e.currentTarget.querySelector('.gear-icon');
+                if (icon) icon.style.transform = "rotate(0deg)";
               }}
-            >⚙️</button>
+            >
+              <span className="gear-icon" style={{ display: "inline-block", transition: "transform 0.35s ease" }}>⚙️</span>
+            </button>
           ) : (
             <span style={{
               fontSize: 11, color: "var(--text-tertiary)",

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ref, onValue, push } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 import { useTheme } from '../context/ThemeContext';
 import { formatCurrency } from '../utils/helpers';
 
@@ -11,6 +12,7 @@ export default function MyStamps() {
   const { slug } = useParams();
   const { appointments, loading, barbershopConfig } = useApp();
   const { theme, toggleTheme } = useTheme();
+  const t = useT(barbershopConfig?.idioma);
 
   const [phone, setPhone] = useState('');
   const [searched, setSearched] = useState(false);
@@ -40,7 +42,7 @@ export default function MyStamps() {
   const handleSearch = () => {
     const cleanPhone = phone.trim();
     if (cleanPhone.length < 8) {
-      alert('⚠ Ingresa un teléfono válido');
+      alert(t('⚠ Ingresa un teléfono válido'));
       return;
     }
 
@@ -98,7 +100,7 @@ export default function MyStamps() {
       r.status === 'pendiente' && normalizePhone(r.phone) === cleanPhone
     );
     if (existingPending.length > 0) {
-      alert('⚠ Ya tienes un canje pendiente. Espera a que el administrador lo revise.');
+      alert(t('⚠ Ya tienes un canje pendiente. Espera a que el administrador lo revise.'));
       return;
     }
 
@@ -109,11 +111,11 @@ export default function MyStamps() {
       r.createdAt && r.createdAt > oneDayAgo
     );
     if (recentRequests.length >= 3) {
-      alert('⚠ Demasiadas solicitudes. Intenta de nuevo mañana.');
+      alert(t('⚠ Demasiadas solicitudes. Intenta de nuevo mañana.'));
       return;
     }
 
-    if (!confirm(`¿Solicitar el canje de "${REWARD_NAME}"?\n\nEl administrador deberá aprobarlo antes de aplicarse.`)) return;
+    if (!confirm(`${barbershopConfig?.idioma === 'en' ? 'Request redemption of' : '¿Solicitar el canje de'} "${REWARD_NAME}"?\n\n${t('El administrador deberá aprobarlo antes de aplicarse.')}`)) return;
     setRequesting(true);
     try {
       await push(ref(db, `barberias/${slug}/canjes`), {
@@ -128,7 +130,7 @@ export default function MyStamps() {
       setResult({ ...result, hasPending: true });
     } catch (err) {
       console.error(err);
-      alert('Error al solicitar el canje. Verifica que tengas conexión.');
+      alert(t('Error al solicitar el canje. Verifica que tengas conexión.'));
     } finally {
       setRequesting(false);
     }
@@ -150,12 +152,12 @@ export default function MyStamps() {
         <div className="fade-in" style={{ textAlign: "center", maxWidth: 420 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🚫</div>
           <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 12 }}>
-            Programa no disponible
+            {t("Programa no disponible")}
           </h2>
           <p style={{ color: "var(--text-tertiary)", fontSize: 14, marginBottom: 24 }}>
-            Esta barbería no tiene activo el programa de lealtad.
+            {t("Esta barbería no tiene activo el programa de lealtad.")}
           </p>
-          <button className="btn-gold" onClick={() => navigate(`/${slug}`)}>Volver al inicio</button>
+          <button className="btn-gold" onClick={() => navigate(`/${slug}`)}>{t("Volver al inicio")}</button>
         </div>
       </div>
     );
@@ -182,7 +184,7 @@ export default function MyStamps() {
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
       <button onClick={() => navigate(`/${slug}`)} style={{ position: "absolute", top: 20, left: 20, background: "transparent", border: "1px solid var(--border-strong)", color: "var(--text-tertiary)", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>
-        ← Volver
+        {t("← Volver")}
       </button>
 
       <div className="fade-in-up" style={{ width: "100%", maxWidth: 460 }}>
@@ -200,13 +202,13 @@ export default function MyStamps() {
               </div>
               <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "var(--text-primary)" }}>
                 {result.stamps > 0
-                  ? <>Tienes <span className="gold">{result.stamps}</span> sello{result.stamps !== 1 ? 's' : ''}</>
-                  : <><span className="gold">Sin</span> sellos todavía</>
+                  ? <>{t("Tienes")} <span className="gold">{result.stamps}</span> {t(result.stamps !== 1 ? "sellos" : "sello")}</>
+                  : <><span className="gold">{t("Sin")}</span> {t("sellos")} {t("todavía")}</>
                 }
               </h2>
               {result.client && (
                 <p style={{ color: "var(--text-tertiary)", fontSize: 14, marginTop: 8 }}>
-                  Hola, <strong style={{ color: "var(--text-primary)" }}>{result.client}</strong> 👋
+                  {t("Hola,")} <strong style={{ color: "var(--text-primary)" }}>{result.client}</strong> 👋
                 </p>
               )}
             </div>
@@ -222,10 +224,10 @@ export default function MyStamps() {
                 textAlign: "center"
               }}>
                 <p style={{ fontSize: 13, color: "#f59e0b", fontWeight: 700 }}>
-                  ⏳ Tienes un canje PENDIENTE de aprobación
+                  {t("⏳ Tienes un canje PENDIENTE de aprobación")}
                 </p>
                 <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>
-                  El administrador lo revisará pronto
+                  {t("El administrador lo revisará pronto")}
                 </p>
               </div>
             )}
@@ -242,7 +244,7 @@ export default function MyStamps() {
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                     <p style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>
-                      Tarjeta de lealtad
+                      {t("Tarjeta de lealtad")}
                     </p>
                     <p style={{ fontSize: 11, color: canRedeem ? "#f59e0b" : "var(--accent)", fontWeight: 700 }}>
                       {stampsInCurrentRow}/{REQUIRED_STAMPS}
@@ -278,17 +280,17 @@ export default function MyStamps() {
 
                   {canRedeem ? (
                     <p style={{ fontSize: 14, color: "#f59e0b", fontWeight: 800, textAlign: "center", marginTop: 14, padding: "10px 12px", background: "rgba(245,158,11,0.15)", borderRadius: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                      🎁 ¡Puedes canjear tu {REWARD_NAME}!
+                      {t("🎁 ¡Puedes canjear tu")} {REWARD_NAME}!
                     </p>
                   ) : stampsForNext > 0 && (
                     <p style={{ fontSize: 13, color: "#f59e0b", fontWeight: 700, textAlign: "center", marginTop: 14, padding: "8px 12px", background: "rgba(245,158,11,0.1)", borderRadius: 8 }}>
-                      Solo {stampsForNext} {stampsForNext === 1 ? 'sello' : 'sellos'} más para obtener: <strong>{REWARD_NAME}</strong>
+                      {t("Solo")} {stampsForNext} {t(stampsForNext === 1 ? 'sello' : 'sellos')} {t("más para obtener:")} <strong>{REWARD_NAME}</strong>
                     </p>
                   )}
 
                   {result.redeemedCount > 0 && (
                     <p style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "center", marginTop: 10 }}>
-                      🏆 Has canjeado {result.redeemedCount} premio{result.redeemedCount > 1 ? 's' : ''} antes
+                      {t("🏆 Has canjeado")} {result.redeemedCount} {t(result.redeemedCount > 1 ? "premios" : "premio")} {t("antes")}
                     </p>
                   )}
                 </div>
@@ -316,7 +318,7 @@ export default function MyStamps() {
                       transition: "all 0.2s"
                     }}
                   >
-                    {requesting ? 'Enviando...' : `🎁 Canjear mi ${REWARD_NAME}`}
+                    {requesting ? t('Enviando...') : `${t('🎁 Canjear mi')} ${REWARD_NAME}`}
                   </button>
                 )}
 
@@ -330,10 +332,10 @@ export default function MyStamps() {
                     textAlign: "center"
                   }}>
                     <p style={{ fontSize: 14, color: "var(--success)", fontWeight: 700, marginBottom: 4 }}>
-                      ✓ Solicitud enviada
+                      {t("✓ Solicitud enviada")}
                     </p>
                     <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                      El administrador revisará tu canje pronto. Muestra esta pantalla al pasar.
+                      {t("El administrador revisará tu canje pronto. Muestra esta pantalla al pasar.")}
                     </p>
                   </div>
                 )}
@@ -341,13 +343,13 @@ export default function MyStamps() {
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
                   <div style={{ background: "var(--bg-elevated-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-                    <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>Total gastado</p>
+                    <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>{t("Total gastado")}</p>
                     <p style={{ fontSize: 18, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
                       {formatCurrency(result.totalSpent)}
                     </p>
                   </div>
                   <div style={{ background: "var(--bg-elevated-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-                    <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>Visitas totales</p>
+                    <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>{t("Visitas totales")}</p>
                     <p style={{ fontSize: 18, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif" }}>
                       {result.stamps + (result.redeemedCount * REQUIRED_STAMPS)}
                     </p>
@@ -357,18 +359,18 @@ export default function MyStamps() {
             ) : (
               <div style={{ background: "var(--bg-elevated-2)", border: "1px dashed var(--border-strong)", borderRadius: 12, padding: 24, textAlign: "center", marginBottom: 20 }}>
                 <p style={{ fontSize: 14, color: "var(--text-tertiary)", lineHeight: 1.6 }}>
-                  Cada vez que vengas a cortarte y completes tu cita, ganarás <strong style={{ color: "var(--accent)" }}>1 sello</strong>.
+                  {t("Cada vez que vengas a cortarte y completes tu cita, ganarás")} <strong style={{ color: "var(--accent)" }}>{t("1 sello")}</strong>.
                 </p>
                 <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 8 }}>
-                  Junta {REQUIRED_STAMPS} sellos y obtén <strong style={{ color: "#f59e0b" }}>{REWARD_NAME}</strong> 🎁
+                  {t("Junta")} {REQUIRED_STAMPS} {t("sellos")} {t("y obtén")} <strong style={{ color: "#f59e0b" }}>{REWARD_NAME}</strong> 🎁
                 </p>
               </div>
             )}
 
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn-ghost" onClick={handleNewSearch} style={{ flex: 1 }}>Buscar otro</button>
+              <button className="btn-ghost" onClick={handleNewSearch} style={{ flex: 1 }}>{t("Buscar otro")}</button>
               <button className="btn-gold" onClick={() => navigate(`/${slug}/cliente`)} style={{ flex: 1 }}>
-                {result.stamps > 0 ? 'Agendar otra cita' : 'Agendar mi 1ra cita'}
+                {result.stamps > 0 ? t('Agendar otra cita') : t('Agendar mi 1ra cita')}
               </button>
             </div>
           </div>
@@ -378,16 +380,16 @@ export default function MyStamps() {
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ width: 64, height: 64, background: "linear-gradient(135deg, var(--accent), var(--accent-light))", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 32 }}>🎫</div>
               <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 6 }}>
-                Mis <span className="gold">sellos</span>
+                {t("Mis")} <span className="gold">{t("sellos")}</span>
               </h2>
               <p style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-                {REQUIRED_STAMPS} sellos = {REWARD_NAME}
+                {REQUIRED_STAMPS} {t("sellos")} = {REWARD_NAME}
               </p>
             </div>
 
             <div style={{ marginBottom: 24 }}>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                Tu teléfono *
+                {t("Tu teléfono *")}
               </label>
               <input
                 value={phone}
@@ -398,12 +400,12 @@ export default function MyStamps() {
                 autoFocus
               />
               <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-                El mismo que usaste al agendar tus citas
+                {t("El mismo que usaste al agendar tus citas")}
               </p>
             </div>
 
             <button className="btn-gold" onClick={handleSearch} disabled={!phone} style={{ width: "100%" }}>
-              🔍 Ver mis sellos
+              {t("🔍 Ver mis sellos")}
             </button>
           </div>
         )}
