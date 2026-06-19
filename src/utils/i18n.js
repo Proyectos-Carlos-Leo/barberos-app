@@ -663,6 +663,13 @@ const en = {
   "Esta barbería no está disponible en este momento.": "This barbershop is not available at the moment.",
   "Si eres el administrador, comunícate con nosotros para reactivar tu cuenta.": "If you're the administrator, contact us to reactivate your account.",
   "Contacto de Soporte": "Support Contact",
+  "Calendario": "Calendar",
+  "Sin citas este día": "No appointments this day",
+  "Agregar a Google Calendar": "Add to Google Calendar",
+  "Conecta tu Google Calendar para que las citas se agreguen automáticamente.": "Connect your Google Calendar so appointments are added automatically.",
+  "¿Cómo obtener mi Calendar ID?": "How to get my Calendar ID?",
+  "Guardar Calendar ID": "Save Calendar ID",
+  "Configurado:": "Configured:",
 
   // ===== AppContext notifications =====
   "Cita agendada para {client}": "Appointment booked for {client}",

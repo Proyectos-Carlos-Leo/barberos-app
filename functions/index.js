@@ -327,3 +327,140 @@ exports.sendAppointmentConfirmation = onValueCreated(
     }
   }
 );
+
+// ================================================================
+// Google Calendar: crear evento automáticamente por cada cita nueva
+// ================================================================
+// Requisitos:
+//   1. En Google Cloud Console: habilitar "Google Calendar API"
+//   2. Crear una Cuenta de Servicio → generar JSON de credenciales
+//   3. Subir el JSON como Secret: firebase functions:secrets:set GOOGLE_SERVICE_ACCOUNT_KEY
+//      (pegar todo el contenido del JSON como valor del secret)
+//   4. En cada barbería, guardar el Calendar ID en Firebase:
+//      barberias/{slug}/config/google_calendar_id = "xxx@group.calendar.google.com"
+//      (o "primary" para el calendario principal)
+//   5. En Google Calendar: compartir ese calendario con el email de la cuenta de servicio
+//      (aparece en el JSON como "client_email"), con permiso "Hacer cambios en eventos"
+// ================================================================
+
+const { google } = require("googleapis");
+const GOOGLE_SA_KEY = defineSecret("GOOGLE_SERVICE_ACCOUNT_KEY");
+
+exports.syncAppointmentToGoogleCalendar = onValueCreated(
+  {
+    ref: "/barberias/{slug}/citas/{citaId}",
+    secrets: [GOOGLE_SA_KEY],
+  },
+  async (event) => {
+    const slug        = event.params.slug;
+    const citaId      = event.params.citaId;
+    const appointment = event.data.val();
+
+    // Solo sincronizar citas con datos mínimos
+    if (!appointment.client || !appointment.date || !appointment.time) return null;
+
+    try {
+      // Leer config de la barbería
+      const configSnap = await admin.database().ref(`barberias/${slug}/config`).once("value");
+      const config = configSnap.val() || {};
+
+      const calendarId = config.google_calendar_id;
+      if (!calendarId) {
+        console.log(`[${slug}] Sin google_calendar_id configurado, omitiendo sync.`);
+        return null;
+      }
+
+      // Credenciales de la cuenta de servicio
+      let serviceAccountKey;
+      try {
+        serviceAccountKey = JSON.parse(GOOGLE_SA_KEY.value());
+      } catch (e) {
+        console.error(`[${slug}] GOOGLE_SERVICE_ACCOUNT_KEY inválido:`, e.message);
+        return null;
+      }
+
+      const auth = new google.auth.GoogleAuth({
+        credentials: serviceAccountKey,
+        scopes: ["https://www.googleapis.com/auth/calendar"],
+      });
+
+      const calendar = google.calendar({ version: "v3", auth });
+
+      // Datos del barbero y servicio
+      const [barberSnap, serviceSnap] = await Promise.all([
+        appointment.barberId
+          ? admin.database().ref(`barberias/${slug}/barberos/${appointment.barberId}`).once("value")
+          : Promise.resolve({ val: () => ({}) }),
+        appointment.service?.id
+          ? admin.database().ref(`barberias/${slug}/servicios/${appointment.service.id}`).once("value")
+          : Promise.resolve({ val: () => appointment.service || {} }),
+      ]);
+      const barber  = barberSnap.val()  || {};
+      const service = serviceSnap.val() || appointment.service || {};
+
+      // Construir start/end en formato ISO (zona horaria Monterrey / America/Monterrey)
+      const timeZone = config.timezone || "America/Monterrey";
+      const duration = service.duration || appointment.service?.duration || 30;
+
+      const startDateTime = `${appointment.date}T${appointment.time}:00`;
+      const endDt = new Date(`${appointment.date}T${appointment.time}:00`);
+      endDt.setMinutes(endDt.getMinutes() + duration);
+      const endHH  = String(endDt.getHours()).padStart(2, "0");
+      const endMM  = String(endDt.getMinutes()).padStart(2, "0");
+      const endDateTime = `${appointment.date}T${endHH}:${endMM}:00`;
+
+      // Icono de estado
+      const statusIcon = { pendiente: "⏳", confirmada: "✅", completada: "✂️" }[appointment.status] || "📅";
+
+      const event = {
+        summary: `${statusIcon} ${appointment.client} — ${service.name || "Cita"}`,
+        description: [
+          `📋 Folio: ${appointment.folio || citaId}`,
+          `💈 Barbero: ${barber.name || "Por asignar"}`,
+          `✂️ Servicio: ${service.name || "—"}`,
+          `⏱ Duración: ${duration} min`,
+          appointment.service?.price ? `💰 Precio: $${appointment.service.price}` : "",
+          `📞 Teléfono: ${appointment.phone || "—"}`,
+          appointment.notes ? `📝 Notas: ${appointment.notes}` : "",
+          `\n🏪 ${config.nombre || "Barbería"} · BarberOS by MBT`,
+        ].filter(Boolean).join("\n"),
+        location: config.direccion || config.nombre || "",
+        start: { dateTime: startDateTime, timeZone },
+        end:   { dateTime: endDateTime,   timeZone },
+        colorId: appointment.status === "confirmada" ? "2" : "5", // verde=confirmada, amarillo=pendiente
+        extendedProperties: {
+          private: {
+            barberos_app_slug:   slug,
+            barberos_app_cita_id: citaId,
+            barberos_app_folio:   appointment.folio || "",
+          },
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: "popup", minutes: 30 },
+            { method: "popup", minutes: 5  },
+          ],
+        },
+      };
+
+      const response = await calendar.events.insert({
+        calendarId,
+        resource: event,
+      });
+
+      // Guardar el ID del evento en Firebase para poder actualizarlo después
+      await admin.database()
+        .ref(`barberias/${slug}/citas/${citaId}/google_event_id`)
+        .set(response.data.id);
+
+      console.log(`[${slug}] Evento creado en Google Calendar: ${response.data.id}`);
+      return null;
+
+    } catch (error) {
+      // No fallar silenciosamente en prod, pero tampoco bloquear
+      console.error(`[${slug}] Error al crear evento en Google Calendar:`, error.message);
+      return null;
+    }
+  }
+);

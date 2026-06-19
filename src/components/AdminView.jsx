@@ -273,6 +273,8 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const [showEmailConfig, setShowEmailConfig] = useState(false);
   const [emailConfirm, setEmailConfirm] = useState(barbershopConfig?.email_confirmacion || "");
   const [savingEmail, setSavingEmail] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(getTodayStr());
 
   const filtered = filterAppointments(appointments, { date: filterDate, barberId: filterBarber, status: filterStatus })
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -473,10 +475,10 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         }}>{t("⚡ Acciones rápidas")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
           <QuickAction
-            icon="📞"
-            label="WhatsApp Bot"
-            color="#25D366"
-            onClick={() => alert(t('Próximamente: envío automático de confirmaciones'))}
+            icon="📅"
+            label={t("Calendario")}
+            color="#4285F4"
+            onClick={() => { setCalendarDate(getTodayStr()); setShowCalendar(true); }}
           />
           <QuickAction
             icon="📊"
@@ -781,6 +783,21 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         onConfirm={() => { onDelete(confirmDelete.id); setConfirmDelete(null); }}
         onCancel={() => setConfirmDelete(null)}
       />
+
+      {/* 📅 Modal Calendario */}
+      {showCalendar && (
+        <CalendarModal
+          appointments={appointments}
+          barbers={barbers}
+          date={calendarDate}
+          setDate={setCalendarDate}
+          onClose={() => setShowCalendar(false)}
+          barbershopConfig={barbershopConfig}
+          onStatusChange={onStatusChange}
+          t={t}
+          idioma={idioma}
+        />
+      )}
 
       {/* Modal configurar email */}
       {showEmailConfig && (
@@ -2602,6 +2619,224 @@ function ServicesView({ slug }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ==================== CALENDAR MODAL ====================
+function CalendarModal({ appointments, barbers, date, setDate, onClose, barbershopConfig, onStatusChange, t, idioma }) {
+  const horario = barbershopConfig?.horario || {};
+  const startHour = parseInt((horario.hora_inicio || '08:00').split(':')[0]);
+  const endHour   = parseInt((horario.hora_fin   || '21:00').split(':')[0]);
+  const SLOT_HEIGHT = 64;
+  const HOURS = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
+
+  const dayAppts = appointments
+    .filter(a => a.date === date && a.status !== 'cancelada')
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const moveDay = (delta) => {
+    const d = new Date(date + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    setDate(d.toISOString().split('T')[0]);
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isToday = date === todayStr;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const startMinutes   = startHour * 60;
+  const endMinutes     = endHour   * 60;
+  const timeLineTop = isToday && currentMinutes >= startMinutes && currentMinutes <= endMinutes
+    ? ((currentMinutes - startMinutes) / 60) * SLOT_HEIGHT
+    : null;
+
+  const getApptTop    = (time) => { const [h, m] = time.split(':').map(Number); return ((h * 60 + m - startMinutes) / 60) * SLOT_HEIGHT; };
+  const getApptHeight = (dur = 30) => Math.max((dur / 60) * SLOT_HEIGHT, 28);
+
+  const STATUS_COLORS = {
+    pendiente:  { bg: 'rgba(245,158,11,0.18)', border: '#f59e0b' },
+    confirmada: { bg: 'rgba(74,222,128,0.15)', border: '#4ade80' },
+    completada: { bg: 'rgba(54,177,223,0.15)', border: 'var(--accent)' },
+  };
+
+  const headerDate = (() => {
+    const d = new Date(date + 'T00:00:00');
+    return idioma === 'en'
+      ? d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      : d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  })();
+
+  const gcalLink = (appt) => {
+    const barber = barbers.find(b => b.id === appt.barberId);
+    const [h, m] = appt.time.split(':').map(Number);
+    const dur = appt.service?.duration || 30;
+    const pad = n => String(n).padStart(2, '0');
+    const dateStr = appt.date.replace(/-/g, '');
+    const startT  = `${dateStr}T${pad(h)}${pad(m)}00`;
+    const endDt   = new Date(`${appt.date}T${appt.time}`);
+    endDt.setMinutes(endDt.getMinutes() + dur);
+    const endT = `${endDt.getFullYear()}${pad(endDt.getMonth()+1)}${pad(endDt.getDate())}T${pad(endDt.getHours())}${pad(endDt.getMinutes())}00`;
+    const title   = encodeURIComponent(`✂️ ${appt.client} — ${appt.service?.name || 'Cita'}`);
+    const details = encodeURIComponent(`Barbero: ${barber?.name || '—'}
+Servicio: ${appt.service?.name || '—'}
+Teléfono: ${appt.phone || '—'}
+Folio: ${appt.folio || '—'}`);
+    const location = encodeURIComponent(barbershopConfig?.direccion || barbershopConfig?.nombre || '');
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startT}/${endT}&details=${details}&location=${location}`;
+  };
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.78)',
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        zIndex: 2000, padding: '20px 16px', overflowY: 'auto'
+      }}
+    >
+      <div className="fade-in" style={{
+        background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
+        borderRadius: 16, width: '100%', maxWidth: 680, marginBottom: 20,
+        overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.55)'
+      }}>
+
+        {/* ── Header ── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 18px', borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-elevated-2)', flexWrap: 'wrap', gap: 8
+        }}>
+          {/* Nav arrows + today + date picker */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={() => moveDay(-1)} style={{ background: 'var(--bg-input)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', borderRadius: 7, width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+            <button onClick={() => setDate(todayStr)} style={{ background: isToday ? 'var(--accent)' : 'var(--bg-input)', border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border-strong)'}`, color: isToday ? 'white' : 'var(--text-secondary)', borderRadius: 7, padding: '5px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: "'Barlow', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('Hoy')}</button>
+            <button onClick={() => moveDay(1)}  style={{ background: 'var(--bg-input)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', borderRadius: 7, width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ background: 'var(--bg-input)', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', borderRadius: 7, padding: '5px 8px', fontSize: 12, fontFamily: "'Barlow', sans-serif" }} />
+          </div>
+
+          {/* Date title */}
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 15, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-primary)', textTransform: 'capitalize', flex: 1, textAlign: 'center', minWidth: 160 }}>
+            {headerDate}
+            <span style={{ marginLeft: 8, background: 'var(--accent-bg)', color: 'var(--accent)', padding: '1px 9px', borderRadius: 10, fontSize: 10, fontWeight: 800 }}>
+              {dayAppts.length} {t(dayAppts.length !== 1 ? 'citas' : 'cita')}
+            </span>
+          </p>
+
+          {/* Close */}
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+        </div>
+
+        {/* ── Calendar grid ── */}
+        <div style={{ display: 'flex', overflowY: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
+
+          {/* Time gutter */}
+          <div style={{ width: 50, flexShrink: 0 }}>
+            {HOURS.map(h => (
+              <div key={h} style={{
+                height: SLOT_HEIGHT, display: 'flex', alignItems: 'flex-start',
+                justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4,
+                borderTop: '1px solid var(--border)', color: 'var(--text-muted)',
+                fontSize: 9, fontWeight: 600, userSelect: 'none', letterSpacing: 0.3
+              }}>
+                {String(h).padStart(2,'0')}:00
+              </div>
+            ))}
+          </div>
+
+          {/* Events area */}
+          <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid var(--border)' }}>
+            {/* Hour rows */}
+            {HOURS.map(h => (
+              <div key={h} style={{ height: SLOT_HEIGHT, borderTop: '1px solid var(--border)', background: h % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.008)' }} />
+            ))}
+
+            {/* Half-hour marks */}
+            {HOURS.map(h => (
+              <div key={`h${h}`} style={{ position: 'absolute', top: ((h - startHour) + 0.5) * SLOT_HEIGHT, left: 0, right: 0, height: 1, background: 'var(--border)', opacity: 0.4 }} />
+            ))}
+
+            {/* Current time line */}
+            {timeLineTop !== null && (
+              <div style={{ position: 'absolute', left: 0, right: 0, top: timeLineTop, zIndex: 10, display: 'flex', alignItems: 'center' }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', flexShrink: 0, marginLeft: -5 }} />
+                <div style={{ flex: 1, height: 2, background: '#ef4444' }} />
+              </div>
+            )}
+
+            {/* Appointment blocks */}
+            {dayAppts.map((appt, idx) => {
+              const barber  = barbers.find(b => b.id === appt.barberId);
+              const top     = getApptTop(appt.time);
+              const height  = getApptHeight(appt.service?.duration || 30) - 4;
+              const colors  = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
+              const overlap = dayAppts.filter((a, i) => i < idx && Math.abs(getApptTop(a.time) - top) < getApptHeight(a.service?.duration || 30));
+              const offsetX = overlap.length * 6;
+
+              return (
+                <div key={appt.id} style={{
+                  position: 'absolute', top: top + 2, left: 6 + offsetX, right: 6,
+                  height, background: colors.bg,
+                  border: `1.5px solid ${colors.border}`, borderLeft: `4px solid ${colors.border}`,
+                  borderRadius: 8, padding: '4px 8px', overflow: 'hidden', zIndex: 5 + idx,
+                  transition: 'box-shadow 0.15s', display: 'flex', flexDirection: 'column', justifyContent: 'center'
+                }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${colors.border}55`}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                    <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {appt.time} · {appt.client}
+                    </p>
+                    <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+                      {appt.status === 'pendiente' && (
+                        <button title={t('Confirmar')} onClick={() => onStatusChange(appt.id, 'confirmada')} style={{ background: '#4ade8018', border: '1px solid #4ade80', color: '#4ade80', borderRadius: 4, padding: '1px 5px', fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>✓</button>
+                      )}
+                      {(appt.status === 'pendiente' || appt.status === 'confirmada') && (
+                        <button title={t('Completada')} onClick={() => onStatusChange(appt.id, 'completada')} style={{ background: '#36B1DF18', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 4, padding: '1px 5px', fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>✂</button>
+                      )}
+                      <a href={gcalLink(appt)} target="_blank" rel="noopener noreferrer" title="Agregar a Google Calendar" style={{ background: '#4285F418', border: '1px solid #4285F4', color: '#4285F4', borderRadius: 4, padding: '1px 5px', fontSize: 9, fontWeight: 800, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>G</a>
+                    </div>
+                  </div>
+                  {height > 34 && (
+                    <p style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {appt.service?.name || '—'}{barber ? ` · ${barber.name}` : ''}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Empty state */}
+            {dayAppts.length === 0 && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
+                <p style={{ fontSize: 32, marginBottom: 6 }}>📭</p>
+                <p style={{ fontSize: 13, fontWeight: 600 }}>{t('Sin citas este día')}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Footer legend ── */}
+        <div style={{ padding: '10px 18px', borderTop: '1px solid var(--border)', background: 'var(--bg-elevated-2)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          {[
+            { k: 'pendiente',  label: t('Pendiente'),    col: '#f59e0b' },
+            { k: 'confirmada', label: t('Confirmada ✓'), col: '#4ade80' },
+            { k: 'completada', label: t('Completada'),    col: 'var(--accent)' },
+          ].map(s => (
+            <div key={s.k} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 9, height: 9, borderRadius: 2, background: s.col }} />
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{s.label}</span>
+            </div>
+          ))}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 800, background: '#4285F418', border: '1px solid #4285F4', color: '#4285F4', padding: '1px 6px', borderRadius: 4 }}>G</span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t('Agregar a Google Calendar')}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

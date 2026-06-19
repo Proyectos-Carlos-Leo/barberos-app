@@ -21,6 +21,9 @@ export default function AdminSettings({ open, onClose }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [calendarId, setCalendarId] = useState(barbershopConfig?.google_calendar_id || '');
+  const [savingCal, setSavingCal] = useState(false);
+  const [savedCal, setSavedCal] = useState(false);
 
   useEffect(() => {
     if (barbershopConfig?.theme_color) {
@@ -30,6 +33,24 @@ export default function AdminSettings({ open, onClose }) {
       setSelectedColor(PRESET_COLORS[0]);
     }
   }, [barbershopConfig]);
+
+  const handleSaveCalendar = async () => {
+    if (!slug) return;
+    setSavingCal(true);
+    try {
+      const { update: fbUpdate } = await import('firebase/database');
+      const { ref: fbRef } = await import('firebase/database');
+      const { db } = await import('../firebase');
+      await fbUpdate(fbRef(db, `barberias/${slug}/config`), { google_calendar_id: calendarId.trim() || null });
+      setSavedCal(true);
+      setTimeout(() => setSavedCal(false), 3000);
+    } catch (err) {
+      console.error(err);
+      alert(t('Error al guardar'));
+    } finally {
+      setSavingCal(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!selectedColor || !slug) return;
@@ -189,6 +210,34 @@ export default function AdminSettings({ open, onClose }) {
             </div>
           </div>
         )}
+
+        {/* Google Calendar */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 22, marginBottom: 22 }}>
+          <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
+            📅 Google Calendar ID
+          </label>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10, lineHeight: 1.5 }}>
+            {t("Conecta tu Google Calendar para que las citas se agreguen automáticamente.")}
+            {' '}<a href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>{t("¿Cómo obtener mi Calendar ID?")}</a>
+          </p>
+          <input
+            value={calendarId}
+            onChange={e => setCalendarId(e.target.value)}
+            placeholder="primary   ó   xxxxx@group.calendar.google.com"
+            style={{ marginBottom: 10 }}
+          />
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button className="btn-gold" onClick={handleSaveCalendar} disabled={savingCal} style={{ fontSize: 13 }}>
+              {savingCal ? t('Guardando...') : '💾 ' + t('Guardar Calendar ID')}
+            </button>
+            {savedCal && <p style={{ color: "#4ade80", fontSize: 12, fontWeight: 600 }}>✓ {t('Guardado')}</p>}
+          </div>
+          {calendarId && (
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
+              ✓ {t('Configurado:')} <code style={{ background: "var(--bg-input)", padding: "1px 5px", borderRadius: 4, fontSize: 10 }}>{calendarId}</code>
+            </p>
+          )}
+        </div>
 
         {/* Botones */}
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", alignItems: "center" }}>
