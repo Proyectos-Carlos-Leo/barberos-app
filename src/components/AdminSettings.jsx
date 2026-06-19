@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, update } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 
 const PRESET_COLORS = [
   { name: 'Azul (default)', primary: '#36B1DF', light: '#5FC8EC', dark: '#1A7FAB', bg: '#051520', border: '#0a3d56' },
@@ -16,6 +17,7 @@ const PRESET_COLORS = [
 
 export default function AdminSettings({ open, onClose }) {
   const { barbershopConfig, slug } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [selectedColor, setSelectedColor] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -38,7 +40,7 @@ export default function AdminSettings({ open, onClose }) {
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
       console.error(err);
-      alert('Error al guardar el color');
+      alert(t('Error al guardar el color'));
     } finally {
       setSaving(false);
     }
@@ -75,7 +77,7 @@ export default function AdminSettings({ open, onClose }) {
             fontSize: 22, fontWeight: 800, letterSpacing: 1,
             textTransform: "uppercase", color: "var(--text-primary)"
           }}>
-            ⚙️ Configuración
+            {t("⚙️ Configuración")}
           </h2>
           <button
             onClick={onClose}
@@ -87,7 +89,7 @@ export default function AdminSettings({ open, onClose }) {
           >×</button>
         </div>
         <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginBottom: 22 }}>
-          Personaliza la apariencia de tu barbería
+          {t("Personaliza la apariencia de tu barbería")}
         </p>
 
         {/* Selector de color */}
@@ -97,7 +99,7 @@ export default function AdminSettings({ open, onClose }) {
             fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
             display: "block", marginBottom: 12
           }}>
-            🎨 Color secundario
+            {t("🎨 Color secundario")}
           </label>
           <div style={{
             display: "grid",
@@ -135,7 +137,7 @@ export default function AdminSettings({ open, onClose }) {
                     fontFamily: "'Barlow Condensed', sans-serif",
                     textTransform: "uppercase",
                     letterSpacing: 0.5
-                  }}>{c.name}</p>
+                  }}>{t(c.name)}</p>
                 </div>
               );
             })}
@@ -156,7 +158,7 @@ export default function AdminSettings({ open, onClose }) {
               fontWeight: 700, textTransform: "uppercase", letterSpacing: 1,
               marginBottom: 8
             }}>
-              Vista previa
+              {t("Vista previa")}
             </p>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <button style={{
@@ -170,7 +172,7 @@ export default function AdminSettings({ open, onClose }) {
                 letterSpacing: 0.5,
                 textTransform: "uppercase",
                 cursor: "default"
-              }}>Botón principal</button>
+              }}>{t("Botón principal")}</button>
               <span style={{
                 background: selectedColor.bg,
                 border: `1px solid ${selectedColor.border}`,
@@ -178,12 +180,12 @@ export default function AdminSettings({ open, onClose }) {
                 padding: "4px 10px",
                 borderRadius: 6,
                 fontSize: 11, fontWeight: 700
-              }}>Badge</span>
+              }}>{t("Badge")}</span>
               <span style={{
                 color: selectedColor.primary,
                 fontWeight: 700,
                 fontSize: 14
-              }}>Texto destacado</span>
+              }}>{t("Texto destacado")}</span>
             </div>
           </div>
         )}
@@ -192,14 +194,14 @@ export default function AdminSettings({ open, onClose }) {
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", alignItems: "center" }}>
           {saved && (
             <p style={{ color: "#4ade80", fontSize: 13, fontWeight: 600, marginRight: "auto" }}>
-              ✓ Color aplicado. Recarga si no ves cambios.
+              {t("✓ Color aplicado. Recarga si no ves cambios.")}
             </p>
           )}
           <button className="btn-ghost" onClick={onClose} disabled={saving}>
-            Cerrar
+            {t("Cerrar")}
           </button>
           <button className="btn-gold" onClick={handleSave} disabled={saving || !selectedColor}>
-            {saving ? 'Guardando...' : '💾 Aplicar color'}
+            {saving ? t('Guardando...') : t('💾 Aplicar color')}
           </button>
         </div>
       </div>

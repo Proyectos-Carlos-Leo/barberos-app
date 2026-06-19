@@ -20,6 +20,7 @@ import {
   formatDate,
   formatCurrency
 } from '../utils/helpers';
+import { useT } from '../utils/i18n';
 
 export default function AdminView() {
   const [isAuth, setIsAuth] = useState(false);
@@ -31,6 +32,7 @@ export default function AdminView() {
   const previousRedemptionsRef = useRef(null);
   const [pendingRedemptionsCount, setPendingRedemptionsCount] = useState(0);
   const { appointments, barbers, blocks, barbershopConfig, slug, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
+  const t = useT(barbershopConfig?.idioma);
 
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -162,16 +164,16 @@ export default function AdminView() {
           🔒
         </div>
         <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "var(--danger)", marginBottom: 12 }}>
-          Acceso Denegado
+          {t("Acceso Denegado")}
         </h2>
         <p style={{ color: "var(--text-tertiary)", fontSize: 15, marginBottom: 8, maxWidth: 380 }}>
-          Tu cuenta no tiene permiso para administrar esta barbería.
+          {t("Tu cuenta no tiene permiso para administrar esta barbería.")}
         </p>
         <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 32 }}>
-          Verifica que estés usando el correo correcto.
+          {t("Verifica que estés usando el correo correcto.")}
         </p>
         <button className="btn-gold" onClick={() => setAccessDenied(false)} style={{ minWidth: 200 }}>
-          Intentar con otra cuenta
+          {t("Intentar con otra cuenta")}
         </button>
       </div>
     </div>
@@ -181,15 +183,15 @@ export default function AdminView() {
   if (!isAuth) return <AdminLogin onLogin={() => setIsAuth(true)} />;
 
   const navItems = [
-    { key: "dashboard", label: "Panel", active: view === "dashboard", onClick: () => setView("dashboard") },
-    { key: "team", label: "Equipo", active: view === "team", onClick: () => setView("team") },
-    { key: "services", label: "Servicios", active: view === "services", onClick: () => setView("services") },
-    { key: "schedule", label: "Horarios", active: view === "schedule", onClick: () => setView("schedule") },
-    { key: "reports", label: "Reportes", active: view === "reports", onClick: () => setView("reports") },
-    { key: "history", label: "Historial", active: view === "history", onClick: () => setView("history") },
-    ...(barbershopConfig?.productos_activos !== false ? [{ key: "products", label: "Productos", active: view === "products", onClick: () => setView("products") }] : []),
+    { key: "dashboard", label: t("Panel"), active: view === "dashboard", onClick: () => setView("dashboard") },
+    { key: "team", label: t("Equipo"), active: view === "team", onClick: () => setView("team") },
+    { key: "services", label: t("Servicios"), active: view === "services", onClick: () => setView("services") },
+    { key: "schedule", label: t("Horarios"), active: view === "schedule", onClick: () => setView("schedule") },
+    { key: "reports", label: t("Reportes"), active: view === "reports", onClick: () => setView("reports") },
+    { key: "history", label: t("Historial"), active: view === "history", onClick: () => setView("history") },
+    ...(barbershopConfig?.productos_activos !== false ? [{ key: "products", label: t("Productos"), active: view === "products", onClick: () => setView("products") }] : []),
     ...(barbershopConfig?.lealtad_activa !== false ? [
-      { key: "loyalty", label: "Lealtad", active: view === "loyalty", onClick: () => setView("loyalty"), badge: pendingRedemptionsCount > 0 ? pendingRedemptionsCount : null }
+      { key: "loyalty", label: t("Lealtad"), active: view === "loyalty", onClick: () => setView("loyalty"), badge: pendingRedemptionsCount > 0 ? pendingRedemptionsCount : null }
     ] : [])
   ];
 
@@ -210,7 +212,7 @@ export default function AdminView() {
         }}>
           <span style={{ fontSize: 20 }}>🔔</span>
           <p style={{ fontSize: 13, color: "var(--accent)", flex: 1, minWidth: 200 }}>
-            <strong>Activa las notificaciones</strong> para recibir un aviso cada vez que alguien agende una cita
+            <strong>{t("Activa las notificaciones")}</strong> {t("para recibir un aviso cada vez que alguien agende una cita")}
           </p>
           <button
             onClick={handleEnableNotifications}
@@ -226,7 +228,7 @@ export default function AdminView() {
               textTransform: "uppercase"
             }}
           >
-            Activar
+            {t("Activar")}
           </button>
           <button
             onClick={() => setShowNotifBanner(false)}
@@ -240,7 +242,7 @@ export default function AdminView() {
               cursor: "pointer"
             }}
           >
-            Después
+            {t("Después")}
           </button>
         </div>
       )}
@@ -261,6 +263,8 @@ export default function AdminView() {
 // ==================== DASHBOARD ====================
 function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const { barbershopConfig, slug } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
   const [filterDate, setFilterDate] = useState(getTodayStr());
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -340,17 +344,17 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 
   const handleSaveEmail = async () => {
     if (!emailConfirm.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailConfirm)) {
-      alert('Email inválido');
+      alert(t('Email inválido'));
       return;
     }
     setSavingEmail(true);
     try {
       await update(ref(db, `barberias/${slug}/config`), { email_confirmacion: emailConfirm.trim() });
       setShowEmailConfig(false);
-      alert('Email guardado. Desde ahora se enviarán confirmaciones desde este email.');
+      alert(t('Email guardado. Desde ahora se enviarán confirmaciones desde este email.'));
     } catch (err) {
       console.error(err);
-      alert('Error al guardar');
+      alert(t('Error al guardar'));
     } finally {
       setSavingEmail(false);
     }
@@ -358,7 +362,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 
   // Saludo según hora
   const hour = now.getHours();
-  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const greeting = t(hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches');
   const adminName = barbershopConfig?.nombre || 'admin';
 
   return (
@@ -374,7 +378,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             {greeting} 👋
           </p>
           <h1 className="section-title" style={{ marginBottom: 4, marginTop: 4 }}>
-            Tu <span className="gold">barbería</span> hoy
+            {t("Tu")} <span className="gold">{t("barbería")}</span> {t("hoy")}
           </h1>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -394,7 +398,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.1)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.background = "var(--accent-bg)"; }}
           >
-            📧 Email confirmación
+            {t("📧 Email confirmación")}
           </button>
           <div style={{
             background: "var(--accent-bg)",
@@ -408,7 +412,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             letterSpacing: 0.5,
             whiteSpace: "nowrap"
           }}>
-            📅 {new Date().toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+            📅 {new Date().toLocaleDateString(idioma === 'en' ? 'en-US' : 'es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
           </div>
         </div>
       </div>
@@ -416,7 +420,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
       {/* 🆕 KPIs mejorados con sparklines y tendencias */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
         <StatCardPro
-          label="Citas hoy"
+          label={t("Citas hoy")}
           value={stats.todayTotal}
           color="var(--accent)"
           change={apptsChange}
@@ -424,11 +428,11 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           maxSpark={maxCount}
         />
         <StatCardPro
-          label="Pendientes"
+          label={t("Pendientes")}
           value={stats.pending}
           color="#f59e0b"
           icon={stats.pending > 0 ? "!" : null}
-          subtitle={stats.pending > 0 ? "Por confirmar" : "Al día"}
+          subtitle={stats.pending > 0 ? t("Por confirmar") : t("Al día")}
           onClick={stats.pending > 0 ? () => {
             setFilterDate('all');
             setFilterStatus('pendiente');
@@ -439,7 +443,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           } : null}
         />
         <StatCardPro
-          label="Ingresos por cortes"
+          label={t("Ingresos por cortes")}
           value={formatCurrency(stats.revenueCortesToday)}
           color="#4ade80"
           change={revenueChange}
@@ -447,13 +451,13 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           maxSpark={maxRev}
         />
         <StatCardPro
-          label="Ingresos por productos"
+          label={t("Ingresos por productos")}
           value={formatCurrency(stats.revenueProductosToday)}
           color="#a78bfa"
-          subtitle={stats.revenueProductosToday > 0 ? "Del día" : "Sin ventas hoy"}
+          subtitle={stats.revenueProductosToday > 0 ? t("Del día") : t("Sin ventas hoy")}
         />
         <StatCardPro
-          label="Ocupación"
+          label={t("Ocupación")}
           value={`${ocupacion}%`}
           color="var(--accent)"
           progress={ocupacion}
@@ -466,29 +470,29 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           fontSize: 10, color: "var(--text-muted)",
           textTransform: "uppercase", letterSpacing: 1,
           marginBottom: 10, fontWeight: 700
-        }}>⚡ Acciones rápidas</p>
+        }}>{t("⚡ Acciones rápidas")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
           <QuickAction
             icon="📞"
             label="WhatsApp Bot"
             color="#25D366"
-            onClick={() => alert('Próximamente: envío automático de confirmaciones')}
+            onClick={() => alert(t('Próximamente: envío automático de confirmaciones'))}
           />
           <QuickAction
             icon="📊"
-            label="Ver reportes"
+            label={t("Ver reportes")}
             color="var(--accent)"
             onClick={() => document.querySelector('[data-key="reports"]')?.click()}
           />
           <QuickAction
             icon="🚫"
-            label="Bloquear hora"
+            label={t("Bloquear hora")}
             color="#f87171"
             onClick={() => document.querySelector('[data-key="schedule"]')?.click()}
           />
           <QuickAction
             icon="💈"
-            label="Editar servicios"
+            label={t("Editar servicios")}
             color="#f59e0b"
             onClick={() => document.querySelector('[data-key="services"]')?.click()}
           />
@@ -510,7 +514,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               fontSize: 16, fontWeight: 700,
               color: "var(--text-primary)",
               textTransform: "uppercase", letterSpacing: 1
-            }}>⏱ Próximas citas</p>
+            }}>{t("⏱ Próximas citas")}</p>
             <span style={{
               background: "var(--accent-bg)",
               color: "var(--accent)",
@@ -518,7 +522,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               borderRadius: 12,
               fontSize: 11,
               fontWeight: 700
-            }}>HOY · {upcomingAppts.length}</span>
+            }}>{t("HOY")} · {upcomingAppts.length}</span>
           </div>
 
           <div style={{ display: "grid", gap: 8 }}>
@@ -529,10 +533,10 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               const isSoon = minutes > 15 && minutes <= 60;
               const borderColor = isNow ? "#f59e0b" : isSoon ? "var(--accent)" : "var(--border)";
               const timeLabel = minutes < 0
-                ? "AHORA"
+                ? t("AHORA")
                 : minutes < 60
-                  ? `EN ${minutes} MIN`
-                  : `EN ${Math.floor(minutes / 60)}H ${minutes % 60}M`;
+                  ? `${idioma === 'en' ? 'IN' : 'EN'} ${minutes} ${t("MIN")}`
+                  : `${idioma === 'en' ? 'IN' : 'EN'} ${Math.floor(minutes / 60)}H ${minutes % 60}M`;
 
               return (
                 <div key={appt.id} style={{
@@ -560,7 +564,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                   <div style={{ flex: 1, minWidth: 120 }}>
                     <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{appt.client}</p>
                     <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                      {appt.service?.emoji || '✂️'} {appt.service?.name} · {barber?.name || 'Sin asignar'}
+                      {appt.service?.emoji || '✂️'} {appt.service?.name} · {barber?.name || t('Sin asignar')}
                     </p>
                   </div>
                   {/* Badge de productos */}
@@ -574,7 +578,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                     }}>
                       <span style={{ fontSize: 12 }}>🛍</span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>
-                        Productos pedidos:
+                        {t("Productos pedidos:")}
                       </span>
                       <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                         {appt.productos.map(p => `${p.name} x${p.qty}`).join(' · ')}
@@ -598,7 +602,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                           fontWeight: 700,
                           cursor: "pointer"
                         }}
-                      >✓ Confirmar</button>
+                      >{t("✓ Confirmar")}</button>
                     )}
                     {appt.phone && (
                       <a href={`tel:${appt.phone}`} style={{
@@ -627,31 +631,31 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           fontSize: 20, fontWeight: 800,
           textTransform: "uppercase", letterSpacing: 1,
           color: "var(--text-secondary)"
-        }}>📋 Todas las citas</h2>
+        }}>📋 {t("Todas las citas")}</h2>
       </div>
 
       <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
-        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>Filtros</p>
+        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>{t("Filtros")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
           <div>
-            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>Fecha</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>{t("Fecha")}</label>
             <input type="date" value={filterDate === "all" ? "" : filterDate} onChange={e => setFilterDate(e.target.value || "all")} />
           </div>
           <div>
-            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>Barbero</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>{t("Barbero")}</label>
             <select value={filterBarber} onChange={e => setFilterBarber(e.target.value)}>
-              <option value="all">Todos</option>
+              <option value="all">{t("Todos")}</option>
               {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>Estado</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>{t("Estado")}</label>
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="all">Todos</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="confirmada">Confirmada</option>
-              <option value="completada">Completada</option>
-              <option value="cancelada">Cancelada</option>
+              <option value="all">{t("Todos")}</option>
+              <option value="pendiente">{t("Pendiente")}</option>
+              <option value="confirmada">{t("Confirmada")}</option>
+              <option value="completada">{t("Completada")}</option>
+              <option value="cancelada">{t("Cancelada")}</option>
             </select>
           </div>
         </div>
@@ -671,7 +675,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           flexWrap: "wrap"
         }}>
           <p style={{ fontSize: 13, color: "#f59e0b", fontWeight: 600 }}>
-            ⚠️ Mostrando TODAS las citas pendientes ({filtered.length})
+            ⚠️ {t("⚠️ Mostrando TODAS las citas pendientes")} ({filtered.length})
           </p>
           <button
             onClick={() => { setFilterDate(getTodayStr()); setFilterStatus('all'); }}
@@ -686,18 +690,18 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               cursor: "pointer"
             }}
           >
-            Ver solo hoy
+            {t("Ver solo hoy")}
           </button>
         </div>
       )}
 
-      <p className="appointments-list" style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16, scrollMarginTop: 80 }}>{filtered.length} cita{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}</p>
+      <p className="appointments-list" style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16, scrollMarginTop: 80 }}>{filtered.length} {t(filtered.length !== 1 ? 'citas' : 'cita')} {t(filtered.length !== 1 ? 'encontradas' : 'encontrada')}</p>
 
       <div style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <p style={{ fontSize: 36, marginBottom: 8 }}>📭</p>
-            <p style={{ fontSize: 14 }}>No hay citas con estos filtros</p>
+            <p style={{ fontSize: 14 }}>{t("No hay citas con estos filtros")}</p>
           </div>
         )}
         {filtered.map(appt => {
@@ -711,7 +715,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: barber?.bg || "var(--text-faint)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: barber?.color || "#fff", flexShrink: 0 }}>{barber?.avatar || "?"}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{appt.client}</p>
-                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{appt.service?.name} · {barber?.name || "Sin asignar"}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{appt.service?.name} · {barber?.name || t("Sin asignar")}</p>
                   {appt.productos && appt.productos.length > 0 && (
                     <p style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, marginTop: 3 }}>
                       🛍 {appt.productos.map(p => `${p.name} x${p.qty}`).join(' · ')}
@@ -724,7 +728,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                   </span>
                   <span className="tag" style={{ background: sc.bg, color: sc.text }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot, display: "inline-block" }}></span>
-                    {sc.label}
+                    {t(sc.label)}
                   </span>
                 </div>
               </div>
@@ -732,36 +736,36 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                 <div className="fade-in" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--border)" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 16 }}>
                     <div>
-                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Fecha</p>
-                      <p style={{ fontSize: 13, fontWeight: 600 }}>{formatDate(appt.date)}</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>{t("Fecha")}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600 }}>{formatDate(appt.date, idioma)}</p>
                     </div>
                     {appt.phone && (
                       <div>
-                        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Teléfono</p>
+                        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>{t("Teléfono")}</p>
                         <a href={`tel:${appt.phone}`} onClick={e => e.stopPropagation()} style={{ fontSize: 13, fontWeight: 600 }}>📞 {appt.phone}</a>
                       </div>
                     )}
                     <div>
-                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>Duración</p>
-                      <p style={{ fontSize: 13, fontWeight: 600 }}>{appt.service?.duration} min</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 3 }}>{t("Duración")}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600 }}>{appt.service?.duration} {t("min")}</p>
                     </div>
                   </div>
                   {appt.notes && (
                     <div style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: 12, marginBottom: 16, borderLeft: "3px solid var(--accent)" }}>
-                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>Notas</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{t("Notas")}</p>
                       <p style={{ fontSize: 13, fontStyle: "italic", color: "var(--text-secondary)" }}>"{appt.notes}"</p>
                     </div>
                   )}
                   <div>
-                    <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>Cambiar estado</p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>{t("Cambiar estado")}</p>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {Object.entries(STATUS_COLORS).map(([key, s]) => (
-                        <button key={key} onClick={e => { e.stopPropagation(); onStatusChange(appt.id, key); }} style={{ padding: "6px 14px", borderRadius: 6, border: `1.5px solid ${appt.status === key ? s.dot : "var(--border-strong)"}`, background: appt.status === key ? s.bg : "transparent", color: appt.status === key ? s.text : "var(--text-tertiary)", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>{s.label}</button>
+                        <button key={key} onClick={e => { e.stopPropagation(); onStatusChange(appt.id, key); }} style={{ padding: "6px 14px", borderRadius: 6, border: `1.5px solid ${appt.status === key ? s.dot : "var(--border-strong)"}`, background: appt.status === key ? s.bg : "transparent", color: appt.status === key ? s.text : "var(--text-tertiary)", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>{t(s.label)}</button>
                       ))}
                     </div>
                   </div>
                   <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗑 Eliminar</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t("🗑 Eliminar")}</button>
                   </div>
                 </div>
               )}
@@ -771,9 +775,9 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
       </div>
       <ConfirmModal
         open={!!confirmDelete}
-        title="¿Eliminar cita?"
-        message={confirmDelete ? `Vas a eliminar la cita de ${confirmDelete.name}. Esta acción no se puede deshacer.` : ''}
-        confirmText="Sí, eliminar"
+        title={t("¿Eliminar cita?")}
+        message={confirmDelete ? `${t("Vas a eliminar la cita de")} ${confirmDelete.name}${t(". Esta acción no se puede deshacer.")}` : ''}
+        confirmText={t("Sí, eliminar")}
         onConfirm={() => { onDelete(confirmDelete.id); setConfirmDelete(null); }}
         onCancel={() => setConfirmDelete(null)}
       />
@@ -798,10 +802,10 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               fontSize: 22, fontWeight: 800, letterSpacing: 1,
               textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 6
             }}>
-              📧 Email de confirmación
+              {t("📧 Email de confirmación")}
             </h2>
             <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginBottom: 20 }}>
-              Desde qué email se enviarán las confirmaciones de citas
+              {t("Desde qué email se enviarán las confirmaciones de citas")}
             </p>
 
             <div style={{ marginBottom: 20 }}>
@@ -810,7 +814,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                 fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
                 display: "block", marginBottom: 8
               }}>
-                Dirección de email *
+                {t("Dirección de email *")}
               </label>
               <input
                 value={emailConfirm}
@@ -820,16 +824,16 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                 style={{ width: "100%", boxSizing: "border-box" }}
               />
               <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
-                Asegúrate de que sea un email de Gmail y que hayas activado "apps menos seguras"
+                {t("Asegúrate de que sea un email de Gmail y que hayas activado \"apps menos seguras\"")}
               </p>
             </div>
 
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button className="btn-ghost" onClick={() => setShowEmailConfig(false)} disabled={savingEmail}>
-                Cancelar
+                {t("Cancelar")}
               </button>
               <button className="btn-gold" onClick={handleSaveEmail} disabled={savingEmail || !emailConfirm.trim()}>
-                {savingEmail ? 'Guardando...' : '💾 Guardar'}
+                {savingEmail ? t('Guardando...') : t('💾 Guardar')}
               </button>
             </div>
           </div>
@@ -841,6 +845,8 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 
 // ==================== TEAM VIEW ====================
 function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [showForm, setShowForm] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({ name: "", specialty: "", photo: null });
@@ -889,11 +895,11 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
     <div className="fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
         <div>
-          <h1 className="section-title" style={{ marginBottom: 4 }}>Tu <span className="gold">equipo</span></h1>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{activeBarbers} barbero{activeBarbers !== 1 ? 's' : ''} activo{activeBarbers !== 1 ? 's' : ''} · {totalCompleted} cortes totales</p>
+          <h1 className="section-title" style={{ marginBottom: 4 }}>{t("Tu")} <span className="gold">{t("equipo")}</span></h1>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{activeBarbers} {t(activeBarbers !== 1 ? "barberos" : "barbero")} {t(activeBarbers !== 1 ? "activos" : "activo")} · {totalCompleted} {t("cortes totales")}</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancelar" : "+ Agregar barbero"}</button>
+          <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? t("Cancelar") : t("+ Agregar barbero")}</button>
         </div>
       </div>
 
@@ -901,17 +907,17 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
       {barbersWithStats.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
-            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Equipo activo</p>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{t("Equipo activo")}</p>
             <p style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>
               {activeBarbers}<span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 400 }}>/{barbers.length}</span>
             </p>
           </div>
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
-            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Cortes totales</p>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{t("Cortes totales")}</p>
             <p style={{ fontSize: 24, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>{totalCompleted}</p>
           </div>
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
-            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Ingresos generados</p>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{t("Ingresos generados")}</p>
             <p style={{ fontSize: 24, fontWeight: 800, color: "#f59e0b", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>{formatCurrency(totalRevenue)}</p>
           </div>
         </div>
@@ -919,22 +925,22 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
 
       {showForm && (
         <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid var(--accent-border)" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "var(--accent)" }}>➕ Nuevo barbero</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "var(--accent)" }}>{t("➕ Nuevo barbero")}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             <div>
-              <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Nombre *</label>
-              <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej. Juan Pérez" />
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>{t("Nombre *")}</label>
+              <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={t("Ej. Juan Pérez")} />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Especialidad *</label>
-              <input value={form.specialty} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Ej. Degradados" />
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>{t("Especialidad *")}</label>
+              <input value={form.specialty} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder={t("Ej. Degradados")} />
             </div>
           </div>
 
           {/* Foto del barbero */}
           <div style={{ marginTop: 18 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 8, fontWeight: 600, textTransform: "uppercase" }}>
-              📸 Foto del barbero (opcional)
+              {t("📸 Foto del barbero (opcional)")}
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
               <div style={{
@@ -959,7 +965,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                   cursor: uploadingPhoto ? "not-allowed" : "pointer",
                   opacity: uploadingPhoto ? 0.6 : 1
                 }}>
-                  {uploadingPhoto ? '⏳ Procesando...' : (form.photo ? '🔄 Cambiar foto' : '📷 Subir foto')}
+                  {uploadingPhoto ? t('⏳ Procesando...') : (form.photo ? t('🔄 Cambiar foto') : t('📷 Subir foto'))}
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploadingPhoto} style={{ display: "none" }} />
                 </label>
                 {form.photo && (
@@ -968,7 +974,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                     color: "var(--danger)", padding: "6px 12px", borderRadius: 6,
                     fontSize: 11, fontWeight: 600, cursor: "pointer"
                   }}>
-                    🗑 Quitar
+                    {t("🗑 Quitar")}
                   </button>
                 )}
               </div>
@@ -977,8 +983,8 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
           </div>
 
           <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button className="btn-ghost" onClick={() => { setShowForm(false); setForm({ name: "", specialty: "", photo: null }); setPhotoError(''); }}>Cancelar</button>
-            <button className="btn-gold" onClick={handleAdd} disabled={!form.name || !form.specialty || uploadingPhoto}>Agregar</button>
+            <button className="btn-ghost" onClick={() => { setShowForm(false); setForm({ name: "", specialty: "", photo: null }); setPhotoError(''); }}>{t("Cancelar")}</button>
+            <button className="btn-gold" onClick={handleAdd} disabled={!form.name || !form.specialty || uploadingPhoto}>{t("Agregar")}</button>
           </div>
         </div>
       )}
@@ -1010,7 +1016,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                   textTransform: "uppercase",
                   fontFamily: "'Barlow Condensed', sans-serif"
                 }}>
-                  🏆 Top Performer
+                  {t("🏆 Top Performer")}
                 </div>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
@@ -1031,7 +1037,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
                   <p style={{ fontWeight: 700, fontSize: 17, marginBottom: 3, color: "var(--text-primary)" }}>{b.name}</p>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{b.specialty}</p>
                   {!b.active && (
-                    <p style={{ fontSize: 10, color: "var(--danger)", marginTop: 4, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" }}>● Inactivo</p>
+                    <p style={{ fontSize: 10, color: "var(--danger)", marginTop: 4, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" }}>{t("● Inactivo")}</p>
                   )}
                 </div>
                 <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "var(--success-bg)" : "var(--danger-bg)", border: `1px solid ${b.active ? "var(--success)" : "var(--danger)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
@@ -1042,7 +1048,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, textAlign: "center", marginBottom: 14 }}>
                 {[["Hoy", stats.today, "var(--accent)"], ["Cortes", stats.completed, "#4ade80"], ["Ingresos", formatCurrency(stats.revenue), "#f59e0b"]].map(([label, val, color]) => (
                   <div key={label} style={{ background: "var(--bg-elevated-2)", borderRadius: 8, padding: "12px 4px" }}>
-                    <p style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
+                    <p style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>{t(label)}</p>
                     <p style={{ fontSize: 16, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{val}</p>
                   </div>
                 ))}
@@ -1050,16 +1056,16 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
               <button onClick={() => setConfirmDelete({ id: b.id, name: b.name })} style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "1px solid var(--border-strong)", color: "var(--danger)", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--danger-bg)"; e.currentTarget.style.borderColor = "var(--danger)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}
-              >🗑 Eliminar</button>
+              >{t("🗑 Eliminar")}</button>
             </div>
           );
         })}
       </div>
       <ConfirmModal
         open={!!confirmDelete}
-        title="¿Eliminar barbero?"
-        message={confirmDelete ? `Vas a eliminar a ${confirmDelete.name} del equipo. Esta acción no se puede deshacer.` : ''}
-        confirmText="Sí, eliminar"
+        title={t("¿Eliminar barbero?")}
+        message={confirmDelete ? `${t("Vas a eliminar a")} ${confirmDelete.name} ${t("del equipo. Esta acción no se puede deshacer.")}` : ''}
+        confirmText={t("Sí, eliminar")}
         onConfirm={() => { onDelete(confirmDelete.id); setConfirmDelete(null); }}
         onCancel={() => setConfirmDelete(null)}
       />
@@ -1069,6 +1075,9 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
 
 // ==================== HISTORY VIEW ====================
 function HistoryView({ appointments, barbers }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
   const [filterBarberId, setFilterBarberId] = useState('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
@@ -1091,7 +1100,7 @@ function HistoryView({ appointments, barbers }) {
   // Exportar CSV
   const handleExport = () => {
     const BOM = '\uFEFF';
-    const headers = ['Fecha', 'Hora', 'Cliente', 'Telefono', 'Servicio', 'Precio', 'Barbero', 'Estado'];
+    const headers = [t('Fecha'), t('Hora'), t('Cliente'), t('Telefono'), t('Servicio'), t('Precio'), t('Barbero'), t('Estado')];
 
     const rows = filtered.map(a => {
       const barber = barbers.find(b => b.id === a.barberId);
@@ -1102,24 +1111,24 @@ function HistoryView({ appointments, barbers }) {
         a.phone || '',
         a.service?.name || '',
         a.service?.price || 0,
-        barber?.name || 'Sin asignar',
+        barber?.name || t('Sin asignar'),
         a.status
       ];
     });
 
     // Resumen al final
     rows.push([]);
-    rows.push(['RESUMEN']);
-    rows.push(['Total citas', filtered.length]);
-    rows.push(['Ingresos totales', totalRevenue]);
-    rows.push(['Ticket promedio', filtered.length > 0 ? Math.round(totalRevenue / filtered.length) : 0]);
+    rows.push([t('RESUMEN')]);
+    rows.push([t('Total citas'), filtered.length]);
+    rows.push([t('Ingresos totales'), totalRevenue]);
+    rows.push([t('Ticket promedio'), filtered.length > 0 ? Math.round(totalRevenue / filtered.length) : 0]);
 
     if (filterBarberId !== 'all') {
       const b = barbers.find(x => x.id === filterBarberId);
-      rows.push(['Filtrado por barbero', b?.name || filterBarberId]);
+      rows.push([t('Filtrado por barbero'), b?.name || filterBarberId]);
     }
-    if (filterDateFrom) rows.push(['Desde', filterDateFrom]);
-    if (filterDateTo) rows.push(['Hasta', filterDateTo]);
+    if (filterDateFrom) rows.push([t('Desde'), filterDateFrom]);
+    if (filterDateTo) rows.push([t('Hasta'), filterDateTo]);
 
     const csv = BOM + [headers, ...rows]
       .map(r => r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
@@ -1144,8 +1153,8 @@ function HistoryView({ appointments, barbers }) {
     <div className="fade-in">
       <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
         <div>
-          <h1 className="section-title" style={{ marginBottom: 4 }}><span className="gold">Historial</span> de citas</h1>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Citas completadas y reportes</p>
+          <h1 className="section-title" style={{ marginBottom: 4 }}><span className="gold">{t("Historial")}</span> {t("de citas")}</h1>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{t("Citas completadas y reportes")}</p>
         </div>
         <button
           onClick={handleExport}
@@ -1166,7 +1175,7 @@ function HistoryView({ appointments, barbers }) {
             whiteSpace: "nowrap"
           }}
         >
-          📥 Exportar CSV
+          {t("📥 Exportar CSV")}
         </button>
       </div>
 
@@ -1184,14 +1193,14 @@ function HistoryView({ appointments, barbers }) {
       }}>
         <div>
           <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 6 }}>
-            Barbero
+            {t("Barbero")}
           </label>
           <select
             value={filterBarberId}
             onChange={e => setFilterBarberId(e.target.value)}
             style={{ width: "100%" }}
           >
-            <option value="all">Todos los barberos</option>
+            <option value="all">{t("Todos los barberos")}</option>
             {barbers.map(b => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
@@ -1199,13 +1208,13 @@ function HistoryView({ appointments, barbers }) {
         </div>
         <div>
           <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 6 }}>
-            Desde
+            {t("Desde")}
           </label>
           <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} style={{ width: "100%" }} />
         </div>
         <div>
           <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 6 }}>
-            Hasta
+            {t("Hasta")}
           </label>
           <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} style={{ width: "100%" }} />
         </div>
@@ -1224,7 +1233,7 @@ function HistoryView({ appointments, barbers }) {
               whiteSpace: "nowrap"
             }}
           >
-            ✕ Limpiar filtros
+            {t("✕ Limpiar filtros")}
           </button>
         )}
       </div>
@@ -1237,7 +1246,7 @@ function HistoryView({ appointments, barbers }) {
           ["Ticket promedio", filtered.length > 0 ? formatCurrency(Math.round(totalRevenue / filtered.length)) : "$0", "#60a5fa"]
         ].map(([label, value, color]) => (
           <div key={label} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{label}</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t(label)}</p>
             <p style={{ fontSize: 26, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>{value}</p>
           </div>
         ))}
@@ -1249,7 +1258,7 @@ function HistoryView({ appointments, barbers }) {
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <p style={{ fontSize: 36, marginBottom: 8 }}>📋</p>
             <p style={{ fontSize: 14 }}>
-              {hasFilters ? "No hay citas que coincidan con los filtros" : "Aún no hay citas completadas"}
+              {hasFilters ? t("No hay citas que coincidan con los filtros") : t("Aún no hay citas completadas")}
             </p>
           </div>
         ) : filtered.map(appt => {
@@ -1284,13 +1293,13 @@ function HistoryView({ appointments, barbers }) {
                       fontWeight: 700,
                       letterSpacing: 0.5,
                       textTransform: "uppercase"
-                    }}>✓ Completada</span>
+                    }}>{t("✓ Completada")}</span>
                   </div>
                   <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                    {appt.service?.emoji || '✂️'} {appt.service?.name} · <strong style={{ color: "var(--text-secondary)" }}>{barber?.name || "Sin asignar"}</strong>
+                    {appt.service?.emoji || '✂️'} {appt.service?.name} · <strong style={{ color: "var(--text-secondary)" }}>{barber?.name || t("Sin asignar")}</strong>
                   </p>
                   <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                    📅 {formatDate(appt.date)} · 🕐 {appt.time}
+                    📅 {formatDate(appt.date, idioma)} · 🕐 {appt.time}
                   </p>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -1300,7 +1309,7 @@ function HistoryView({ appointments, barbers }) {
                     fontFamily: "'Barlow Condensed', sans-serif"
                   }}>{formatCurrency(appt.service?.price || 0)}</p>
                   <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    {appt.service?.duration} min
+                    {appt.service?.duration} {t("min")}
                   </p>
                 </div>
               </div>
@@ -1334,6 +1343,7 @@ const ALL_HOURS = [
 const DURATIONS = [15, 20, 30, 45, 60, 75, 90];
 
 function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
+  const t = useT(barbershopConfig?.idioma);
   const config = barbershopConfig?.horario || {};
 
   // Estado local del horario (inicializado desde Firebase)
@@ -1376,7 +1386,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error(err);
-      alert('Error al guardar. Intenta de nuevo.');
+      alert(t('Error al guardar. Intenta de nuevo.'));
     } finally {
       setSaving(false);
     }
@@ -1401,10 +1411,10 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
     <div className="fade-in">
       <div style={{ marginBottom: 28 }}>
         <h1 className="section-title" style={{ marginBottom: 4 }}>
-          🕐 <span className="gold">Horarios</span> de atención
+          🕐 <span className="gold">{t("Horarios")}</span> {t("de atención")}
         </h1>
         <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
-          Configura cuándo y cómo puedes recibir citas
+          {t("Configura cuándo y cómo puedes recibir citas")}
         </p>
       </div>
 
@@ -1415,9 +1425,9 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 18, fontWeight: 700, letterSpacing: 1,
             textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
-          }}>📅 Días de atención</h3>
+          }}>{t("📅 Días de atención")}</h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
-            {diasActivosCount} día{diasActivosCount !== 1 ? 's' : ''} activo{diasActivosCount !== 1 ? 's' : ''}
+            {diasActivosCount} {t(diasActivosCount !== 1 ? "días" : "día")} {t(diasActivosCount !== 1 ? "activos" : "activo")}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
             {DAYS.map(d => {
@@ -1441,7 +1451,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
                   <p style={{
                     fontSize: 14, fontWeight: 700,
                     color: active ? "var(--accent)" : "var(--text-tertiary)"
-                  }}>{d.label}</p>
+                  }}>{t(d.label)}</p>
                   <div style={{
                     marginTop: 8,
                     width: 20, height: 20,
@@ -1466,11 +1476,11 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 18, fontWeight: 700, letterSpacing: 1,
             textTransform: "uppercase", marginBottom: 18, color: "var(--text-primary)"
-          }}>⏰ Horario de apertura</h3>
+          }}>{t("⏰ Horario de apertura")}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-                Primer turno
+                {t("Primer turno")}
               </label>
               <select value={horaInicio} onChange={e => { setHoraInicio(e.target.value); setSaved(false); }}>
                 {ALL_HOURS.filter(h => h < horaFin).map(h => (
@@ -1480,7 +1490,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             </div>
             <div>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-                Último turno
+                {t("Último turno")}
               </label>
               <select value={horaFin} onChange={e => { setHoraFin(e.target.value); setSaved(false); }}>
                 {ALL_HOURS.filter(h => h > horaInicio).map(h => (
@@ -1497,9 +1507,9 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 18, fontWeight: 700, letterSpacing: 1,
             textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
-          }}>⚡ Duración de cada cita</h3>
+          }}>{t("⚡ Duración de cada cita")}</h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
-            Cada cuántos minutos se puede agendar un turno
+            {t("Cada cuántos minutos se puede agendar un turno")}
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {DURATIONS.map(d => {
@@ -1524,7 +1534,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
                     fontSize: 22, fontWeight: 800,
                     color: selected ? "var(--accent)" : "var(--text-primary)"
                   }}>{d}</p>
-                  <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>min</p>
+                  <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>{t("min")}</p>
                 </div>
               );
             })}
@@ -1537,9 +1547,9 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 18, fontWeight: 700, letterSpacing: 1,
             textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
-          }}>👁 Vista previa</h3>
+          }}>{t("👁 Vista previa")}</h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
-            Así verán los clientes los horarios disponibles · {previewSlots.length} turnos por día
+            {t("Así verán los clientes los horarios disponibles")} · {previewSlots.length} {t("turnos por día")}
           </p>
           <div style={{
             display: "grid",
@@ -1563,7 +1573,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
           </div>
           {previewSlots.length === 0 && (
             <p style={{ color: "var(--text-muted)", fontSize: 13, textAlign: "center", padding: 20 }}>
-              ⚠ Ajusta la hora de inicio, fin y duración para generar turnos
+              {t("⚠ Ajusta la hora de inicio, fin y duración para generar turnos")}
             </p>
           )}
         </div>
@@ -1575,7 +1585,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, alignItems: "center" }}>
           {saved && (
             <p style={{ color: "#4ade80", fontSize: 14, fontWeight: 600 }}>
-              ✓ Horarios guardados
+              {t("✓ Horarios guardados")}
             </p>
           )}
           <button
@@ -1584,7 +1594,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             disabled={saving}
             style={{ minWidth: 160 }}
           >
-            {saving ? 'Guardando...' : '💾 Guardar horarios'}
+            {saving ? t('Guardando...') : t('💾 Guardar horarios')}
           </button>
         </div>
       </div>
@@ -1595,6 +1605,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
 // ==================== LOYALTY VIEW ====================
 function LoyaltyView({ appointments }) {
   const { slug, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('clientes'); // clientes | canjes | config
   const [redemptions, setRedemptions] = useState([]);
@@ -1681,10 +1692,10 @@ function LoyaltyView({ appointments }) {
     <div className="fade-in">
       <div style={{ marginBottom: 24 }}>
         <h1 className="section-title" style={{ marginBottom: 4 }}>
-          🏆 <span className="gold">Lealtad</span> de clientes
+          🏆 <span className="gold">{t("Lealtad")}</span> {t("de clientes")}
         </h1>
         <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
-          {REQUIRED_STAMPS} sellos = {REWARD_NAME}
+          {REQUIRED_STAMPS} {t("sellos")} = {REWARD_NAME}
         </p>
       </div>
 
@@ -1696,17 +1707,17 @@ function LoyaltyView({ appointments }) {
         border: "1px solid var(--border)"
       }}>
         {[
-          { key: 'clientes', label: '👥 Clientes', count: totalClients },
-          { key: 'canjes', label: '🎁 Canjes', count: pendingRedemptions.length, badge: pendingRedemptions.length > 0 },
-          { key: 'config', label: '⚙️ Configuración' }
-        ].map(t => (
+          { key: 'clientes', label: t('👥 Clientes'), count: totalClients },
+          { key: 'canjes', label: t('🎁 Canjes'), count: pendingRedemptions.length, badge: pendingRedemptions.length > 0 },
+          { key: 'config', label: t('⚙️ Configuración') }
+        ].map(tab => (
           <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             style={{
               flex: 1,
-              background: activeTab === t.key ? "linear-gradient(135deg, var(--accent), var(--accent-light))" : "transparent",
-              color: activeTab === t.key ? "white" : "var(--text-tertiary)",
+              background: activeTab === tab.key ? "linear-gradient(135deg, var(--accent), var(--accent-light))" : "transparent",
+              color: activeTab === tab.key ? "white" : "var(--text-tertiary)",
               border: "none",
               borderRadius: 7,
               padding: "10px 14px",
@@ -1721,17 +1732,17 @@ function LoyaltyView({ appointments }) {
               whiteSpace: "nowrap"
             }}
           >
-            {t.label}
-            {t.count !== undefined && (
+            {tab.label}
+            {tab.count !== undefined && (
               <span style={{
                 marginLeft: 6,
-                background: t.badge ? "#dc2626" : "rgba(255,255,255,0.2)",
+                background: tab.badge ? "#dc2626" : "rgba(255,255,255,0.2)",
                 color: "white",
                 borderRadius: 10,
                 padding: "2px 7px",
                 fontSize: 10,
                 fontWeight: 800
-              }}>{t.count}</span>
+              }}>{tab.count}</span>
             )}
           </button>
         ))}
@@ -1742,27 +1753,27 @@ function LoyaltyView({ appointments }) {
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 20 }}>
             <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clientes</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("Clientes")}</p>
               <p style={{ fontSize: 26, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
             </div>
             <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Sellos activos</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("Sellos activos")}</p>
               <p style={{ fontSize: 26, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalStamps}</p>
             </div>
             <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Listos para canjear</p>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("Listos para canjear")}</p>
               <p style={{ fontSize: 26, fontWeight: 800, color: "#f59e0b", fontFamily: "'Barlow Condensed', sans-serif" }}>{vipClients}</p>
             </div>
           </div>
 
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-              🔍 Buscar cliente
+              {t("🔍 Buscar cliente")}
             </label>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Por nombre o teléfono..."
+              placeholder={t("Por nombre o teléfono...")}
               style={{ width: "100%" }}
             />
           </div>
@@ -1771,13 +1782,13 @@ function LoyaltyView({ appointments }) {
             <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
               <p style={{ fontSize: 36, marginBottom: 8 }}>🎫</p>
               <p style={{ fontSize: 14 }}>
-                {search ? "Ningún cliente coincide" : "Aún no hay clientes con citas completadas"}
+                {search ? t("Ningún cliente coincide") : t("Aún no hay clientes con citas completadas")}
               </p>
             </div>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
               {filtered.map((client, i) => (
-                <ClientLoyaltyCard key={client.phone + i} client={client} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} stampImage={STAMP_IMAGE} />
+                <ClientLoyaltyCard key={client.phone + i} client={client} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} stampImage={STAMP_IMAGE} idioma={barbershopConfig?.idioma} />
               ))}
             </div>
           )}
@@ -1786,19 +1797,20 @@ function LoyaltyView({ appointments }) {
 
       {/* TAB: CANJES */}
       {activeTab === 'canjes' && (
-        <RedemptionsManager redemptions={redemptions} slug={slug} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} />
+        <RedemptionsManager redemptions={redemptions} slug={slug} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} idioma={barbershopConfig?.idioma} />
       )}
 
       {/* TAB: CONFIG */}
       {activeTab === 'config' && (
-        <LoyaltyConfig slug={slug} currentConfig={loyaltyConfig} />
+        <LoyaltyConfig slug={slug} currentConfig={loyaltyConfig} idioma={barbershopConfig?.idioma} />
       )}
     </div>
   );
 }
 
 // ========== CONFIG ==========
-function LoyaltyConfig({ slug, currentConfig }) {
+function LoyaltyConfig({ slug, currentConfig, idioma }) {
+  const t = useT(idioma);
   const [stamps, setStamps] = useState(currentConfig.required_stamps || 10);
   const [reward, setReward] = useState(currentConfig.reward_name || 'Corte gratis');
   const [stampImage, setStampImage] = useState(currentConfig.stamp_image || null);
@@ -1823,14 +1835,14 @@ function LoyaltyConfig({ slug, currentConfig }) {
   };
 
   const handleRemoveImage = () => {
-    if (confirm('¿Quitar imagen y usar ✂️ por defecto?')) {
+    if (confirm(t('¿Quitar imagen y usar ✂️ por defecto?'))) {
       setStampImage(null);
     }
   };
 
   const handleSave = async () => {
-    if (stamps < 2 || stamps > 50) { alert('Sellos entre 2 y 50'); return; }
-    if (!reward.trim()) { alert('Escribe un premio'); return; }
+    if (stamps < 2 || stamps > 50) { alert(t('Sellos entre 2 y 50')); return; }
+    if (!reward.trim()) { alert(t('Escribe un premio')); return; }
     setSaving(true);
     try {
       await update(ref(db, `barberias/${slug}/config/loyalty_config`), {
@@ -1842,7 +1854,7 @@ function LoyaltyConfig({ slug, currentConfig }) {
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
       console.error(err);
-      alert('Error al guardar');
+      alert(t('Error al guardar'));
     } finally {
       setSaving(false);
     }
@@ -1855,13 +1867,13 @@ function LoyaltyConfig({ slug, currentConfig }) {
         fontSize: 18, fontWeight: 700, letterSpacing: 1,
         textTransform: "uppercase", marginBottom: 18, color: "var(--text-primary)"
       }}>
-        ⚙️ Configurar programa de lealtad
+        {t("⚙️ Configurar programa de lealtad")}
       </h3>
 
       {/* Imagen del sello */}
       <div style={{ marginBottom: 22 }}>
         <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-          🎨 Imagen del sello (opcional)
+          {t("🎨 Imagen del sello (opcional)")}
         </label>
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           {/* Preview */}
@@ -1887,7 +1899,7 @@ function LoyaltyConfig({ slug, currentConfig }) {
               opacity: uploading ? 0.6 : 1,
               fontFamily: "'Barlow', sans-serif"
             }}>
-              {uploading ? '⏳ Procesando...' : (stampImage ? '🔄 Cambiar imagen' : '📷 Subir imagen')}
+              {uploading ? t('⏳ Procesando...') : (stampImage ? t('🔄 Cambiar imagen') : t('📷 Subir imagen'))}
               <input
                 type="file"
                 accept="image/*"
@@ -1911,20 +1923,20 @@ function LoyaltyConfig({ slug, currentConfig }) {
                   cursor: "pointer"
                 }}
               >
-                🗑 Quitar imagen
+                {t("🗑 Quitar imagen")}
               </button>
             )}
           </div>
         </div>
         {uploadError && <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 8 }}>⚠ {uploadError}</p>}
         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
-          Sube el logo de tu barbería como sello. Tamaño máx 5 MB, se redimensiona automáticamente.
+          {t("Sube el logo de tu barbería como sello. Tamaño máx 5 MB, se redimensiona automáticamente.")}
         </p>
       </div>
 
       <div style={{ marginBottom: 18 }}>
         <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-          Sellos necesarios para premio
+          {t("Sellos necesarios para premio")}
         </label>
         <input
           type="number"
@@ -1933,22 +1945,22 @@ function LoyaltyConfig({ slug, currentConfig }) {
           min="2" max="50"
         />
         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-          Cuántos cortes debe completar el cliente
+          {t("Cuántos cortes debe completar el cliente")}
         </p>
       </div>
 
       <div style={{ marginBottom: 18 }}>
         <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-          Premio
+          {t("Premio")}
         </label>
         <input
           value={reward}
           onChange={e => setReward(e.target.value)}
-          placeholder="Ej. Corte gratis, 50% descuento, Producto..."
+          placeholder={t("Ej. Corte gratis, 50% descuento, Producto...")}
           maxLength={80}
         />
         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-          Qué se lleva el cliente al juntar sellos
+          {t("Qué se lleva el cliente al juntar sellos")}
         </p>
       </div>
 
@@ -1960,25 +1972,26 @@ function LoyaltyConfig({ slug, currentConfig }) {
         marginBottom: 18
       }}>
         <p style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
-          📋 Vista previa
+          {t("📋 Vista previa")}
         </p>
         <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-          "Junta <strong style={{ color: "var(--accent)" }}>{stamps} sellos</strong> y obtén un <strong style={{ color: "var(--accent)" }}>{reward}</strong>"
+          "{t("Junta")} <strong style={{ color: "var(--accent)" }}>{stamps} {t("sellos")}</strong> {t("y obtén un")} <strong style={{ color: "var(--accent)" }}>{reward}</strong>"
         </p>
       </div>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <button className="btn-gold" onClick={handleSave} disabled={saving}>
-          {saving ? 'Guardando...' : '💾 Guardar'}
+          {saving ? t('Guardando...') : t('💾 Guardar')}
         </button>
-        {saved && <p style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}>✓ Guardado</p>}
+        {saved && <p style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}>{t("✓ Guardado")}</p>}
       </div>
     </div>
   );
 }
 
 // ========== REDEMPTIONS MANAGER ==========
-function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
+function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName, idioma }) {
+  const t = useT(idioma);
   const [filter, setFilter] = useState('pendiente'); // pendiente | aprobado | rechazado | todos
 
   const filtered = redemptions
@@ -1986,7 +1999,7 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
   const handleApprove = async (id) => {
-    if (!confirm(`Aprobar canje de "${rewardName}"? Se descontarán ${requiredStamps} sellos del cliente.`)) return;
+    if (!confirm(t('Aprobar canje de "{reward}"? Se descontarán {stamps} sellos del cliente.', { reward: rewardName, stamps: requiredStamps }))) return;
     try {
       await update(ref(db, `barberias/${slug}/canjes/${id}`), {
         status: 'aprobado',
@@ -1996,12 +2009,12 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
       });
     } catch (err) {
       console.error(err);
-      alert('Error al aprobar');
+      alert(t('Error al aprobar'));
     }
   };
 
   const handleReject = async (id) => {
-    if (!confirm('¿Rechazar este canje? Los sellos NO se descontarán.')) return;
+    if (!confirm(t('¿Rechazar este canje? Los sellos NO se descontarán.'))) return;
     try {
       await update(ref(db, `barberias/${slug}/canjes/${id}`), {
         status: 'rechazado',
@@ -2009,14 +2022,14 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
       });
     } catch (err) {
       console.error(err);
-      alert('Error al rechazar');
+      alert(t('Error al rechazar'));
     }
   };
 
   const statusInfo = {
-    pendiente: { label: 'Pendiente', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-    aprobado: { label: 'Aprobado ✓', color: '#4ade80', bg: 'rgba(74,222,128,0.1)' },
-    rechazado: { label: 'Rechazado ✗', color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
+    pendiente: { label: t('Pendiente'), color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    aprobado: { label: t('Aprobado ✓'), color: '#4ade80', bg: 'rgba(74,222,128,0.1)' },
+    rechazado: { label: t('Rechazado ✗'), color: '#f87171', bg: 'rgba(248,113,113,0.1)' }
   };
 
   return (
@@ -2024,10 +2037,10 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
       {/* Filtros */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
         {[
-          { key: 'pendiente', label: '⏳ Pendientes' },
-          { key: 'aprobado', label: '✓ Aprobados' },
-          { key: 'rechazado', label: '✗ Rechazados' },
-          { key: 'todos', label: 'Todos' }
+          { key: 'pendiente', label: t('⏳ Pendientes') },
+          { key: 'aprobado', label: t('✓ Aprobados') },
+          { key: 'rechazado', label: t('✗ Rechazados') },
+          { key: 'todos', label: t('Todos') }
         ].map(f => (
           <button
             key={f.key}
@@ -2052,7 +2065,10 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
         <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
           <p style={{ fontSize: 36, marginBottom: 8 }}>🎁</p>
           <p style={{ fontSize: 14 }}>
-            {filter === 'pendiente' ? 'No hay canjes pendientes' : `No hay canjes ${filter === 'todos' ? 'registrados' : filter + 's'}`}
+            {filter === 'pendiente' ? t('No hay canjes pendientes')
+              : filter === 'aprobado' ? t('No hay canjes aprobados')
+              : filter === 'rechazado' ? t('No hay canjes rechazados')
+              : t('No hay canjes registrados')}
           </p>
         </div>
       ) : (
@@ -2095,14 +2111,14 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
                   padding: 12,
                   marginBottom: r.status === 'pendiente' ? 12 : 0
                 }}>
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>Premio solicitado</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 }}>{t("Premio solicitado")}</p>
                   <p style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)" }}>🎁 {r.reward_requested || rewardName}</p>
                   <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
-                    Solicitado: {r.createdAt ? new Date(r.createdAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
+                    {t("Solicitado:")} {r.createdAt ? new Date(r.createdAt).toLocaleString(idioma === 'en' ? 'en-US' : 'es-MX', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
                   </p>
                   {r.approvedAt && (
                     <p style={{ fontSize: 11, color: "#4ade80", marginTop: 2 }}>
-                      Aprobado: {new Date(r.approvedAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                      {t("Aprobado:")} {new Date(r.approvedAt).toLocaleString(idioma === 'en' ? 'en-US' : 'es-MX', { dateStyle: 'short', timeStyle: 'short' })}
                     </p>
                   )}
                 </div>
@@ -2122,7 +2138,7 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
                         cursor: "pointer"
                       }}
                     >
-                      ✗ Rechazar
+                      {t("✗ Rechazar")}
                     </button>
                     <button
                       onClick={() => handleApprove(r.id)}
@@ -2138,7 +2154,7 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
                         cursor: "pointer"
                       }}
                     >
-                      ✓ Aprobar
+                      {t("✓ Aprobar")}
                     </button>
                   </div>
                 )}
@@ -2151,7 +2167,8 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName }) {
   );
 }
 
-function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
+function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage, idioma }) {
+  const t = useT(idioma);
   const REQ = requiredStamps || 10;
   const stampsForNext = REQ - (client.stamps % REQ);
   const initials = (client.client || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -2183,7 +2200,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
                 background: "linear-gradient(135deg, #f59e0b, #fbbf24)",
                 color: "#fff", padding: "2px 8px",
                 borderRadius: 10, letterSpacing: 0.5
-              }}>🎁 LISTO</span>
+              }}>{t("🎁 LISTO")}</span>
             )}
             {client.redeemed > 0 && (
               <span style={{
@@ -2192,7 +2209,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
                 color: "var(--accent)",
                 padding: "2px 8px",
                 borderRadius: 10
-              }}>{client.redeemed}× canjeado</span>
+              }}>{client.redeemed}× {t("canjeado")}</span>
             )}
           </div>
           <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📞 {client.phone}</p>
@@ -2200,7 +2217,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
         <div style={{ textAlign: "right" }}>
           <p style={{ fontSize: 28, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>{client.stamps}</p>
           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>
-            sello{client.stamps !== 1 ? 's' : ''}
+{t(client.stamps !== 1 ? "sellos" : "sello")}
           </p>
         </div>
       </div>
@@ -2208,13 +2225,13 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
       <div style={{ background: "var(--bg-elevated-2)", border: "1px dashed var(--border-strong)", borderRadius: 10, padding: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <p style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
-            Progreso ({stampsInCurrentRow}/{REQ})
+            {t("Progreso")} ({stampsInCurrentRow}/{REQ})
           </p>
           {canRedeem ? (
-            <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>🎁 Premio listo</p>
+            <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>{t("🎁 Premio listo")}</p>
           ) : stampsForNext > 0 && stampsForNext < REQ && (
             <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>
-              {stampsForNext} para premio
+              {stampsForNext} {t("para premio")}
             </p>
           )}
         </div>
@@ -2254,11 +2271,11 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage }) {
         borderTop: "1px solid var(--border)"
       }}>
         <div>
-          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Total gastado</p>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>{t("Total gastado")}</p>
           <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{formatCurrency(client.totalSpent)}</p>
         </div>
         <div>
-          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Ticket promedio</p>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>{t("Ticket promedio")}</p>
           <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
             {client.stamps > 0 ? formatCurrency(Math.round(client.totalSpent / (client.stamps + (client.redeemed * REQ)))) : '—'}
           </p>
@@ -2281,7 +2298,8 @@ const DEFAULT_SERVICES_TEMPLATE = [
 const SERVICE_EMOJIS = ["✂️", "💈", "🔥", "🧔", "👦", "✨", "💇", "🎨", "⭐", "🪒", "👨", "🧖"];
 
 function ServicesView({ slug }) {
-  const { services } = useApp();
+  const { services, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", duration: 30, price: 100, description: "", emoji: "✂️" });
@@ -2310,9 +2328,9 @@ function ServicesView({ slug }) {
 
   const handleSave = async () => {
     setError("");
-    if (!form.name.trim()) { setError("El nombre es obligatorio"); return; }
-    if (form.duration < 5 || form.duration > 240) { setError("Duración entre 5 y 240 minutos"); return; }
-    if (form.price < 0) { setError("Precio debe ser positivo"); return; }
+    if (!form.name.trim()) { setError(t("El nombre es obligatorio")); return; }
+    if (form.duration < 5 || form.duration > 240) { setError(t("Duración entre 5 y 240 minutos")); return; }
+    if (form.price < 0) { setError(t("Precio debe ser positivo")); return; }
 
     setSaving(true);
     try {
@@ -2331,25 +2349,25 @@ function ServicesView({ slug }) {
       resetForm();
     } catch (err) {
       console.error(err);
-      setError("Error al guardar el servicio");
+      setError(t("Error al guardar el servicio"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("¿Eliminar este servicio? Las citas pasadas con este servicio no se afectan.")) return;
+    if (!confirm(t("¿Eliminar este servicio? Las citas pasadas con este servicio no se afectan."))) return;
     try {
       await remove(ref(db, `barberias/${slug}/servicios/${id}`));
     } catch (err) {
       console.error(err);
-      alert("Error al eliminar");
+      alert(t("Error al eliminar"));
     }
   };
 
   const loadDefaults = async () => {
     if (services.length > 0) {
-      if (!confirm("Ya tienes servicios. ¿Quieres agregar los servicios por defecto a los existentes?")) return;
+      if (!confirm(t("Ya tienes servicios. ¿Quieres agregar los servicios por defecto a los existentes?"))) return;
     }
     try {
       for (const svc of DEFAULT_SERVICES_TEMPLATE) {
@@ -2357,7 +2375,7 @@ function ServicesView({ slug }) {
       }
     } catch (err) {
       console.error(err);
-      alert("Error al cargar defaults");
+      alert(t("Error al cargar defaults"));
     }
   };
 
@@ -2366,20 +2384,20 @@ function ServicesView({ slug }) {
       <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>
-            💈 <span className="gold">Servicios</span> ofrecidos
+            💈 <span className="gold">{t("Servicios")}</span> {t("ofrecidos")}
           </h1>
           <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
-            Edita los cortes y servicios que ofrece tu barbería
+            {t("Edita los cortes y servicios que ofrece tu barbería")}
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {services.length === 0 && (
             <button className="btn-ghost" onClick={loadDefaults}>
-              📋 Cargar defaults
+              {t("📋 Cargar defaults")}
             </button>
           )}
           <button className="btn-gold" onClick={() => { resetForm(); setShowForm(true); }}>
-            ➕ Nuevo servicio
+            {t("➕ Nuevo servicio")}
           </button>
         </div>
       </div>
@@ -2399,13 +2417,13 @@ function ServicesView({ slug }) {
             textTransform: "uppercase", marginBottom: 18,
             color: "var(--text-primary)"
           }}>
-            {editingId ? "✏️ Editar servicio" : "➕ Nuevo servicio"}
+            {editingId ? t("✏️ Editar servicio") : t("➕ Nuevo servicio")}
           </h3>
 
           {/* Emoji selector */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-              Ícono
+              {t("Ícono")}
             </label>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {SERVICE_EMOJIS.map(e => (
@@ -2429,12 +2447,12 @@ function ServicesView({ slug }) {
 
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-              Nombre del servicio *
+              {t("Nombre del servicio *")}
             </label>
             <input
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Ej. Corte clásico"
+              placeholder={t("Ej. Corte clásico")}
               maxLength={50}
             />
           </div>
@@ -2442,7 +2460,7 @@ function ServicesView({ slug }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
             <div>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-                Duración (min) *
+                {t("Duración (min) *")}
               </label>
               <input
                 type="number"
@@ -2453,7 +2471,7 @@ function ServicesView({ slug }) {
             </div>
             <div>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-                Precio (MXN) *
+                {t("Precio (MXN) *")}
               </label>
               <input
                 type="number"
@@ -2466,12 +2484,12 @@ function ServicesView({ slug }) {
 
           <div style={{ marginBottom: 18 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-              Descripción
+              {t("Descripción")}
             </label>
             <input
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Breve descripción del servicio"
+              placeholder={t("Breve descripción del servicio")}
               maxLength={150}
             />
           </div>
@@ -2479,9 +2497,9 @@ function ServicesView({ slug }) {
           {error && <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12 }}>⚠ {error}</p>}
 
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <button className="btn-ghost" onClick={resetForm} disabled={saving}>Cancelar</button>
+            <button className="btn-ghost" onClick={resetForm} disabled={saving}>{t("Cancelar")}</button>
             <button className="btn-gold" onClick={handleSave} disabled={saving}>
-              {saving ? "Guardando..." : editingId ? "Actualizar" : "Crear servicio"}
+              {saving ? t("Guardando...") : editingId ? t("Actualizar") : t("Crear servicio")}
             </button>
           </div>
         </div>
@@ -2498,10 +2516,10 @@ function ServicesView({ slug }) {
         }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>💈</p>
           <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>
-            Aún no tienes servicios configurados
+            {t("Aún no tienes servicios configurados")}
           </p>
           <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Crea tu primer servicio o carga los predeterminados
+            {t("Crea tu primer servicio o carga los predeterminados")}
           </p>
         </div>
       ) : (
@@ -2538,7 +2556,7 @@ function ServicesView({ slug }) {
                   </p>
                 )}
                 <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                  ⏱ {svc.duration} min
+                  ⏱ {svc.duration} {t("min")}
                 </p>
               </div>
               <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -2562,7 +2580,7 @@ function ServicesView({ slug }) {
                     cursor: "pointer"
                   }}
                 >
-                  ✏️ Editar
+                  {t("✏️ Editar")}
                 </button>
                 <button
                   onClick={() => handleDelete(svc.id)}
@@ -2723,6 +2741,9 @@ function QuickAction({ icon, label, color, onClick }) {
 
 // ==================== PRODUCTS VIEW ====================
 function ProductsView({ slug }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -2762,16 +2783,16 @@ function ProductsView({ slug }) {
   const handleImage = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('La imagen no debe pesar más de 5MB'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert(t('La imagen no debe pesar más de 5MB')); return; }
     const reader = new FileReader();
     reader.onload = ev => setForm(f => ({ ...f, image: ev.target.result }));
     reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { alert('El nombre del producto es obligatorio'); return; }
-    if (!form.price || isNaN(Number(form.price)) || Number(form.price) < 0) { alert('Ingresa un precio válido'); return; }
-    if (form.cantidad !== '' && (isNaN(Number(form.cantidad)) || Number(form.cantidad) < 0)) { alert('Ingresa una cantidad válida'); return; }
+    if (!form.name.trim()) { alert(t('El nombre del producto es obligatorio')); return; }
+    if (!form.price || isNaN(Number(form.price)) || Number(form.price) < 0) { alert(t('Ingresa un precio válido')); return; }
+    if (form.cantidad !== '' && (isNaN(Number(form.cantidad)) || Number(form.cantidad) < 0)) { alert(t('Ingresa una cantidad válida')); return; }
     setSaving(true);
     try {
       const data = {
@@ -2790,18 +2811,18 @@ function ProductsView({ slug }) {
       }
       setShowForm(false);
     } catch (err) {
-      alert('Error al guardar el producto');
+      alert(t('Error al guardar el producto'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este producto?')) return;
+    if (!window.confirm(t('¿Eliminar este producto?'))) return;
     setDeleting(id);
     try {
       await remove(ref(db, `barberias/${slug}/productos/${id}`));
-    } catch { alert('Error al eliminar'); }
+    } catch { alert(t('Error al eliminar')); }
     finally { setDeleting(null); }
   };
 
@@ -2809,7 +2830,7 @@ function ProductsView({ slug }) {
 
   // Export products CSV
   const exportProductos = () => {
-    const rows = [['Nombre', 'Precio Venta', 'Costo Adquisición', 'Ganancia Neta', 'Margen %', 'Stock', 'Descripción']];
+    const rows = [[t('Nombre'), t('Precio Venta'), t('Costo Adquisición'), t('Ganancia Neta'), t('Margen %'), t('Stock'), t('Descripción')]];
     products.forEach(p => {
       const ganancia = p.costo != null ? p.price - p.costo : '';
       const margen = p.costo != null ? (((p.price - p.costo) / p.price) * 100).toFixed(1) : '';
@@ -2818,7 +2839,7 @@ function ProductsView({ slug }) {
     const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'productos.csv'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = idioma === 'en' ? 'products.csv' : 'productos.csv'; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -2843,9 +2864,9 @@ function ProductsView({ slug }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 className="section-title" style={{ marginBottom: 4 }}>Productos</h2>
+          <h2 className="section-title" style={{ marginBottom: 4 }}>{t("Productos")}</h2>
           <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
-            {products.length} producto{products.length !== 1 ? 's' : ''} en el catálogo
+            {products.length} {t(products.length !== 1 ? "productos" : "producto")} {t("en el catálogo")}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -2856,16 +2877,16 @@ function ProductsView({ slug }) {
             borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 700,
             cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
           }}>
-            🧮 Calculadora
+            {t("🧮 Calculadora")}
           </button>
           <button onClick={exportProductos} style={{
             background: 'var(--bg-elevated)', border: '1px solid var(--border)',
             color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 14px',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
           }}>
-            ↓ Exportar
+            {t("↓ Exportar")}
           </button>
-          <button className="btn-gold" onClick={openNew}>+ Agregar producto</button>
+          <button className="btn-gold" onClick={openNew}>{t("+ Agregar producto")}</button>
         </div>
       </div>
 
@@ -2873,9 +2894,9 @@ function ProductsView({ slug }) {
       {productosConCosto.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
           {[
-            { label: 'Ganancia neta potencial', value: `$${gananciaTotal.toLocaleString()}`, color: '#4ade80', sub: 'Si vendes todo el stock' },
-            { label: 'Margen promedio', value: `${margenPromedio}%`, color: 'var(--accent)', sub: 'Sobre precio de venta' },
-            { label: 'Productos con costo', value: `${productosConCosto.length}/${totalProductos}`, color: '#a78bfa', sub: 'Tienen costo registrado' },
+            { label: t('Ganancia neta potencial'), value: `$${gananciaTotal.toLocaleString()}`, color: '#4ade80', sub: t('Si vendes todo el stock') },
+            { label: t('Margen promedio'), value: `${margenPromedio}%`, color: 'var(--accent)', sub: t('Sobre precio de venta') },
+            { label: t('Productos con costo'), value: `${productosConCosto.length}/${totalProductos}`, color: '#a78bfa', sub: t('Tienen costo registrado') },
           ].map(({ label, value, color, sub }) => (
             <div key={label} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px' }}>
               <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>{label}</p>
@@ -2889,17 +2910,17 @@ function ProductsView({ slug }) {
       {/* Calculadora de ganancias */}
       {showCalc && (
         <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--accent-border)', borderRadius: 14, padding: 20, marginBottom: 24 }}>
-          <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>🧮 Calculadora de ganancias</p>
+          <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>{t("🧮 Calculadora de ganancias")}</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
-              <label style={labelStyle}>Costo de adquisición</label>
+              <label style={labelStyle}>{t("Costo de adquisición")}</label>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700 }}>$</span>
                 <input value={calc.costo} onChange={e => setCalc(c => ({ ...c, costo: e.target.value }))} type="number" min="0" placeholder="0" style={{ paddingLeft: 28 }} />
               </div>
             </div>
             <div>
-              <label style={labelStyle}>Precio de venta</label>
+              <label style={labelStyle}>{t("Precio de venta")}</label>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700 }}>$</span>
                 <input value={calc.precio} onChange={e => setCalc(c => ({ ...c, precio: e.target.value }))} type="number" min="0" placeholder="0" style={{ paddingLeft: 28 }} />
@@ -2909,8 +2930,8 @@ function ProductsView({ slug }) {
           {calcPrecio > 0 && calcCosto > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {[
-                { label: 'Ganancia neta', value: `$${calcGanancia.toLocaleString()}`, color: calcGanancia > 0 ? '#4ade80' : '#ef4444' },
-                { label: 'Margen', value: `${calcMargen}%`, color: 'var(--accent)' },
+                { label: t('Ganancia neta'), value: `$${calcGanancia.toLocaleString()}`, color: calcGanancia > 0 ? '#4ade80' : '#ef4444' },
+                { label: t('Margen'), value: `${calcMargen}%`, color: 'var(--accent)' },
                 { label: 'ROI', value: `${calcROI}%`, color: '#a78bfa' },
               ].map(({ label, value, color }) => (
                 <div key={label} style={{ background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
@@ -2922,7 +2943,9 @@ function ProductsView({ slug }) {
           )}
           {calcPrecio > 0 && calcCosto > 0 && (
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12, textAlign: 'center' }}>
-              Por cada ${calcPrecio} que vendes, ganas ${calcGanancia > 0 ? calcGanancia : 0} después de recuperar tu inversión de ${calcCosto}.
+              {idioma === 'en'
+                ? `For every $${calcPrecio} you sell, you make $${calcGanancia > 0 ? calcGanancia : 0} after recovering your $${calcCosto} investment.`
+                : `Por cada $${calcPrecio} que vendes, ganas $${calcGanancia > 0 ? calcGanancia : 0} después de recuperar tu inversión de $${calcCosto}.`}
             </p>
           )}
         </div>
@@ -2931,7 +2954,7 @@ function ProductsView({ slug }) {
 
       {/* Grid de productos */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-tertiary)' }}>Cargando...</div>
+        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-tertiary)' }}>{t("Cargando...")}</div>
       ) : products.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: 60,
@@ -2939,8 +2962,8 @@ function ProductsView({ slug }) {
           borderRadius: 16, color: 'var(--text-tertiary)'
         }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🛍</div>
-          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Sin productos aún</p>
-          <p style={{ fontSize: 14 }}>Agrega los productos que vendes en tu barbería</p>
+          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{t("Sin productos aún")}</p>
+          <p style={{ fontSize: 14 }}>{t("Agrega los productos que vendes en tu barbería")}</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
@@ -2972,7 +2995,7 @@ function ProductsView({ slug }) {
                     </p>
                     {p.costo != null && (
                       <p style={{ fontSize: 11, color: '#4ade80', fontWeight: 700 }}>
-                        +${(p.price - p.costo).toLocaleString()} neto
+                        +${(p.price - p.costo).toLocaleString()} {t("neto")}
                       </p>
                     )}
                   </div>
@@ -2981,10 +3004,10 @@ function ProductsView({ slug }) {
                 {p.costo != null && (
                   <div style={{ marginBottom: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: '#1a1a1a', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
-                      Costo: ${p.costo}
+                      {t("Costo:")} ${p.costo}
                     </span>
                     <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: '#4ade8015', color: '#4ade80', border: '1px solid #4ade8040' }}>
-                      {(((p.price - p.costo) / p.price) * 100).toFixed(0)}% margen
+                      {(((p.price - p.costo) / p.price) * 100).toFixed(0)}% {t("margen")}
                     </span>
                   </div>
                 )}
@@ -2997,7 +3020,7 @@ function ProductsView({ slug }) {
                       color: p.cantidad === 0 ? '#ef4444' : p.cantidad <= 5 ? '#f59e0b' : '#10b981',
                       border: `1px solid ${p.cantidad === 0 ? '#ef444440' : p.cantidad <= 5 ? '#f59e0b40' : '#10b98140'}`,
                     }}>
-                      {p.cantidad === 0 ? 'Agotado' : p.cantidad <= 5 ? `Últimas ${p.cantidad} piezas` : `${p.cantidad} en stock`}
+                      {p.cantidad === 0 ? t('Agotado') : p.cantidad <= 5 ? `${t('Últimas')} ${p.cantidad} ${t('piezas')}` : `${p.cantidad} ${t('en stock')}`}
                     </span>
                   </div>
                 )}
@@ -3012,7 +3035,7 @@ function ProductsView({ slug }) {
                     color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 0',
                     fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
                   }}>
-                    Editar
+                    {t("Editar")}
                   </button>
                   <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} style={{
                     background: '#ef444410', border: '1px solid #ef444430',
@@ -3041,12 +3064,12 @@ function ProductsView({ slug }) {
             maxHeight: '90vh', overflowY: 'auto'
           }}>
             <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}>
-              {editing ? 'Editar producto' : 'Nuevo producto'}
+              {editing ? t('Editar producto') : t('Nuevo producto')}
             </h3>
 
             {/* Foto */}
             <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Fotografía del producto</label>
+              <label style={labelStyle}>{t("Fotografía del producto")}</label>
               <div
                 onClick={() => fileRef.current?.click()}
                 style={{
@@ -3062,8 +3085,8 @@ function ProductsView({ slug }) {
                 ) : (
                   <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
                     <div style={{ fontSize: 36, marginBottom: 8 }}>📷</div>
-                    <p style={{ fontSize: 13 }}>Click para subir imagen</p>
-                    <p style={{ fontSize: 11, marginTop: 4 }}>JPG, PNG · Máx 5MB</p>
+                    <p style={{ fontSize: 13 }}>{t("Click para subir imagen")}</p>
+                    <p style={{ fontSize: 11, marginTop: 4 }}>{t("JPG, PNG · Máx 5MB")}</p>
                   </div>
                 )}
               </div>
@@ -3073,18 +3096,18 @@ function ProductsView({ slug }) {
                   marginTop: 8, background: 'transparent', border: 'none',
                   color: 'var(--danger)', fontSize: 12, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
                 }}>
-                  Quitar imagen
+                  {t("Quitar imagen")}
                 </button>
               )}
             </div>
 
             {/* Nombre */}
             <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Nombre del producto *</label>
+              <label style={labelStyle}>{t("Nombre del producto *")}</label>
               <input
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Ej: Pomada texturizante, aceite para barba..."
+                placeholder={t("Ej: Pomada texturizante, aceite para barba...")}
                 autoFocus
               />
             </div>
@@ -3092,14 +3115,14 @@ function ProductsView({ slug }) {
             {/* Precio y Costo — lado a lado */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                <label style={labelStyle}>Precio de venta *</label>
+                <label style={labelStyle}>{t("Precio de venta *")}</label>
                 <div style={{ position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 16 }}>$</span>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0" type="number" min="0" style={{ paddingLeft: 30 }} />
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Costo adquisición <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></label>
+                <label style={labelStyle}>{t("Costo de adquisición")} <span style={{ textTransform: 'none', fontWeight: 400 }}>{t("(opcional)")}</span></label>
                 <div style={{ position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 16 }}>$</span>
                   <input value={form.costo} onChange={e => setForm(f => ({ ...f, costo: e.target.value }))} placeholder="0" type="number" min="0" style={{ paddingLeft: 30 }} />
@@ -3110,7 +3133,7 @@ function ProductsView({ slug }) {
             {/* Preview ganancia */}
             {form.price && form.costo && Number(form.price) > 0 && Number(form.costo) > 0 && (
               <div style={{ marginBottom: 16, background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Ganancia neta por unidad</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t("Ganancia neta por unidad")}</span>
                 <span style={{ fontSize: 16, fontWeight: 800, color: '#4ade80', fontFamily: "'Barlow Condensed', sans-serif" }}>
                   ${(Number(form.price) - Number(form.costo)).toLocaleString()} ({(((Number(form.price) - Number(form.costo)) / Number(form.price)) * 100).toFixed(0)}%)
                 </span>
@@ -3120,27 +3143,27 @@ function ProductsView({ slug }) {
             {/* Cantidad en stock */}
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>
-                Cantidad en inventario
-                <span style={{ textTransform: 'none', fontWeight: 400 }}> (opcional)</span>
+                {t("Cantidad en inventario")}
+                <span style={{ textTransform: 'none', fontWeight: 400 }}> {t("(opcional)")}</span>
               </label>
               <input
                 value={form.cantidad}
                 onChange={e => setForm(f => ({ ...f, cantidad: e.target.value }))}
-                placeholder="Ej: 10"
+                placeholder={t("Ej: 10")}
                 type="number" min="0"
               />
               <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
-                Deja vacío si no quieres mostrar stock. Con 0 aparecerá como "Agotado".
+                {t('Deja vacío si no quieres mostrar stock. Con 0 aparecerá como "Agotado".')}
               </p>
             </div>
 
             {/* Descripción */}
             <div style={{ marginBottom: 24 }}>
-              <label style={labelStyle}>Descripción <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></label>
+              <label style={labelStyle}>{t("Descripción")} <span style={{ textTransform: 'none', fontWeight: 400 }}>{t("(opcional)")}</span></label>
               <textarea
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Descripción breve del producto, uso, beneficios..."
+                placeholder={t("Descripción breve del producto, uso, beneficios...")}
                 style={{ minHeight: 80 }}
               />
             </div>
@@ -3148,10 +3171,10 @@ function ProductsView({ slug }) {
             {/* Botones */}
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn-ghost" onClick={() => setShowForm(false)} disabled={saving} style={{ flex: 1 }}>
-                Cancelar
+                {t("Cancelar")}
               </button>
               <button className="btn-gold" onClick={handleSave} disabled={saving} style={{ flex: 1 }}>
-                {saving ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agregar producto'}
+                {saving ? t('Guardando...') : editing ? t('Guardar cambios') : t('Agregar producto')}
               </button>
             </div>
           </div>

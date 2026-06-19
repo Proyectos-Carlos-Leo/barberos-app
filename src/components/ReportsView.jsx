@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { formatCurrency, getTodayStr } from '../utils/helpers';
+import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 
 // ==================== EXPORTAR CSV ====================
 const downloadCSV = (filename, rows) => {
@@ -220,6 +222,9 @@ const exportFullReport = (appointments, barbers) => {
 };
 
 export default function ReportsView({ appointments, barbers }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
   // Solo citas completadas tienen ingresos reales
   const completed = useMemo(
     () => appointments.filter(a => a.status === 'completada'),
@@ -235,7 +240,10 @@ export default function ReportsView({ appointments, barbers }) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      const dayName = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][d.getDay()];
+      const dayNames = idioma === 'en'
+        ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      const dayName = dayNames[d.getDay()];
       const revenue = completed
         .filter(a => a.date === dateStr)
         .reduce((sum, a) => sum + (a.service?.price || 0), 0);
@@ -352,9 +360,9 @@ export default function ReportsView({ appointments, barbers }) {
       <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>
-            <span className="gold">Reportes</span> & análisis
+            <span className="gold">{t("Reportes")}</span> {t("& análisis")}
           </h1>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Métricas del negocio en tiempo real</p>
+          <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{t("Métricas del negocio en tiempo real")}</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
@@ -375,7 +383,7 @@ export default function ReportsView({ appointments, barbers }) {
               opacity: completed.length === 0 ? 0.4 : 1
             }}
           >
-            📊 Exportar barberos
+            {t("📊 Exportar barberos")}
           </button>
           <button
             onClick={() => exportFullReport(appointments, barbers)}
@@ -395,23 +403,23 @@ export default function ReportsView({ appointments, barbers }) {
               opacity: appointments.length === 0 ? 0.4 : 1
             }}
           >
-            📥 Exportar todo
+            {t("📥 Exportar todo")}
           </button>
         </div>
       </div>
 
       {/* Resumen general */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
-        <KPI label="Total citas completadas" value={completed.length} color="#4ade80" icon="✓" />
-        <KPI label="Ingresos totales" value={formatCurrency(totalRevenue)} color="var(--accent)" icon="💰" />
-        <KPI label="Ticket promedio" value={formatCurrency(Math.round(avgTicket))} color="#60a5fa" icon="🧾" />
-        <KPI label="Últimos 7 días" value={formatCurrency(totalLast7)} color="#a78bfa" icon="📅" />
+        <KPI label={t("Total citas completadas")} value={completed.length} color="#4ade80" icon="✓" />
+        <KPI label={t("Ingresos totales")} value={formatCurrency(totalRevenue)} color="var(--accent)" icon="💰" />
+        <KPI label={t("Ticket promedio")} value={formatCurrency(Math.round(avgTicket))} color="#60a5fa" icon="🧾" />
+        <KPI label={t("Últimos 7 días")} value={formatCurrency(totalLast7)} color="#a78bfa" icon="📅" />
       </div>
 
       {/* HISTOGRAMA: Ingresos últimos 7 días */}
       <Card
-        title={`📊 Ingresos últimos ${daysRange} días`}
-        subtitle={`Total: ${formatCurrency(totalLastN)}`}
+        title={t("📊 Ingresos últimos {n} días", { n: daysRange })}
+        subtitle={`${t("Total")}: ${formatCurrency(totalLastN)}`}
         action={
           <div style={{ display: "flex", gap: 6, background: "var(--bg-track)", padding: 4, borderRadius: 8 }}>
             {[7, 15, 30].map(n => (
@@ -439,7 +447,7 @@ export default function ReportsView({ appointments, barbers }) {
         }
       >
         {totalLast7 === 0 ? (
-          <EmptyState icon="📊" message="Aún no hay ingresos registrados" />
+          <EmptyState icon="📊" message={t("Aún no hay ingresos registrados")} />
         ) : (
           <div style={{ padding: "24px 0 0" }}>
             {/* Área del histograma */}
@@ -590,13 +598,13 @@ export default function ReportsView({ appointments, barbers }) {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 12, height: 12, borderRadius: 2, background: "linear-gradient(180deg, var(--accent-light), var(--accent))" }} />
-                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Hoy</span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("Hoy")}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 12, height: 12, borderRadius: 2, background: "var(--text-faint)" }} />
-                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Días anteriores</span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("Días anteriores")}</span>
               </div>
-              <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: "auto" }}>✓ = citas completadas</span>
+              <span style={{ fontSize: 11, color: "var(--text-dim)", marginLeft: "auto" }}>{t("✓ = citas completadas")}</span>
             </div>
           </div>
         )}
@@ -611,12 +619,12 @@ export default function ReportsView({ appointments, barbers }) {
       }}>
       {/* Top barberos */}
       <Card
-        title="🏆 Top barberos"
-        subtitle="Ranking por ingresos generados"
-        action={<RangePill value={barbersRange} onChange={setBarbersRange} />}
+        title={t("🏆 Top barberos")}
+        subtitle={t("Ranking por ingresos generados")}
+        action={<RangePill value={barbersRange} onChange={setBarbersRange} idioma={idioma} />}
       >
         {topBarbers.length === 0 || topBarbers.every(b => b.count === 0) ? (
-          <EmptyState icon="📊" message="Aún no hay datos suficientes" />
+          <EmptyState icon="📊" message={t("Aún no hay datos suficientes")} />
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {topBarbers.map((b, i) => {
@@ -642,7 +650,7 @@ export default function ReportsView({ appointments, barbers }) {
                       </span>
                     </div>
                     <div
-                      title={`${b.name}: ${b.count} corte${b.count !== 1 ? 's' : ''} · ${formatCurrency(b.revenue)}`}
+                      title={`${b.name}: ${b.count} ${t("corte")}${b.count !== 1 ? 's' : ''} · ${formatCurrency(b.revenue)}`}
                       style={{
                         height: 8, background: "var(--bg-track)",
                         borderRadius: 3, overflow: "hidden",
@@ -669,7 +677,7 @@ export default function ReportsView({ appointments, barbers }) {
                         transition: "width 0.5s"
                       }} />
                     </div>
-                    <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{b.count} corte{b.count !== 1 ? 's' : ''}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{b.count} {t("corte")}{b.count !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
               );
@@ -680,12 +688,12 @@ export default function ReportsView({ appointments, barbers }) {
 
       {/* Servicios más vendidos */}
       <Card
-        title="💈 Servicios más vendidos"
-        subtitle="Por cantidad de cortes"
-        action={<RangePill value={servicesRange} onChange={setServicesRange} />}
+        title={t("💈 Servicios más vendidos")}
+        subtitle={t("Por cantidad de cortes")}
+        action={<RangePill value={servicesRange} onChange={setServicesRange} idioma={idioma} />}
       >
         {topServices.length === 0 ? (
-          <EmptyState icon="📊" message="Aún no hay datos suficientes" />
+          <EmptyState icon="📊" message={t("Aún no hay datos suficientes")} />
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
             {topServices.map(s => {
@@ -695,14 +703,14 @@ export default function ReportsView({ appointments, barbers }) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
                     <span style={{ fontWeight: 600, fontSize: 13 }}>{s.name}</span>
                     <div style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.count} corte{s.count !== 1 ? 's' : ''}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.count} {t("corte")}{s.count !== 1 ? 's' : ''}</span>
                       <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 13 }}>
                         {formatCurrency(s.revenue)}
                       </span>
                     </div>
                   </div>
                   <div
-                    title={`${s.name}: ${s.count} corte${s.count !== 1 ? 's' : ''} · ${formatCurrency(s.revenue)}`}
+                    title={`${s.name}: ${s.count} ${t("corte")}${s.count !== 1 ? 's' : ''} · ${formatCurrency(s.revenue)}`}
                     style={{
                       height: 10, background: "var(--bg-track)",
                       borderRadius: 4, overflow: "hidden",
@@ -743,7 +751,7 @@ export default function ReportsView({ appointments, barbers }) {
       }}>
 
       {/* Comparativa mensual */}
-      <Card title="📆 Comparativa mensual" subtitle="Este mes vs mes anterior">
+      <Card title={t("📆 Comparativa mensual")} subtitle={t("Este mes vs mes anterior")}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{
             background: "var(--bg-elevated-2)",
@@ -752,13 +760,13 @@ export default function ReportsView({ appointments, barbers }) {
             padding: 18
           }}>
             <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
-              Mes anterior
+              {t("Mes anterior")}
             </p>
             <p style={{ fontSize: 22, fontWeight: 800, color: "var(--text-tertiary)", fontFamily: "'Barlow Condensed', sans-serif" }}>
               {formatCurrency(monthComparison.lastMonth.revenue)}
             </p>
             <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-              {monthComparison.lastMonth.count} corte{monthComparison.lastMonth.count !== 1 ? 's' : ''}
+              {monthComparison.lastMonth.count} {t("corte")}{monthComparison.lastMonth.count !== 1 ? 's' : ''}
             </p>
           </div>
           <div style={{
@@ -768,13 +776,13 @@ export default function ReportsView({ appointments, barbers }) {
             padding: 18
           }}>
             <p style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>
-              Este mes
+              {t("Este mes")}
             </p>
             <p style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>
               {formatCurrency(monthComparison.thisMonth.revenue)}
             </p>
             <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
-              {monthComparison.thisMonth.count} corte{monthComparison.thisMonth.count !== 1 ? 's' : ''}
+              {monthComparison.thisMonth.count} {t("corte")}{monthComparison.thisMonth.count !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -793,27 +801,28 @@ export default function ReportsView({ appointments, barbers }) {
               fontWeight: 700
             }}>
               {monthComparison.change >= 0 ? '📈 +' : '📉 '}
-              {monthComparison.change.toFixed(1)}% respecto al mes anterior
+              {monthComparison.change.toFixed(1)}% {t("respecto al mes anterior")}
             </p>
           </div>
         )}
       </Card>
 
       {/* Productos mini — dentro del grid */}
-      <ProductosStats appointments={appointments} compact={true} />
+      <ProductosStats appointments={appointments} compact={true} idioma={idioma} />
 
       </div>
       {/* Fin grid 2x2 inferior */}
 
       {/* ===== HORARIOS PICO — Full width grande ===== */}
-      <HorariosPicoFullWidth peakHours={peakHours} maxHourCount={maxHourCount} hoursRange={hoursRange} setHoursRange={setHoursRange} />
+      <HorariosPicoFullWidth peakHours={peakHours} maxHourCount={maxHourCount} hoursRange={hoursRange} setHoursRange={setHoursRange} idioma={idioma} />
 
     </div>
   );
 }
 
 // ========== HORARIOS PICO FULL WIDTH ==========
-function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRange }) {
+function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRange, idioma }) {
+  const t = useT(idioma);
   if (!peakHours || peakHours.length === 0) return null;
 
   const amHours = peakHours.filter(h => parseInt(h.time) < 12);
@@ -837,12 +846,12 @@ function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRa
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 20 }}>⏰</span>
             <h3 style={{ fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-primary)' }}>
-              Horarios Pico
+              {t("Horarios Pico")}
             </h3>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Distribución de citas por hora del día</p>
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{t("Distribución de citas por hora del día")}</p>
         </div>
-        <RangePill value={hoursRange} onChange={setHoursRange} />
+        <RangePill value={hoursRange} onChange={setHoursRange} idioma={idioma} />
       </div>
 
       {/* Chart grande */}
@@ -878,7 +887,7 @@ function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRa
                     </span>
                   )}
                   <div
-                    title={`${h.time}: ${h.count} cita${h.count !== 1 ? 's' : ''}`}
+                    title={`${h.time}: ${h.count} ${t(h.count !== 1 ? 'citas' : 'cita')}`}
                     style={{
                       width: '100%',
                       height: `${Math.max(heightPct, h.count > 0 ? 2 : 0)}%`,
@@ -928,10 +937,10 @@ function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRa
         ].map(({ label, peaks, color, bg, border, count }) => (
           <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 6 }}>{label}</p>
-            <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif", marginBottom: 4 }}>{count} citas</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif", marginBottom: 4 }}>{count} {t("citas")}</p>
             {peaks.length > 0 && (
               <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                Picos: {peaks.map(p => p.time).join(', ')}
+                {t("Picos:")} {peaks.map(p => p.time).join(', ')}
               </p>
             )}
           </div>
@@ -942,11 +951,11 @@ function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRa
       <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--accent-dark)' }} />
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hora AM pico</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t("Hora AM pico")}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ width: 12, height: 12, borderRadius: 2, background: '#4f46e5' }} />
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hora PM pico</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t("Hora PM pico")}</span>
         </div>
       </div>
     </div>
@@ -954,7 +963,8 @@ function HorariosPicoFullWidth({ peakHours, maxHourCount, hoursRange, setHoursRa
 }
 
 // ========== PRODUCTOS STATS ==========
-function ProductosStats({ appointments, compact = false }) {
+function ProductosStats({ appointments, compact = false, idioma }) {
+  const t = useT(idioma);
   const [range, setRange] = useState(30);
 
   const data = useMemo(() => {
@@ -1021,11 +1031,11 @@ function ProductosStats({ appointments, compact = false }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 18 }}>🛍</span>
             <h3 style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--text-primary)' }}>
-              Ventas de Productos
+              {t("Ventas de Productos")}
             </h3>
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-            Productos vendidos junto a citas
+            {t("Productos vendidos junto a citas")}
           </p>
         </div>
         {/* Selector de rango */}
@@ -1045,19 +1055,19 @@ function ProductosStats({ appointments, compact = false }) {
         {/* Export button */}
         {!compact && data.products.length > 0 && (
           <button onClick={() => {
-            const rows = [['Producto', 'Unidades', 'Ingresos brutos', 'Ganancia neta']];
+            const rows = [[t('Producto'), t('Unidades'), t('Ingresos brutos'), t('Ganancia neta')]];
             data.products.forEach(p => rows.push([p.name, p.qty, `$${p.revenue}`, `$${p.ganancia}`]));
             const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
             const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'ventas-productos.csv'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = idioma === 'en' ? 'product-sales.csv' : 'ventas-productos.csv'; a.click();
             URL.revokeObjectURL(url);
           }} style={{
             background: 'var(--bg-input)', border: '1px solid var(--border)',
             color: 'var(--text-secondary)', borderRadius: 8, padding: '6px 12px',
             fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
           }}>
-            ↓ Exportar ventas
+            {t("↓ Exportar ventas")}
           </button>
         )}
       </div>
@@ -1065,9 +1075,9 @@ function ProductosStats({ appointments, compact = false }) {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: compact ? '1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: compact ? 8 : 12, marginBottom: compact ? 16 : 24 }}>
         {[
-          { label: data.tieneAlgunCosto ? 'Ganancia neta' : 'Ingresos productos', value: `$${data.totalGanancia.toLocaleString()}`, color: '#4ade80', sub: data.tieneAlgunCosto ? 'Después de costos' : 'Sin costos registrados' },
-          { label: 'Unidades vendidas', value: data.totalQty, color: 'var(--text-primary)', sub: null },
-          { label: 'Citas con productos', value: data.withProducts.length, color: 'var(--text-primary)', sub: null },
+          { label: data.tieneAlgunCosto ? t('Ganancia neta') : t('Ingresos productos'), value: `$${data.totalGanancia.toLocaleString()}`, color: '#4ade80', sub: data.tieneAlgunCosto ? t('Después de costos') : t('Sin costos registrados') },
+          { label: t('Unidades vendidas'), value: data.totalQty, color: 'var(--text-primary)', sub: null },
+          { label: t('Citas con productos'), value: data.withProducts.length, color: 'var(--text-primary)', sub: null },
         ].map(({ label, value, color, sub }) => (
           <div key={label} style={{ background: 'var(--bg-input)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--border)' }}>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</p>
@@ -1080,7 +1090,7 @@ function ProductosStats({ appointments, compact = false }) {
       {/* Lista de productos */}
       {data.products.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
-          Sin ventas de productos en este período
+          {t("Sin ventas de productos en este período")}
         </p>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
@@ -1101,7 +1111,7 @@ function ProductosStats({ appointments, compact = false }) {
                     </span>
                     {p.hasCosto && (
                       <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block' }}>
-                        bruto ${p.revenue.toLocaleString()}
+                        {t("bruto")} ${p.revenue.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -1114,7 +1124,7 @@ function ProductosStats({ appointments, compact = false }) {
                     transition: 'width 0.5s ease'
                   }} />
                 </div>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{p.qty} unidad{p.qty !== 1 ? 'es' : ''} vendida{p.qty !== 1 ? 's' : ''}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{p.qty} {t(p.qty !== 1 ? "unidades vendidas" : "unidad vendida")}</p>
               </div>
             </div>
           ))}
@@ -1126,13 +1136,14 @@ function ProductosStats({ appointments, compact = false }) {
 }
 
 // ========== HELPERS ==========
-function RangePill({ value, onChange }) {
+function RangePill({ value, onChange, idioma }) {
+  const t = useT(idioma);
   const options = [
-    { val: 'today', label: 'Hoy' },
+    { val: 'today', label: t('Hoy') },
     { val: '7', label: '7d' },
     { val: '30', label: '30d' },
     { val: '90', label: '90d' },
-    { val: 'all', label: 'Todo' }
+    { val: 'all', label: t('Todo') }
   ];
   return (
     <div style={{ display: "flex", gap: 4, background: "var(--bg-track)", padding: 3, borderRadius: 7 }}>

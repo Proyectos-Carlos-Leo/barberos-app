@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 
 export default function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { slug } = useApp();
+  const { slug, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError('Completa todos los campos');
+      setError(t('Completa todos los campos'));
       return;
     }
     setError('');
@@ -21,15 +24,15 @@ export default function AdminLogin({ onLogin }) {
       await signInWithEmailAndPassword(auth, email, password);
       onLogin();
     } catch (err) {
-      let msg = 'Error al iniciar sesión';
+      let msg = t('Error al iniciar sesión');
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-        msg = 'Email o contraseña incorrectos';
+        msg = t('Email o contraseña incorrectos');
       } else if (err.code === 'auth/user-not-found') {
-        msg = 'Usuario no registrado';
+        msg = t('Usuario no registrado');
       } else if (err.code === 'auth/invalid-email') {
-        msg = 'Email inválido';
+        msg = t('Email inválido');
       } else if (err.code === 'auth/too-many-requests') {
-        msg = 'Demasiados intentos, espera un momento';
+        msg = t('Demasiados intentos, espera un momento');
       }
       setError(msg);
       setLoading(false);
@@ -71,10 +74,12 @@ export default function AdminLogin({ onLogin }) {
           fontSize: 36, fontWeight: 800, letterSpacing: 2,
           textTransform: 'uppercase', color: 'var(--text-primary)', marginBottom: 8
         }}>
-          Acceso <span style={{ color: 'var(--accent)' }}>Admin</span>
+          {idioma === 'en'
+            ? <><span style={{ color: 'var(--accent)' }}>Admin</span> Access</>
+            : <>Acceso <span style={{ color: 'var(--accent)' }}>Admin</span></>}
         </h1>
         <p style={{ color: 'var(--text-tertiary)', fontSize: 14, marginBottom: 36 }}>
-          Solo el dueño puede entrar aquí
+          {t("Solo el dueño puede entrar aquí")}
         </p>
 
         <div style={{
@@ -88,7 +93,7 @@ export default function AdminLogin({ onLogin }) {
               marginBottom: 8, fontWeight: 600,
               textTransform: 'uppercase', letterSpacing: 0.5
             }}>
-              Email
+              {t("Email")}
             </label>
             <input
               type="email"
@@ -115,7 +120,7 @@ export default function AdminLogin({ onLogin }) {
               marginBottom: 8, fontWeight: 600,
               textTransform: 'uppercase', letterSpacing: 0.5
             }}>
-              Contraseña
+              {t("Contraseña")}
             </label>
             <input
               type="password"
@@ -155,14 +160,14 @@ export default function AdminLogin({ onLogin }) {
               transition: 'all 0.2s'
             }}
           >
-            {loading ? 'Verificando...' : 'Entrar al Panel'}
+            {loading ? t('Verificando...') : t('Entrar al Panel')}
           </button>
         </div>
 
         <p style={{ color: 'var(--text-faint)', fontSize: 12, marginTop: 24 }}>
-          ¿Eres cliente?{' '}
+          {t("¿Eres cliente?")}{' '}
           <a href={`/${slug}/cliente`} style={{ color: 'var(--accent)' }}>
-            Agenda tu cita aquí
+            {t("Agenda tu cita aquí")}
           </a>
         </p>
       </div>

@@ -3,13 +3,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
 import { useTheme } from '../context/ThemeContext';
 import AdminSettings from './AdminSettings';
 
 export default function Header({ userType, navItems = [] }) {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const { appointments } = useApp();
+  const { appointments, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const pendingCount = appointments.filter(a => a.status === "pendiente").length;
@@ -111,8 +113,8 @@ export default function Header({ userType, navItems = [] }) {
           <button
             className="theme-toggle"
             onClick={toggleTheme}
-            title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-            aria-label="Cambiar tema"
+            title={theme === 'dark' ? t('Modo claro') : t('Modo oscuro')}
+            aria-label={t("Cambiar tema")}
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
@@ -121,7 +123,7 @@ export default function Header({ userType, navItems = [] }) {
           {userType === 'admin' ? (
             <button
               onClick={() => setSettingsOpen(true)}
-              title="Configuración de la barbería"
+              title={t("Configuración de la barbería")}
               style={{
                 fontSize: 14,
                 background: "var(--accent-bg)",
@@ -168,7 +170,7 @@ export default function Header({ userType, navItems = [] }) {
               onClick={async () => { await signOut(auth); navigate(home); }}
               style={{ padding: "6px 12px", fontSize: 12, color: "#f87171", borderColor: "#7f1d1d", minHeight: "auto" }}
             >
-              Salir
+              {t("Salir")}
             </button>
           ) : (
             <button
@@ -176,7 +178,7 @@ export default function Header({ userType, navItems = [] }) {
               onClick={() => navigate(home)}
               style={{ padding: "6px 12px", fontSize: 12, minHeight: "auto" }}
             >
-              Inicio
+              {t("Inicio")}
             </button>
           )}
         </div>

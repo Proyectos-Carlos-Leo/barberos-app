@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { ref, onValue, push, update, remove, set } from 'firebase/database';
 import { db } from '../firebase';
 import { generateId } from '../utils/helpers';
+import { useT } from '../utils/i18n';
 
 const AppContext = createContext(null);
 
@@ -20,6 +21,7 @@ export function AppProvider({ children, slug }) {
   const [services, setServices] = useState([]);
   const [productos, setProductos] = useState([]);
   const [barbershopConfig, setBarbershopConfig] = useState(null);
+  const t = useT(barbershopConfig?.idioma);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -170,29 +172,30 @@ export function AppProvider({ children, slug }) {
         folio += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       await set(nuevaRef, { ...appointment, folio, status: 'pendiente', createdAt: new Date().toISOString() });
-      addNotification({ type: 'success', message: `Cita agendada para ${appointment.client}` });
+      addNotification({ type: 'success', message: t('Cita agendada para {client}', { client: appointment.client }) });
       return { ...appointment, id: nuevaRef.key, folio, status: 'pendiente' };
     } catch (error) {
       console.error('Error al agendar:', error);
-      addNotification({ type: 'error', message: 'Error al agendar la cita' });
+      addNotification({ type: 'error', message: t('Error al agendar la cita') });
     }
-  }, [basePath, addNotification]);
+  }, [basePath, addNotification, t]);
 
   const updateAppointmentStatus = useCallback(async (id, status) => {
     if (!basePath) return;
     try {
       await update(ref(db, `${basePath}/citas/${id}`), { status, updatedAt: new Date().toISOString() });
-      addNotification({ type: 'info', message: `Cita actualizada a "${status}"` });
+      const statusLabels = { pendiente: 'Pendiente', confirmada: 'Confirmada ✓', completada: 'Completada', cancelada: 'Cancelada' };
+      addNotification({ type: 'info', message: t('Cita actualizada a "{status}"', { status: t(statusLabels[status] || status) }) });
     } catch (error) { console.error(error); }
-  }, [basePath, addNotification]);
+  }, [basePath, addNotification, t]);
 
   const deleteAppointment = useCallback(async (id) => {
     if (!basePath) return;
     try {
       await remove(ref(db, `${basePath}/citas/${id}`));
-      addNotification({ type: 'info', message: 'Cita eliminada' });
+      addNotification({ type: 'info', message: t('Cita eliminada') });
     } catch (error) { console.error(error); }
-  }, [basePath, addNotification]);
+  }, [basePath, addNotification, t]);
 
   // ========== BARBEROS CRUD ==========
   const addBarber = useCallback(async (barber) => {
@@ -201,9 +204,9 @@ export function AppProvider({ children, slug }) {
       const initials = barber.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
       const colorScheme = BARBER_COLORS[Math.floor(Math.random() * BARBER_COLORS.length)];
       await push(ref(db, `${basePath}/barberos`), { ...barber, avatar: initials, ...colorScheme, active: true });
-      addNotification({ type: 'success', message: `${barber.name} agregado al equipo` });
+      addNotification({ type: 'success', message: t('{name} agregado al equipo', { name: barber.name }) });
     } catch (error) { console.error(error); }
-  }, [basePath, addNotification]);
+  }, [basePath, addNotification, t]);
 
   const toggleBarber = useCallback(async (id) => {
     if (!basePath) return;
@@ -218,9 +221,9 @@ export function AppProvider({ children, slug }) {
     if (!basePath) return;
     try {
       await remove(ref(db, `${basePath}/barberos/${id}`));
-      addNotification({ type: 'info', message: 'Barbero eliminado' });
+      addNotification({ type: 'info', message: t('Barbero eliminado') });
     } catch (error) { console.error(error); }
-  }, [basePath, addNotification]);
+  }, [basePath, addNotification, t]);
 
   const value = {
     slug, basePath, barbershopConfig, suspended,

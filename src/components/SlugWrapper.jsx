@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { AppProvider, useApp } from '../context/AppContext';
 import NotFound from './NotFound';
+import { useT } from '../utils/i18n';
 
 function LoadingScreen() {
   return (
@@ -22,6 +23,7 @@ function LoadingScreen() {
 
 function SuspendedScreen() {
   const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   return (
     <div style={{
       minHeight: '100vh',
@@ -62,7 +64,7 @@ function SuspendedScreen() {
           textTransform: 'uppercase', letterSpacing: 1,
           marginBottom: 20, lineHeight: 1.1
         }}>
-          Servicio Temporalmente<br/>Suspendido
+          {t("Servicio Temporalmente")}<br/>{t("Suspendido")}
         </h1>
 
         {/* Línea roja decorativa */}
@@ -75,8 +77,8 @@ function SuspendedScreen() {
         <p style={{
           color: '#aaa', fontSize: 15, lineHeight: 1.8, marginBottom: 36
         }}>
-          Esta barbería no está disponible en este momento.<br/>
-          Si eres el administrador, comunícate con nosotros para reactivar tu cuenta.
+          {t("Esta barbería no está disponible en este momento.")}<br/>
+          {t("Si eres el administrador, comunícate con nosotros para reactivar tu cuenta.")}
         </p>
 
         {/* Card de contacto */}
@@ -89,7 +91,7 @@ function SuspendedScreen() {
             color: '#555', fontSize: 11, marginBottom: 14,
             textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700
           }}>
-            Contacto de Soporte
+            {t("Contacto de Soporte")}
           </p>
           <a
             href="mailto:soporte@barberos.app"

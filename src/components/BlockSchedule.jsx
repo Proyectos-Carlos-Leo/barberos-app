@@ -3,6 +3,7 @@ import { ref, push, remove } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { formatDate, getTodayStr } from '../utils/helpers';
+import { useT } from '../utils/i18n';
 
 // Generar horas desde config
 function generateHours(horario) {
@@ -29,6 +30,8 @@ function generateHours(horario) {
 
 export default function BlockSchedule({ barbers, blocks }) {
   const { basePath, barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
   const HOURS = generateHours(barbershopConfig?.horario);
 
   const [type, setType] = useState('hours');
@@ -46,9 +49,9 @@ export default function BlockSchedule({ barbers, blocks }) {
 
   const handleSave = async () => {
     setError('');
-    if (type === 'hours' && selectedHours.length === 0) { setError('Selecciona al menos un horario'); return; }
-    if (type === 'range' && !endDate) { setError('Selecciona la fecha de fin'); return; }
-    if (type === 'range' && endDate < date) { setError('La fecha de fin debe ser posterior a la de inicio'); return; }
+    if (type === 'hours' && selectedHours.length === 0) { setError(t('Selecciona al menos un horario')); return; }
+    if (type === 'range' && !endDate) { setError(t('Selecciona la fecha de fin')); return; }
+    if (type === 'range' && endDate < date) { setError(t('La fecha de fin debe ser posterior a la de inicio')); return; }
     setSaving(true);
     try {
       const blockData = {
@@ -66,21 +69,21 @@ export default function BlockSchedule({ barbers, blocks }) {
       setTimeout(() => setSuccess(false), 2500);
     } catch (err) {
       console.error(err);
-      setError('Error al guardar el bloqueo');
+      setError(t('Error al guardar el bloqueo'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este bloqueo?')) return;
+    if (!confirm(t('¿Eliminar este bloqueo?'))) return;
     try { await remove(ref(db, `${basePath}/bloqueos/${id}`)); }
     catch (err) { console.error(err); }
   };
 
   const getBarberName = (id) => {
-    if (id === 'all') return 'Toda la barbería';
-    return barbers.find(x => x.id === id)?.name || 'Desconocido';
+    if (id === 'all') return t('Toda la barbería');
+    return barbers.find(x => x.id === id)?.name || t('Desconocido');
   };
 
   const sortedBlocks = [...(blocks || [])].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
@@ -92,31 +95,31 @@ export default function BlockSchedule({ barbers, blocks }) {
         fontSize: 18, fontWeight: 700, letterSpacing: 1,
         textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
       }}>
-        🚫 Bloqueo de horarios
+        {t("🚫 Bloqueo de horarios")}
       </h3>
       <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 20 }}>
-        Bloquea horas, días completos o vacaciones
+        {t("Bloquea horas, días completos o vacaciones")}
       </p>
 
       {/* Tipo de bloqueo */}
       <div style={{ marginBottom: 18 }}>
         <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
-          Tipo de bloqueo
+          {t("Tipo de bloqueo")}
         </label>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
           {[
-            { val: 'hours', label: '⏰ Horas sueltas', desc: 'Comida, descanso' },
-            { val: 'fullDay', label: '📅 Día completo', desc: 'Día libre' },
-            { val: 'range', label: '🏖 Vacaciones', desc: 'Varios días' }
-          ].map(t => (
-            <div key={t.val} onClick={() => setType(t.val)} style={{
+            { val: 'hours', label: t('⏰ Horas sueltas'), desc: t('Comida, descanso') },
+            { val: 'fullDay', label: t('📅 Día completo'), desc: t('Día libre') },
+            { val: 'range', label: t('🏖 Vacaciones'), desc: t('Varios días') }
+          ].map(opt => (
+            <div key={opt.val} onClick={() => setType(opt.val)} style={{
               padding: 12, borderRadius: 10,
-              border: `2px solid ${type === t.val ? 'var(--accent)' : 'var(--border)'}`,
-              background: type === t.val ? 'var(--accent-bg)' : 'var(--bg-elevated-2)',
+              border: `2px solid ${type === opt.val ? 'var(--accent)' : 'var(--border)'}`,
+              background: type === opt.val ? 'var(--accent-bg)' : 'var(--bg-elevated-2)',
               cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
             }}>
-              <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{t.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.desc}</p>
+              <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{opt.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{opt.desc}</p>
             </div>
           ))}
         </div>
@@ -124,9 +127,9 @@ export default function BlockSchedule({ barbers, blocks }) {
 
       {/* Barbero */}
       <div style={{ marginBottom: 14 }}>
-        <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>Barbero</label>
+        <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>{t("Barbero")}</label>
         <select value={barberId} onChange={e => setBarberId(e.target.value)}>
-          <option value="all">🏪 Toda la barbería</option>
+          <option value="all">{t("🏪 Toda la barbería")}</option>
           {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
@@ -135,13 +138,13 @@ export default function BlockSchedule({ barbers, blocks }) {
       <div style={{ display: 'grid', gridTemplateColumns: type === 'range' ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 14 }}>
         <div>
           <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>
-            {type === 'range' ? 'Desde' : 'Fecha'}
+            {type === 'range' ? t('Desde') : t('Fecha')}
           </label>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
         {type === 'range' && (
           <div>
-            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>Hasta</label>
+            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>{t("Hasta")}</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={date} />
           </div>
         )}
@@ -152,11 +155,11 @@ export default function BlockSchedule({ barbers, blocks }) {
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase" }}>
-              Horarios a bloquear ({selectedHours.length})
+              {t("Horarios a bloquear")} ({selectedHours.length})
             </label>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setSelectedHours(HOURS)} style={{ background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--accent)', fontSize: 11, padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>Todos</button>
-              <button onClick={() => setSelectedHours([])} style={{ background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-tertiary)', fontSize: 11, padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>Limpiar</button>
+              <button onClick={() => setSelectedHours(HOURS)} style={{ background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--accent)', fontSize: 11, padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>{t("Todos")}</button>
+              <button onClick={() => setSelectedHours([])} style={{ background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-tertiary)', fontSize: 11, padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>{t("Limpiar")}</button>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -181,15 +184,15 @@ export default function BlockSchedule({ barbers, blocks }) {
 
       {/* Razón */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>Razón (opcional)</label>
-        <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Ej. Vacaciones, comida, cita médica..." />
+        <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 6, fontWeight: 600, textTransform: "uppercase" }}>{t("Razón (opcional)")}</label>
+        <input value={reason} onChange={e => setReason(e.target.value)} placeholder={t("Ej. Vacaciones, comida, cita médica...")} />
       </div>
 
       {error && <p style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 10 }}>⚠ {error}</p>}
-      {success && <p style={{ color: 'var(--success)', fontSize: 12, marginBottom: 10 }}>✓ Bloqueo guardado</p>}
+      {success && <p style={{ color: 'var(--success)', fontSize: 12, marginBottom: 10 }}>{t("✓ Bloqueo guardado")}</p>}
 
       <button className="btn-gold" onClick={handleSave} disabled={saving} style={{ width: '100%' }}>
-        {saving ? 'Guardando...' : '🚫 Aplicar bloqueo'}
+        {saving ? t('Guardando...') : t('🚫 Aplicar bloqueo')}
       </button>
 
       {/* Lista de bloqueos activos */}
@@ -200,11 +203,11 @@ export default function BlockSchedule({ barbers, blocks }) {
             fontSize: 15, fontWeight: 700, letterSpacing: 1,
             textTransform: 'uppercase', marginBottom: 12, color: 'var(--text-secondary)'
           }}>
-            Bloqueos activos ({sortedBlocks.length})
+            {t("Bloqueos activos")} ({sortedBlocks.length})
           </h4>
           <div style={{ display: 'grid', gap: 8 }}>
             {sortedBlocks.map(block => {
-              const typeLabel = { hours: '⏰ Horas', fullDay: '📅 Día completo', range: '🏖 Vacaciones' }[block.type] || '🚫';
+              const typeLabel = { hours: t('⏰ Horas'), fullDay: t('📅 Día completo'), range: t('🏖 Vacaciones') }[block.type] || '🚫';
               return (
                 <div key={block.id} style={{
                   background: 'var(--bg-elevated-2)', border: '1px solid var(--border)',
@@ -216,12 +219,12 @@ export default function BlockSchedule({ barbers, blocks }) {
                     <strong>{getBarberName(block.barberId)}</strong>
                     <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>
                       {block.type === 'range'
-                        ? `${formatDate(block.date)} → ${formatDate(block.endDate)}`
-                        : formatDate(block.date)}
+                        ? `${formatDate(block.date, idioma)} → ${formatDate(block.endDate, idioma)}`
+                        : formatDate(block.date, idioma)}
                     </span>
                     {block.type === 'hours' && block.hours && (
                       <span style={{ color: 'var(--text-muted)', marginLeft: 8, fontSize: 11 }}>
-                        ({block.hours.length} horarios)
+                        ({block.hours.length} {t("horarios")})
                       </span>
                     )}
                     {block.reason && (
@@ -238,7 +241,7 @@ export default function BlockSchedule({ barbers, blocks }) {
                       padding: '4px 10px', fontSize: 11, cursor: 'pointer'
                     }}
                   >
-                    Eliminar
+                    {t("Eliminar")}
                   </button>
                 </div>
               );

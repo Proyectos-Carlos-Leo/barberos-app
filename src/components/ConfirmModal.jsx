@@ -1,4 +1,9 @@
-export default function ConfirmModal({ open, title, message, onConfirm, onCancel, confirmText = "Eliminar", danger = true }) {
+import { useApp } from '../context/AppContext';
+import { useT } from '../utils/i18n';
+
+export default function ConfirmModal({ open, title, message, onConfirm, onCancel, confirmText, danger = true }) {
+  const { barbershopConfig } = useApp();
+  const t = useT(barbershopConfig?.idioma);
   if (!open) return null;
 
   return (
@@ -76,7 +81,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
               flex: 1
             }}
           >
-            Cancelar
+            {t("Cancelar")}
           </button>
           <button
             onClick={onConfirm}
@@ -95,7 +100,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
               flex: 1
             }}
           >
-            {confirmText}
+            {confirmText || t("Eliminar")}
           </button>
         </div>
       </div>
