@@ -2625,15 +2625,30 @@ function ServicesView({ slug }) {
 
 // ==================== CALENDAR MODAL ====================
 function CalendarModal({ appointments, barbers, date, setDate, onClose, barbershopConfig, onStatusChange, t, idioma }) {
+  const [barberFilter, setBarberFilter] = useState('all');
+
   const horario = barbershopConfig?.horario || {};
   const startHour = parseInt((horario.hora_inicio || '08:00').split(':')[0]);
   const endHour   = parseInt((horario.hora_fin   || '21:00').split(':')[0]);
   const SLOT_HEIGHT = 64;
   const HOURS = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
 
-  const dayAppts = appointments
+  const allDayAppts = appointments
     .filter(a => a.date === date && a.status !== 'cancelada')
     .sort((a, b) => a.time.localeCompare(b.time));
+
+  // Columnas: una por barbero (los que tienen citas ese día), o solo el filtrado
+  const columns = barberFilter !== 'all'
+    ? barbers.filter(b => b.id === barberFilter)
+    : barbers.filter(b => allDayAppts.some(a => a.barberId === b.id));
+
+  // Citas sin barbero asignado (edge case) van en columna aparte
+  const unassignedAppts = allDayAppts.filter(a => !barbers.some(b => b.id === a.barberId));
+  const showUnassignedCol = barberFilter === 'all' && unassignedAppts.length > 0;
+
+  const dayAppts = barberFilter !== 'all'
+    ? allDayAppts.filter(a => a.barberId === barberFilter)
+    : allDayAppts;
 
   const moveDay = (delta) => {
     const d = new Date(date + 'T00:00:00');
@@ -2687,6 +2702,84 @@ Folio: ${appt.folio || '—'}`);
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startT}/${endT}&details=${details}&location=${location}`;
   };
 
+  // Render de una columna (apoya un barbero específico, o null = todas las citas en una sola)
+  const renderColumn = (barberId, isLast) => {
+    const colAppts = barberId === null
+      ? dayAppts
+      : (barberId === 'unassigned' ? unassignedAppts : dayAppts.filter(a => a.barberId === barberId));
+
+    return (
+      <div key={barberId ?? 'single'} style={{
+        flex: 1, position: 'relative', minWidth: 140,
+        borderLeft: '1px solid var(--border)',
+        borderRight: isLast ? 'none' : 'none'
+      }}>
+        {/* Hour rows */}
+        {HOURS.map(h => (
+          <div key={h} style={{ height: SLOT_HEIGHT, borderTop: '1px solid var(--border)', background: h % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.008)' }} />
+        ))}
+        {/* Half-hour marks */}
+        {HOURS.map(h => (
+          <div key={`h${h}`} style={{ position: 'absolute', top: ((h - startHour) + 0.5) * SLOT_HEIGHT, left: 0, right: 0, height: 1, background: 'var(--border)', opacity: 0.4 }} />
+        ))}
+        {/* Current time line */}
+        {timeLineTop !== null && (
+          <div style={{ position: 'absolute', left: 0, right: 0, top: timeLineTop, zIndex: 10, display: 'flex', alignItems: 'center' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', flexShrink: 0, marginLeft: -4 }} />
+            <div style={{ flex: 1, height: 2, background: '#ef4444' }} />
+          </div>
+        )}
+        {/* Appointment blocks */}
+        {colAppts.map((appt, idx) => {
+          const barber  = barbers.find(b => b.id === appt.barberId);
+          const top     = getApptTop(appt.time);
+          const height  = getApptHeight(appt.service?.duration || 30) - 4;
+          const colors  = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
+          const overlap = colAppts.filter((a, i) => i < idx && Math.abs(getApptTop(a.time) - top) < getApptHeight(a.service?.duration || 30));
+          const offsetX = overlap.length * 8;
+
+          return (
+            <div key={appt.id} style={{
+              position: 'absolute', top: top + 2, left: 4 + offsetX, right: 4,
+              height, background: colors.bg,
+              border: `1.5px solid ${colors.border}`, borderLeft: `4px solid ${colors.border}`,
+              borderRadius: 8, padding: '3px 6px', overflow: 'hidden', zIndex: 5 + idx,
+              transition: 'box-shadow 0.15s', display: 'flex', flexDirection: 'column', justifyContent: 'center'
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${colors.border}55`}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3 }}>
+                <p style={{ fontWeight: 700, fontSize: 11, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {appt.time} · {appt.client}
+                </p>
+                <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                  {appt.status === 'pendiente' && (
+                    <button title={t('Confirmar')} onClick={() => onStatusChange(appt.id, 'confirmada')} style={{ background: '#4ade8018', border: '1px solid #4ade80', color: '#4ade80', borderRadius: 4, padding: '1px 4px', fontSize: 8, fontWeight: 800, cursor: 'pointer' }}>✓</button>
+                  )}
+                  {(appt.status === 'pendiente' || appt.status === 'confirmada') && (
+                    <button title={t('Completada')} onClick={() => onStatusChange(appt.id, 'completada')} style={{ background: '#36B1DF18', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 4, padding: '1px 4px', fontSize: 8, fontWeight: 800, cursor: 'pointer' }}>✂</button>
+                  )}
+                  <a href={gcalLink(appt)} target="_blank" rel="noopener noreferrer" title="Agregar a Google Calendar" style={{ background: '#4285F418', border: '1px solid #4285F4', color: '#4285F4', borderRadius: 4, padding: '1px 4px', fontSize: 8, fontWeight: 800, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>G</a>
+                </div>
+              </div>
+              {height > 34 && (
+                <p style={{ fontSize: 9, color: 'var(--text-tertiary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {appt.service?.name || '—'}{(barberId === null && barber) ? ` · ${barber.name}` : ''}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const useColumns = barberFilter === 'all' && columns.length > 1;
+  const modalMaxWidth = useColumns
+    ? Math.min(420 + (columns.length + (showUnassignedCol ? 1 : 0)) * 170, 1100)
+    : 680;
+
   return (
     <div
       onClick={e => e.target === e.currentTarget && onClose()}
@@ -2699,8 +2792,9 @@ Folio: ${appt.folio || '—'}`);
     >
       <div className="fade-in" style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
-        borderRadius: 16, width: '100%', maxWidth: 680, marginBottom: 20,
-        overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.55)'
+        borderRadius: 16, width: '100%', maxWidth: modalMaxWidth, marginBottom: 20,
+        overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
+        transition: 'max-width 0.2s'
       }}>
 
         {/* ── Header ── */}
@@ -2725,12 +2819,50 @@ Folio: ${appt.folio || '—'}`);
             </span>
           </p>
 
-          {/* Close */}
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+          {/* Barber filter + close */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select
+              value={barberFilter}
+              onChange={e => setBarberFilter(e.target.value)}
+              style={{
+                background: 'var(--bg-input)', border: '1px solid var(--border-strong)',
+                color: 'var(--text-secondary)', borderRadius: 7, padding: '5px 8px',
+                fontSize: 12, fontFamily: "'Barlow', sans-serif", cursor: 'pointer'
+              }}
+            >
+              <option value="all">👥 {t('Todos')}</option>
+              {barbers.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+          </div>
         </div>
 
+        {/* ── Column headers (solo si hay varias columnas) ── */}
+        {useColumns && (
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-elevated-2)' }}>
+            <div style={{ width: 50, flexShrink: 0 }} />
+            {columns.map(b => (
+              <div key={b.id} style={{
+                flex: 1, minWidth: 140, padding: '8px 10px', textAlign: 'center',
+                borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: 6
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: b.color || 'var(--accent)', flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span>
+              </div>
+            ))}
+            {showUnassignedCol && (
+              <div style={{ flex: 1, minWidth: 140, padding: '8px 10px', textAlign: 'center', borderLeft: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>{t('Sin asignar')}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Calendar grid ── */}
-        <div style={{ display: 'flex', overflowY: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
+        <div style={{ display: 'flex', overflowY: 'auto', overflowX: useColumns ? 'auto' : 'hidden', maxHeight: 'calc(100vh - 240px)' }}>
 
           {/* Time gutter */}
           <div style={{ width: 50, flexShrink: 0 }}>
@@ -2746,77 +2878,23 @@ Folio: ${appt.folio || '—'}`);
             ))}
           </div>
 
-          {/* Events area */}
-          <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid var(--border)' }}>
-            {/* Hour rows */}
-            {HOURS.map(h => (
-              <div key={h} style={{ height: SLOT_HEIGHT, borderTop: '1px solid var(--border)', background: h % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.008)' }} />
-            ))}
+          {/* Columnas */}
+          {useColumns ? (
+            <>
+              {columns.map((b, i) => renderColumn(b.id, i === columns.length - 1 && !showUnassignedCol))}
+              {showUnassignedCol && renderColumn('unassigned', true)}
+            </>
+          ) : (
+            renderColumn(null, true)
+          )}
 
-            {/* Half-hour marks */}
-            {HOURS.map(h => (
-              <div key={`h${h}`} style={{ position: 'absolute', top: ((h - startHour) + 0.5) * SLOT_HEIGHT, left: 0, right: 0, height: 1, background: 'var(--border)', opacity: 0.4 }} />
-            ))}
-
-            {/* Current time line */}
-            {timeLineTop !== null && (
-              <div style={{ position: 'absolute', left: 0, right: 0, top: timeLineTop, zIndex: 10, display: 'flex', alignItems: 'center' }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', flexShrink: 0, marginLeft: -5 }} />
-                <div style={{ flex: 1, height: 2, background: '#ef4444' }} />
-              </div>
-            )}
-
-            {/* Appointment blocks */}
-            {dayAppts.map((appt, idx) => {
-              const barber  = barbers.find(b => b.id === appt.barberId);
-              const top     = getApptTop(appt.time);
-              const height  = getApptHeight(appt.service?.duration || 30) - 4;
-              const colors  = STATUS_COLORS[appt.status] || STATUS_COLORS.pendiente;
-              const overlap = dayAppts.filter((a, i) => i < idx && Math.abs(getApptTop(a.time) - top) < getApptHeight(a.service?.duration || 30));
-              const offsetX = overlap.length * 6;
-
-              return (
-                <div key={appt.id} style={{
-                  position: 'absolute', top: top + 2, left: 6 + offsetX, right: 6,
-                  height, background: colors.bg,
-                  border: `1.5px solid ${colors.border}`, borderLeft: `4px solid ${colors.border}`,
-                  borderRadius: 8, padding: '4px 8px', overflow: 'hidden', zIndex: 5 + idx,
-                  transition: 'box-shadow 0.15s', display: 'flex', flexDirection: 'column', justifyContent: 'center'
-                }}
-                onMouseEnter={e => e.currentTarget.style.boxShadow = `0 2px 12px ${colors.border}55`}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                    <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {appt.time} · {appt.client}
-                    </p>
-                    <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
-                      {appt.status === 'pendiente' && (
-                        <button title={t('Confirmar')} onClick={() => onStatusChange(appt.id, 'confirmada')} style={{ background: '#4ade8018', border: '1px solid #4ade80', color: '#4ade80', borderRadius: 4, padding: '1px 5px', fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>✓</button>
-                      )}
-                      {(appt.status === 'pendiente' || appt.status === 'confirmada') && (
-                        <button title={t('Completada')} onClick={() => onStatusChange(appt.id, 'completada')} style={{ background: '#36B1DF18', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 4, padding: '1px 5px', fontSize: 9, fontWeight: 800, cursor: 'pointer' }}>✂</button>
-                      )}
-                      <a href={gcalLink(appt)} target="_blank" rel="noopener noreferrer" title="Agregar a Google Calendar" style={{ background: '#4285F418', border: '1px solid #4285F4', color: '#4285F4', borderRadius: 4, padding: '1px 5px', fontSize: 9, fontWeight: 800, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>G</a>
-                    </div>
-                  </div>
-                  {height > 34 && (
-                    <p style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {appt.service?.name || '—'}{barber ? ` · ${barber.name}` : ''}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Empty state */}
-            {dayAppts.length === 0 && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-                <p style={{ fontSize: 32, marginBottom: 6 }}>📭</p>
-                <p style={{ fontSize: 13, fontWeight: 600 }}>{t('Sin citas este día')}</p>
-              </div>
-            )}
-          </div>
+          {/* Empty state global */}
+          {dayAppts.length === 0 && (
+            <div style={{ position: 'absolute', left: 50, right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
+              <p style={{ fontSize: 32, marginBottom: 6 }}>📭</p>
+              <p style={{ fontSize: 13, fontWeight: 600 }}>{t('Sin citas este día')}</p>
+            </div>
+          )}
         </div>
 
         {/* ── Footer legend ── */}
