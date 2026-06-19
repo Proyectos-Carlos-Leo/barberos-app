@@ -449,7 +449,7 @@ exports.syncAppointmentToGoogleCalendar = onValueCreated(
       const timeZone    = config.timezone || "America/Monterrey";
       const pad         = n => String(n).padStart(2, "0");
       const [h, m]      = appointment.time.split(":").map(Number);
-      const startDateTime = `${appointment.date}T${pad(h)}${pad(m)}:00`;
+      const startDateTime = `${appointment.date}T${pad(h)}:${pad(m)}:00`;
       const endDt         = new Date(`${appointment.date}T${appointment.time}`);
       endDt.setMinutes(endDt.getMinutes() + duration);
       const endDateTime   = `${appointment.date}T${pad(endDt.getHours())}:${pad(endDt.getMinutes())}:00`;
@@ -502,7 +502,7 @@ exports.syncAppointmentToGoogleCalendar = onValueCreated(
       return null;
 
     } catch (err) {
-      console.error(`[${slug}] Error Google Calendar:`, err.message);
+      console.error(`[${slug}] Error Google Calendar:`, err.message, err.response?.data ? JSON.stringify(err.response.data) : '');
       return null;
     }
   }
