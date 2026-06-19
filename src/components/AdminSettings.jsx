@@ -22,7 +22,7 @@ export default function AdminSettings({ open, onClose }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const isCalConnected = !!(barbershopConfig?.google_oauth?.access_token);
+  const isCalConnected = !!(barbershopConfig?.google_calendar_connected);
 
   useEffect(() => {
     if (barbershopConfig?.theme_color) {
@@ -54,7 +54,7 @@ export default function AdminSettings({ open, onClose }) {
     if (!confirm(t('¿Desconectar Google Calendar? Las citas nuevas ya no se sincronizarán automáticamente.'))) return;
     setDisconnecting(true);
     try {
-      await update(ref(db, `barberias/${slug}/config`), { google_oauth: null });
+      await update(ref(db, `barberias/${slug}/config`), { google_calendar_connected: false });
     } catch (err) {
       console.error(err);
       alert(t('Error al desconectar'));

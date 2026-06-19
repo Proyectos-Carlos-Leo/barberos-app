@@ -348,7 +348,7 @@ const GOOGLE_CLIENT_ID     = "258434171702-mi7qcvggike2c9bqi7mj4bev19m209f5.apps
 
 // ── Helper: obtener cliente OAuth con tokens del dueño ──────────
 async function getOAuthClientForSlug(slug) {
-  const snap = await admin.database().ref(`barberias/${slug}/config/google_oauth`).once("value");
+  const snap = await admin.database().ref(`barberias/${slug}/private/google_oauth`).once("value");
   const tokens = snap.val();
   if (!tokens?.access_token) return null;
 
@@ -362,7 +362,7 @@ async function getOAuthClientForSlug(slug) {
   // Auto-refresh si el token está próximo a expirar
   oAuth2Client.on("tokens", async (newTokens) => {
     const merged = { ...tokens, ...newTokens };
-    await admin.database().ref(`barberias/${slug}/config/google_oauth`).set(merged);
+    await admin.database().ref(`barberias/${slug}/private/google_oauth`).set(merged);
     console.log(`[${slug}] Token de Google Calendar renovado.`);
   });
 
@@ -380,6 +380,17 @@ exports.exchangeGoogleOAuthCode = onRequest(
       return res.status(400).json({ error: "Faltan parámetros: code, slug, redirect_uri" });
     }
 
+    // Validar formato de slug (solo minúsculas, números y guiones)
+    if (!/^[a-z0-9-]{1,50}$/.test(slug)) {
+      return res.status(400).json({ error: "Slug inválido" });
+    }
+
+    // Validar que la barbería exista
+    const slugSnap = await admin.database().ref(`barberias/${slug}/config`).once("value");
+    if (!slugSnap.exists()) {
+      return res.status(404).json({ error: "Barbería no encontrada" });
+    }
+
     try {
       const oAuth2Client = new google.auth.OAuth2(
         GOOGLE_CLIENT_ID,
@@ -390,7 +401,7 @@ exports.exchangeGoogleOAuthCode = onRequest(
       const { tokens } = await oAuth2Client.getToken(code);
 
       // Guardar tokens en Firebase bajo la barbería
-      await admin.database().ref(`barberias/${slug}/config/google_oauth`).set({
+      await admin.database().ref(`barberias/${slug}/private/google_oauth`).set({
         access_token:  tokens.access_token,
         refresh_token: tokens.refresh_token || null,
         expiry_date:   tokens.expiry_date   || null,
@@ -398,6 +409,8 @@ exports.exchangeGoogleOAuthCode = onRequest(
         scope:         tokens.scope         || "",
         connected_at:  new Date().toISOString(),
       });
+      // Bandera pública (sin tokens) para que el panel sepa que está conectado
+      await admin.database().ref(`barberias/${slug}/config/google_calendar_connected`).set(true);
 
       console.log(`[${slug}] Google Calendar conectado correctamente.`);
       return res.json({ success: true });
@@ -425,6 +438,12 @@ exports.syncAppointmentToGoogleCalendar = onValueCreated(
     try {
       const configSnap = await admin.database().ref(`barberias/${slug}/config`).once("value");
       const config     = configSnap.val() || {};
+
+      // Si el dueño desconectó Google Calendar, no sincronizar
+      if (config.google_calendar_connected === false) {
+        console.log(`[${slug}] Google Calendar desconectado, omitiendo sync.`);
+        return null;
+      }
 
       // Obtener cliente OAuth con los tokens del dueño
       const auth = await getOAuthClientForSlug(slug);

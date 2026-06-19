@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { ref, onValue, push, update, remove, set } from 'firebase/database';
 import { db } from '../firebase';
-import { generateId } from '../utils/helpers';
 import { useT } from '../utils/i18n';
 
 const AppContext = createContext(null);
@@ -150,8 +149,9 @@ export function AppProvider({ children, slug }) {
   }, [basePath, notFound]);
 
   // ========== NOTIFICACIONES ==========
+  const notifIdRef = useRef(0);
   const addNotification = useCallback((notification) => {
-    const id = generateId();
+    const id = `notif_${++notifIdRef.current}`;
     setNotifications(prev => [...prev, { ...notification, id }]);
     setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 5000);
   }, []);

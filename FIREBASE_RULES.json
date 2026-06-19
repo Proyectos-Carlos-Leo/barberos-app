@@ -1,22 +1,67 @@
 {
   "rules": {
+    ".read": false,
+    ".write": false,
+
     "barberias": {
       "$slug": {
+
         "config": {
           ".read": true,
-          ".write": "auth != null && data.child('email_admin').val() == auth.token.email"
+          ".write": "auth != null && (!data.exists() ? newData.child('email_admin').val() == auth.token.email : data.child('email_admin').val() == auth.token.email)",
+          "google_oauth": {
+            ".read": false,
+            ".write": false
+          }
         },
-        "citas": {
-          ".read": true,
-          ".write": true
+
+        "private": {
+          ".read": false,
+          ".write": false
         },
+
         "barberos": {
           ".read": true,
           ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
         },
+
+        "servicios": {
+          ".read": true,
+          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+        },
+
+        "productos": {
+          ".read": true,
+          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+        },
+
         "bloqueos": {
           ".read": true,
           ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+        },
+
+        "citas": {
+          ".read": true,
+          "$citaId": {
+            ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists()) || (data.exists() && newData.child('status').val() == 'cancelada')",
+            ".validate": "newData.hasChildren(['client', 'phone', 'date', 'time']) && newData.child('client').isString() && newData.child('client').val().length > 0 && newData.child('client').val().length <= 100 && newData.child('phone').isString() && newData.child('phone').val().length >= 7 && newData.child('phone').val().length <= 20 && newData.child('date').isString() && newData.child('time').isString()",
+            "client":  { ".validate": "newData.isString() && newData.val().length <= 100" },
+            "phone":   { ".validate": "newData.isString() && newData.val().length <= 20" },
+            "email":   { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "notes":   { ".validate": "newData.isString() && newData.val().length <= 500" },
+            "$other":  { ".validate": true }
+          }
+        },
+
+        "canjes": {
+          ".read": true,
+          "$canjeId": {
+            ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists())",
+            ".validate": "newData.hasChildren(['phone', 'status']) && newData.child('phone').isString() && newData.child('phone').val().length >= 7 && newData.child('phone').val().length <= 20",
+            "phone":  { ".validate": "newData.isString() && newData.val().length <= 20" },
+            "client": { ".validate": "newData.isString() && newData.val().length <= 100" },
+            "$other": { ".validate": true }
+          }
         }
       }
     }
