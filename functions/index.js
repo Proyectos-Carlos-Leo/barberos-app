@@ -446,13 +446,24 @@ exports.syncAppointmentToGoogleCalendar = onValueCreated(
       const duration = service.duration || 30;
 
       // Fechas
-      const timeZone    = config.timezone || "America/Monterrey";
-      const pad         = n => String(n).padStart(2, "0");
-      const [h, m]      = appointment.time.split(":").map(Number);
+      const timeZone      = config.timezone || "America/Monterrey";
+      const pad           = n => String(n).padStart(2, "0");
+      const [h, m]        = appointment.time.split(":").map(Number);
+      // Calculamos el end con aritmética de minutos para evitar problemas de zona horaria
+      const startMins     = h * 60 + m;
+      const endMins       = startMins + duration;
+      const endH          = Math.floor(endMins / 60) % 24;
+      const endM          = endMins % 60;
+      // Si la cita cruza medianoche, sumamos un día a la fecha de fin
+      const dayOverflow   = Math.floor(endMins / (24 * 60));
+      let endDateStr      = appointment.date;
+      if (dayOverflow > 0) {
+        const d = new Date(appointment.date + "T00:00:00Z");
+        d.setUTCDate(d.getUTCDate() + dayOverflow);
+        endDateStr = d.toISOString().split("T")[0];
+      }
       const startDateTime = `${appointment.date}T${pad(h)}:${pad(m)}:00`;
-      const endDt         = new Date(`${appointment.date}T${appointment.time}`);
-      endDt.setMinutes(endDt.getMinutes() + duration);
-      const endDateTime   = `${appointment.date}T${pad(endDt.getHours())}:${pad(endDt.getMinutes())}:00`;
+      const endDateTime   = `${endDateStr}T${pad(endH)}:${pad(endM)}:00`;
 
       const statusIcon = { pendiente: "⏳", confirmada: "✅", completada: "✂️" }[appointment.status] || "📅";
 
