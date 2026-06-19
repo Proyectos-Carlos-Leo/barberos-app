@@ -21,9 +21,8 @@ export default function AdminSettings({ open, onClose }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [calendarId, setCalendarId] = useState(barbershopConfig?.google_calendar_id || '');
-  const [savingCal, setSavingCal] = useState(false);
-  const [savedCal, setSavedCal] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const isCalConnected = !!(barbershopConfig?.google_oauth?.access_token);
 
   useEffect(() => {
     if (barbershopConfig?.theme_color) {
@@ -34,21 +33,33 @@ export default function AdminSettings({ open, onClose }) {
     }
   }, [barbershopConfig]);
 
-  const handleSaveCalendar = async () => {
-    if (!slug) return;
-    setSavingCal(true);
+  const CLIENT_ID = '258434171702-mi7qcvggike2c9bqi7mj4bev19m209f5.apps.googleusercontent.com';
+  const REDIRECT_URI = `${window.location.origin}/oauth/callback`;
+  const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+
+  const handleConnectGoogle = () => {
+    const params = new URLSearchParams({
+      client_id:     CLIENT_ID,
+      redirect_uri:  REDIRECT_URI,
+      response_type: 'code',
+      scope:         SCOPES,
+      access_type:   'offline',
+      prompt:        'consent',
+      state:         slug,
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  };
+
+  const handleDisconnectGoogle = async () => {
+    if (!confirm(t('¿Desconectar Google Calendar? Las citas nuevas ya no se sincronizarán automáticamente.'))) return;
+    setDisconnecting(true);
     try {
-      const { update: fbUpdate } = await import('firebase/database');
-      const { ref: fbRef } = await import('firebase/database');
-      const { db } = await import('../firebase');
-      await fbUpdate(fbRef(db, `barberias/${slug}/config`), { google_calendar_id: calendarId.trim() || null });
-      setSavedCal(true);
-      setTimeout(() => setSavedCal(false), 3000);
+      await update(ref(db, `barberias/${slug}/config`), { google_oauth: null });
     } catch (err) {
       console.error(err);
-      alert(t('Error al guardar'));
+      alert(t('Error al desconectar'));
     } finally {
-      setSavingCal(false);
+      setDisconnecting(false);
     }
   };
 
@@ -211,31 +222,66 @@ export default function AdminSettings({ open, onClose }) {
           </div>
         )}
 
-        {/* Google Calendar */}
+        {/* Google Calendar OAuth */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 22, marginBottom: 22 }}>
-          <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-            📅 Google Calendar ID
-          </label>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10, lineHeight: 1.5 }}>
-            {t("Conecta tu Google Calendar para que las citas se agreguen automáticamente.")}
-            {' '}<a href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>{t("¿Cómo obtener mi Calendar ID?")}</a>
-          </p>
-          <input
-            value={calendarId}
-            onChange={e => setCalendarId(e.target.value)}
-            placeholder="primary   ó   xxxxx@group.calendar.google.com"
-            style={{ marginBottom: 10 }}
-          />
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button className="btn-gold" onClick={handleSaveCalendar} disabled={savingCal} style={{ fontSize: 13 }}>
-              {savingCal ? t('Guardando...') : '💾 ' + t('Guardar Calendar ID')}
-            </button>
-            {savedCal && <p style={{ color: "#4ade80", fontSize: 12, fontWeight: 600 }}>✓ {t('Guardado')}</p>}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            {/* Google icon */}
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <label style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Google Calendar
+            </label>
+            {isCalConnected && (
+              <span style={{ background: "rgba(74,222,128,0.15)", border: "1px solid #4ade80", color: "#4ade80", padding: "2px 10px", borderRadius: 10, fontSize: 10, fontWeight: 800 }}>
+                ✓ {t("Conectado")}
+              </span>
+            )}
           </div>
-          {calendarId && (
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
-              ✓ {t('Configurado:')} <code style={{ background: "var(--bg-input)", padding: "1px 5px", borderRadius: 4, fontSize: 10 }}>{calendarId}</code>
-            </p>
+
+          {isCalConnected ? (
+            <div style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, padding: "14px 16px" }}>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
+                ✅ {t("Las nuevas citas se agregan automáticamente a tu Google Calendar.")}
+              </p>
+              <button
+                onClick={handleDisconnectGoogle}
+                disabled={disconnecting}
+                style={{ background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Barlow', sans-serif" }}
+              >
+                {disconnecting ? t("Desconectando...") : "🔌 " + t("Desconectar")}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.6 }}>
+                {t("Conecta tu cuenta de Google para que cada cita nueva aparezca automáticamente en tu calendario.")}
+              </p>
+              <button
+                onClick={handleConnectGoogle}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  background: "#fff", border: "1px solid #ddd",
+                  color: "#333", borderRadius: 8, padding: "10px 18px",
+                  fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  fontFamily: "'Barlow', sans-serif", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+                  transition: "box-shadow 0.2s"
+                }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.15)"}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                {t("Conectar con Google Calendar")}
+              </button>
+            </div>
           )}
         </div>
 

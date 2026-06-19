@@ -7,12 +7,14 @@ import NotFound from './components/NotFound';
 import SuperAdminPanel from './components/SuperAdminPanel';
 import CheckAppointment from './components/CheckAppointment';
 import MyStamps from './components/MyStamps';
+import OAuthCallback from './components/OAuthCallback';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginScreen />} />
       <Route path="/founders" element={<SuperAdminPanel />} />
+      <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/:slug" element={<SlugWrapper><LoginScreen mode="client" /></SlugWrapper>} />
       <Route path="/:slug/cliente" element={<SlugWrapper><ClientView /></SlugWrapper>} />
       <Route path="/:slug/mi-cita" element={<SlugWrapper><CheckAppointment /></SlugWrapper>} />

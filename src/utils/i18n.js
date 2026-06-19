@@ -670,6 +670,13 @@ const en = {
   "¿Cómo obtener mi Calendar ID?": "How to get my Calendar ID?",
   "Guardar Calendar ID": "Save Calendar ID",
   "Configurado:": "Configured:",
+  "Conectado": "Connected",
+  "Las nuevas citas se agregan automáticamente a tu Google Calendar.": "New appointments are automatically added to your Google Calendar.",
+  "Desconectando...": "Disconnecting...",
+  "Desconectar": "Disconnect",
+  "¿Desconectar Google Calendar? Las citas nuevas ya no se sincronizarán automáticamente.": "Disconnect Google Calendar? New appointments will no longer sync automatically.",
+  "Conecta tu cuenta de Google para que cada cita nueva aparezca automáticamente en tu calendario.": "Connect your Google account so each new appointment appears automatically in your calendar.",
+  "Conectar con Google Calendar": "Connect with Google Calendar",
 
   // ===== AppContext notifications =====
   "Cita agendada para {client}": "Appointment booked for {client}",
