@@ -263,13 +263,7 @@ function BookingSummaryBar({ barber, service, date, time, totalProductos, idioma
       {/* Empuja el contenido para que la barra no tape los botones */}
       <div style={{ height: 74 }} aria-hidden="true" />
 
-      <div className="fade-in" style={{
-        position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 90,
-        background: "var(--bg-elevated)",
-        borderTop: "1px solid var(--border-strong)",
-        boxShadow: "0 -8px 30px rgba(0,0,0,0.35)",
-        padding: "10px 14px calc(10px + env(safe-area-inset-bottom))"
-      }}>
+      <div className="fade-in booking-summary-bar">
         <div style={{
           maxWidth: 700, margin: "0 auto",
           display: "flex", alignItems: "center", gap: 12
@@ -1237,7 +1231,7 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
   return (
     <div className="fade-in" style={{ textAlign: "center", padding: "40px 20px" }}>
       {/* Ícono de éxito */}
-      <div style={{ width: 80, height: 80, background: "var(--success-bg)", border: "2px solid var(--success)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px" }}>
+      <div className="pop-in" style={{ width: 80, height: 80, background: "var(--success-bg)", border: "2px solid var(--success)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", boxShadow: "0 0 0 8px rgba(74, 222, 128, 0.09)" }}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
 

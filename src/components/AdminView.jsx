@@ -3020,6 +3020,12 @@ function StatCardPro({ label, value, color, change, spark, maxSpark, icon, subti
         e.currentTarget.style.boxShadow = isClickable ? `0 0 0 1px ${color}22` : "none";
       }}
     >
+      {/* Hairline de color: identifica la métrica de un vistazo */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 3,
+        background: `linear-gradient(90deg, ${color}, transparent 70%)`,
+        opacity: 0.8
+      }} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
         <span style={{
           fontSize: 10, color: "var(--text-muted)",
@@ -3051,9 +3057,9 @@ function StatCardPro({ label, value, color, change, spark, maxSpark, icon, subti
         )}
       </div>
       <p style={{
-        fontSize: 24, fontWeight: 800,
+        fontSize: 26, fontWeight: 800,
         color, fontFamily: "'Barlow Condensed', sans-serif",
-        lineHeight: 1
+        lineHeight: 1, letterSpacing: 0.3
       }}>{value}</p>
       {subtitle && (
         <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>{subtitle}</p>
@@ -3100,13 +3106,21 @@ function QuickAction({ icon, label, color, onClick }) {
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = color;
         e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = `0 6px 18px ${color}22`;
       }}
       onMouseLeave={e => {
         e.currentTarget.style.borderColor = "var(--border)";
         e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
-      <span style={{ fontSize: 22 }}>{icon}</span>
+      <span style={{
+        fontSize: 20,
+        width: 40, height: 40, borderRadius: 11,
+        background: `${color}18`,
+        border: `1px solid ${color}33`,
+        display: "flex", alignItems: "center", justifyContent: "center"
+      }}>{icon}</span>
       <span style={{
         fontSize: 12,
         fontWeight: 700,
