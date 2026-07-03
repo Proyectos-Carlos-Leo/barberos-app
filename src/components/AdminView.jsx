@@ -268,6 +268,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const [filterDate, setFilterDate] = useState(getTodayStr());
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showEmailConfig, setShowEmailConfig] = useState(false);
@@ -276,7 +277,12 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarDate, setCalendarDate] = useState(getTodayStr());
 
+  const q = searchQuery.trim().toLowerCase();
   const filtered = filterAppointments(appointments, { date: filterDate, barberId: filterBarber, status: filterStatus })
+    .filter(a => !q
+      || (a.client || '').toLowerCase().includes(q)
+      || (a.phone || '').toLowerCase().includes(q)
+      || (a.folio || '').toLowerCase().includes(q))
     .sort((a, b) => a.time.localeCompare(b.time));
 
   const stats = calculateStats(appointments);
@@ -637,8 +643,30 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
       </div>
 
       <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
-        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>{t("Filtros")}</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+        {/* Búsqueda rápida */}
+        <div style={{ position: "relative", marginBottom: 12 }}>
+          <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={t("Buscar por nombre, teléfono o folio…")}
+            style={{ paddingLeft: 38, paddingRight: searchQuery ? 38 : 14 }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              aria-label={t("Limpiar búsqueda")}
+              style={{
+                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                background: "var(--bg-input)", border: "1px solid var(--border-strong)",
+                color: "var(--text-tertiary)", borderRadius: 6, width: 24, height: 24,
+                fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1
+              }}
+            >✕</button>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 14 }}>
           <div>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>{t("Fecha")}</label>
             <input type="date" value={filterDate === "all" ? "" : filterDate} onChange={e => setFilterDate(e.target.value || "all")} />
@@ -650,16 +678,42 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
-          <div>
-            <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600 }}>{t("Estado")}</label>
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="all">{t("Todos")}</option>
-              <option value="pendiente">{t("Pendiente")}</option>
-              <option value="confirmada">{t("Confirmada")}</option>
-              <option value="completada">{t("Completada")}</option>
-              <option value="cancelada">{t("Cancelada")}</option>
-            </select>
-          </div>
+        </div>
+
+        {/* Chips de estado: un clic en lugar de dropdown */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {[
+            { key: "all",        label: t("Todos"),      color: "var(--accent)" },
+            { key: "pendiente",  label: t("Pendiente"),  color: "#f59e0b" },
+            { key: "confirmada", label: t("Confirmada"), color: "#4ade80" },
+            { key: "completada", label: t("Completada"), color: "var(--accent)" },
+            { key: "cancelada",  label: t("Cancelada"),  color: "#f87171" },
+          ].map(s => {
+            const active = filterStatus === s.key;
+            return (
+              <button
+                key={s.key}
+                onClick={() => setFilterStatus(s.key)}
+                style={{
+                  background: active ? s.color : "transparent",
+                  border: `1px solid ${active ? s.color : "var(--border-strong)"}`,
+                  color: active ? "#0a0a0a" : "var(--text-tertiary)",
+                  borderRadius: 20, padding: "6px 13px",
+                  fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  fontFamily: "'Barlow', sans-serif",
+                  transition: "all 0.15s", whiteSpace: "nowrap"
+                }}
+              >
+                {s.key !== "all" && (
+                  <span style={{
+                    display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                    background: active ? "#0a0a0a" : s.color, marginRight: 6, verticalAlign: "middle"
+                  }} />
+                )}
+                {s.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -703,7 +757,17 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <p style={{ fontSize: 36, marginBottom: 8 }}>📭</p>
-            <p style={{ fontSize: 14 }}>{t("No hay citas con estos filtros")}</p>
+            <p style={{ fontSize: 14, marginBottom: 14 }}>{t("No hay citas con estos filtros")}</p>
+            <button
+              onClick={() => { setSearchQuery(""); setFilterDate(getTodayStr()); setFilterBarber("all"); setFilterStatus("all"); }}
+              style={{
+                background: "transparent", border: "1px solid var(--accent-border)",
+                color: "var(--accent)", borderRadius: 8, padding: "8px 16px",
+                fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Barlow', sans-serif"
+              }}
+            >
+              {t("Limpiar filtros")}
+            </button>
           </div>
         )}
         {filtered.map(appt => {

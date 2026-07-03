@@ -43,13 +43,11 @@
         "citas": {
           ".read": true,
           "$citaId": {
-            ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists()) || (data.exists() && newData.child('status').val() == 'cancelada')",
-            ".validate": "newData.hasChildren(['client', 'phone', 'date', 'time']) && newData.child('client').isString() && newData.child('client').val().length > 0 && newData.child('client').val().length <= 100 && newData.child('phone').isString() && newData.child('phone').val().length >= 7 && newData.child('phone').val().length <= 20 && newData.child('date').isString() && newData.child('time').isString()",
-            "client":  { ".validate": "newData.isString() && newData.val().length <= 100" },
-            "phone":   { ".validate": "newData.isString() && newData.val().length <= 20" },
-            "email":   { ".validate": "newData.isString() && newData.val().length <= 120" },
-            "notes":   { ".validate": "newData.isString() && newData.val().length <= 500" },
-            "$other":  { ".validate": true }
+            ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists()) || (data.exists() && newData.exists() && newData.child('status').val() == 'cancelada')",
+            "client": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+            "phone":  { ".validate": "newData.isString() && newData.val().length >= 7 && newData.val().length <= 20" },
+            "email":  { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "notes":  { ".validate": "newData.isString() && newData.val().length <= 500" }
           }
         },
 
@@ -57,10 +55,8 @@
           ".read": true,
           "$canjeId": {
             ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists())",
-            ".validate": "newData.hasChildren(['phone', 'status']) && newData.child('phone').isString() && newData.child('phone').val().length >= 7 && newData.child('phone').val().length <= 20",
-            "phone":  { ".validate": "newData.isString() && newData.val().length <= 20" },
-            "client": { ".validate": "newData.isString() && newData.val().length <= 100" },
-            "$other": { ".validate": true }
+            "phone":  { ".validate": "newData.isString() && newData.val().length >= 7 && newData.val().length <= 20" },
+            "client": { ".validate": "newData.isString() && newData.val().length <= 100" }
           }
         }
       }

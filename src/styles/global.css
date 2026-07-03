@@ -586,3 +586,12 @@ main { max-width: 100%; overflow-x: hidden; }
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
 }
+
+/* ==================== ACCESIBILIDAD: MOVIMIENTO REDUCIDO ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

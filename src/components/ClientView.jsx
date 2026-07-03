@@ -223,7 +223,85 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
       {step === 2 && <Step2Service form={form} update={update} carrito={carrito} agregarProducto={agregarProducto} quitarProducto={quitarProducto} onBack={() => setStep(1)} onNext={handleNext} />}
       {step === 3 && <Step3DateTime form={form} update={update} takenTimes={takenTimes} blockedTimes={blockedTimes} isFullDayBlocked={isFullDayBlocked} onBack={() => setStep(2)} onNext={handleNext} />}
       {step === 4 && <Step4Confirm form={form} selectedBarber={selectedBarber} selectedService={selectedService} carrito={carrito} quitarProducto={quitarProducto} totalProductos={totalProductos} onBack={() => setStep(3)} onSubmit={handleSubmit} />}
+
+      {/* Resumen persistente de la reserva (pasos 2 y 3) */}
+      {step >= 2 && step < 4 && selectedBarber && (
+        <BookingSummaryBar
+          barber={selectedBarber}
+          service={selectedService}
+          date={form.date}
+          time={form.time}
+          totalProductos={totalProductos}
+          idioma={barbershopConfig?.idioma}
+        />
+      )}
     </div>
+  );
+}
+
+// ==================== BOOKING SUMMARY BAR ====================
+// Barra fija inferior: el cliente siempre ve lo que lleva elegido y el total
+function BookingSummaryBar({ barber, service, date, time, totalProductos, idioma }) {
+  const t = useT(idioma);
+  const total = (service?.price || 0) + (totalProductos || 0);
+
+  const Chip = ({ icon, children, muted }) => (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      fontSize: 12, fontWeight: 600,
+      color: muted ? "var(--text-dim)" : "var(--text-secondary)",
+      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      maxWidth: 180
+    }}>
+      <span style={{ fontSize: 13, flexShrink: 0 }}>{icon}</span>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{children}</span>
+    </span>
+  );
+
+  return (
+    <>
+      {/* Empuja el contenido para que la barra no tape los botones */}
+      <div style={{ height: 74 }} aria-hidden="true" />
+
+      <div className="fade-in" style={{
+        position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 90,
+        background: "var(--bg-elevated)",
+        borderTop: "1px solid var(--border-strong)",
+        boxShadow: "0 -8px 30px rgba(0,0,0,0.35)",
+        padding: "10px 14px calc(10px + env(safe-area-inset-bottom))"
+      }}>
+        <div style={{
+          maxWidth: 700, margin: "0 auto",
+          display: "flex", alignItems: "center", gap: 12
+        }}>
+          <div style={{
+            flex: 1, minWidth: 0,
+            display: "flex", alignItems: "center", gap: 14,
+            overflow: "hidden", flexWrap: "wrap", rowGap: 4
+          }}>
+            <Chip icon="💈">{barber.name}</Chip>
+            {service
+              ? <Chip icon="✂️">{service.name}</Chip>
+              : <Chip icon="✂️" muted>{t("Elige servicio")}</Chip>}
+            {(date && time)
+              ? <Chip icon="📅">{formatDate(date, idioma)} · {time}</Chip>
+              : <Chip icon="📅" muted>{t("Elige fecha y hora")}</Chip>}
+          </div>
+
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <p style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              {t("Total")}
+            </p>
+            <p style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 22, fontWeight: 800, color: "var(--accent)", lineHeight: 1
+            }}>
+              {formatCurrency(total)}
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, update } from 'firebase/database';
 import { auth, db } from '../firebase';
@@ -7,6 +7,8 @@ const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
   'DFOJycimNmTyxBWVoMgESgXkP5p1',
 ];
+
+const todayStr = () => new Date().toISOString().split('T')[0];
 
 // =========================================================
 // LOGIN SCREEN
@@ -122,107 +124,201 @@ function SuperLogin({ onLogin }) {
             disabled={loading}
             style={{
               width: '100%',
-              background: loading ? '#222' : 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
-              color: loading ? '#555' : '#0a0a0a',
-              border: 'none', borderRadius: 8, padding: '14px 24px',
-              fontSize: 15, fontWeight: 700, letterSpacing: 0.5,
-              cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-              fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase'
+              background: loading ? '#1a5a75' : 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
+              color: '#0a0a0a', border: 'none', borderRadius: 10,
+              padding: '13px 0', fontSize: 15, fontWeight: 800,
+              cursor: loading ? 'wait' : 'pointer',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              textTransform: 'uppercase', letterSpacing: 1,
+              transition: 'opacity 0.2s'
             }}
           >
             {loading ? 'Verificando...' : 'Entrar'}
           </button>
         </div>
+
+        <p style={{ color: '#333', fontSize: 11, marginTop: 24 }}>
+          Acceso restringido · Solo fundadores autorizados
+        </p>
       </div>
     </div>
   );
 }
 
 // =========================================================
-// PANEL PRINCIPAL (SIMPLIFICADO)
+// SWITCH — toggle compacto reutilizable
+// =========================================================
+function Switch({ on, onToggle, label, activeColor = '#36B1DF', title }) {
+  return (
+    <button
+      onClick={onToggle}
+      title={title || label}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+        background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px',
+        fontFamily: "'Barlow', sans-serif"
+      }}
+    >
+      <span style={{
+        width: 36, height: 20, borderRadius: 20, position: 'relative',
+        background: on ? activeColor : '#2a2a2a',
+        border: `1px solid ${on ? activeColor : '#3a3a3a'}`,
+        transition: 'background 0.2s, border-color 0.2s',
+        display: 'inline-block', flexShrink: 0
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, left: on ? 17 : 2,
+          width: 14, height: 14, borderRadius: '50%',
+          background: on ? '#0a0a0a' : '#666',
+          transition: 'left 0.2s, background 0.2s'
+        }} />
+      </span>
+      <span style={{
+        fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase',
+        color: on ? activeColor : '#555', whiteSpace: 'nowrap'
+      }}>{label}</span>
+    </button>
+  );
+}
+
+// =========================================================
+// STAT — tarjeta de métrica global
+// =========================================================
+function GlobalStat({ label, value, sub, color = '#36B1DF' }) {
+  return (
+    <div style={{
+      background: '#141414', border: '1px solid #1f1f1f',
+      borderRadius: 14, padding: '16px 20px', minWidth: 0
+    }}>
+      <p style={{ fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 6 }}>
+        {label}
+      </p>
+      <p style={{ fontSize: 32, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>
+        {value}
+      </p>
+      {sub && <p style={{ fontSize: 11, color: '#444', marginTop: 5 }}>{sub}</p>}
+    </div>
+  );
+}
+
+// =========================================================
+// PANEL PRINCIPAL
 // =========================================================
 function SuperAdminDashboard({ onLogout }) {
-  const [barberias, setBarberias] = useState([]);
+  const [rawData, setRawData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // all | activas | suspendidas
+  const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onValue(ref(db, 'barberias'), (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const list = Object.keys(data).map(slug => ({
-          slug,
-          nombre: data[slug]?.config?.nombre || slug,
-          email_admin: data[slug]?.config?.email_admin || '---',
-          telefono: data[slug]?.config?.telefono || '---',
-          lealtad_activa: data[slug]?.config?.lealtad_activa !== false,
-          productos_activos: data[slug]?.config?.productos_activos !== false,
-          idioma: data[slug]?.config?.idioma || 'es',
-          activa: data[slug]?.config?.activa !== false,
-        }));
-        setBarberias(list.sort((a, b) => a.nombre.localeCompare(b.nombre)));
-      }
+      setRawData(snapshot.val() || {});
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  const toggleLealtad = async (slug, currentValue) => {
-    try {
-      await update(ref(db, `barberias/${slug}/config`), {
-        lealtad_activa: !currentValue
+  // Derivar lista + métricas de todo el snapshot (citas incluidas)
+  const { barberias, globals } = useMemo(() => {
+    const hoy = todayStr();
+    const list = [];
+    let citasTotal = 0, citasHoy = 0, ingresosTotal = 0;
+
+    Object.keys(rawData || {}).forEach(slug => {
+      const node = rawData[slug] || {};
+      const cfg = node.config || {};
+      const citas = node.citas ? Object.values(node.citas) : [];
+      const nBarberos = node.barberos ? Object.keys(node.barberos).length : 0;
+
+      const cHoy = citas.filter(c => c.date === hoy && c.status !== 'cancelada').length;
+      const cCompletadas = citas.filter(c => c.status === 'completada');
+      const ingresos = cCompletadas.reduce((s, c) => s + (c.service?.price || 0) + (c.totalProductos || 0), 0);
+
+      citasTotal += citas.length;
+      citasHoy += cHoy;
+      ingresosTotal += ingresos;
+
+      list.push({
+        slug,
+        nombre: cfg.nombre || slug,
+        email_admin: cfg.email_admin || '—',
+        lealtad_activa: cfg.lealtad_activa !== false,
+        productos_activos: cfg.productos_activos !== false,
+        idioma: cfg.idioma || 'es',
+        activa: cfg.activa !== false,
+        gcalConnected: !!cfg.google_calendar_connected,
+        citasTotal: citas.length,
+        citasHoy: cHoy,
+        citasCompletadas: cCompletadas.length,
+        ingresos,
+        nBarberos,
       });
+    });
+
+    list.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const activas = list.filter(b => b.activa).length;
+    return {
+      barberias: list,
+      globals: { total: list.length, activas, suspendidas: list.length - activas, citasTotal, citasHoy, ingresosTotal }
+    };
+  }, [rawData]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return barberias.filter(b => {
+      if (statusFilter === 'activas' && !b.activa) return false;
+      if (statusFilter === 'suspendidas' && b.activa) return false;
+      if (q && !b.nombre.toLowerCase().includes(q) && !b.slug.toLowerCase().includes(q) && !b.email_admin.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [barberias, search, statusFilter]);
+
+  const toggleField = async (slug, field, value) => {
+    try {
+      await update(ref(db, `barberias/${slug}/config`), { [field]: value });
     } catch (error) {
       console.error('Error:', error);
       alert('Error al actualizar. Verifica las reglas de Firebase.');
     }
   };
 
-  const toggleProductos = async (slug, currentValue) => {
-    try {
-      await update(ref(db, `barberias/${slug}/config`), { productos_activos: !currentValue });
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al actualizar.');
-    }
-  };
-
-  const toggleIdioma = async (slug, currentValue) => {
-    try {
-      await update(ref(db, `barberias/${slug}/config`), { idioma: currentValue === 'en' ? 'es' : 'en' });
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al actualizar.');
-    }
-  };
-
-
   const toggleActiva = async (slug, currentValue) => {
     const nombre = barberias.find(b => b.slug === slug)?.nombre || slug;
     const msg = currentValue
-      ? `Suspender la barberia "${nombre}"?\n\nSu pagina quedara inaccesible hasta que la reactives.`
-      : `Activar la barberia "${nombre}"?\n\nSu pagina sera accesible nuevamente.`;
+      ? `Suspender la barbería "${nombre}"?\n\nSu página quedará inaccesible hasta que la reactives.`
+      : `Activar la barbería "${nombre}"?\n\nSu página será accesible nuevamente.`;
     if (!window.confirm(msg)) return;
-    try {
-      await update(ref(db, `barberias/${slug}/config`), { activa: !currentValue });
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Error al actualizar.");
-    }
+    toggleField(slug, 'activa', !currentValue);
   };
+
+  const fmtMoney = n => `$${n.toLocaleString('es-MX')}`;
+
+  const chipStyle = (active) => ({
+    background: active ? '#36B1DF' : 'transparent',
+    border: `1px solid ${active ? '#36B1DF' : '#2a2a2a'}`,
+    color: active ? '#0a0a0a' : '#777',
+    borderRadius: 20, padding: '6px 14px',
+    fontSize: 12, fontWeight: 700, cursor: 'pointer',
+    fontFamily: "'Barlow', sans-serif",
+    transition: 'all 0.15s', whiteSpace: 'nowrap'
+  });
+
   return (
     <div style={{
       minHeight: '100vh', background: '#0a0a0a',
       fontFamily: "'Barlow', sans-serif"
     }}>
-      {/* Header */}
+      {/* ── Header ── */}
       <div style={{
-        background: '#141414', borderBottom: '1px solid #1f1f1f',
-        padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'sticky', top: 0, zIndex: 10
+        background: 'rgba(20,20,20,0.92)', backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid #1f1f1f',
+        padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'sticky', top: 0, zIndex: 10, gap: 12
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
           <div style={{
-            width: 40, height: 40,
+            width: 40, height: 40, flexShrink: 0,
             background: 'linear-gradient(135deg, #36B1DF, #5FC8EC)',
             borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
@@ -230,8 +326,10 @@ function SuperAdminDashboard({ onLogout }) {
               <path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 110 4 2 2 0 010-4z"/>
             </svg>
           </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, fontFamily: "'Barlow Condensed', sans-serif" }}>BarberOS <span style={{ color: '#36B1DF', fontSize: 14 }}>by MBT</span></div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, fontFamily: "'Barlow Condensed', sans-serif", whiteSpace: 'nowrap' }}>
+              BarberOS <span style={{ color: '#36B1DF', fontSize: 14 }}>by MBT</span>
+            </div>
             <div style={{ color: '#555', fontSize: 12 }}>Panel de Fundadores</div>
           </div>
         </div>
@@ -242,7 +340,7 @@ function SuperAdminDashboard({ onLogout }) {
             background: 'transparent', border: '1px solid #2a2a2a',
             color: '#666', borderRadius: 8, padding: '8px 16px',
             fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
-            fontFamily: "'Barlow', sans-serif"
+            fontFamily: "'Barlow', sans-serif", flexShrink: 0
           }}
           onMouseEnter={e => { e.target.style.borderColor = '#ef4444'; e.target.style.color = '#ef4444'; }}
           onMouseLeave={e => { e.target.style.borderColor = '#2a2a2a'; e.target.style.color = '#666'; }}
@@ -251,234 +349,244 @@ function SuperAdminDashboard({ onLogout }) {
         </button>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
-        {/* Stat card */}
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '28px 20px 60px' }}>
+
+        {/* ── Métricas globales ── */}
         <div style={{
-          background: '#141414', border: '1px solid #1f1f1f',
-          borderRadius: 14, padding: '20px 24px', marginBottom: 32
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: 12, marginBottom: 28
         }}>
-          <div style={{ fontSize: 14, color: '#555', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
-            Total de barberías
+          <GlobalStat label="Barberías" value={globals.total} sub={`${globals.activas} activas · ${globals.suspendidas} suspendidas`} />
+          <GlobalStat label="Citas hoy" value={globals.citasHoy} sub="En todo el sistema" color="#4ade80" />
+          <GlobalStat label="Citas históricas" value={globals.citasTotal.toLocaleString('es-MX')} sub="Desde el inicio" color="#a78bfa" />
+          <GlobalStat label="Ingresos procesados" value={fmtMoney(globals.ingresosTotal)} sub="Citas completadas" color="#f59e0b" />
+        </div>
+
+        {/* ── Buscador + filtros ── */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: '1 1 260px', minWidth: 200 }}>
+            <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#555', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, slug o email…"
+              style={{
+                background: '#141414', color: '#fff',
+                border: '1px solid #2a2a2a', borderRadius: 10,
+                padding: '11px 14px 11px 38px', width: '100%',
+                fontSize: 14, outline: 'none', boxSizing: 'border-box',
+                fontFamily: "'Barlow', sans-serif"
+              }}
+              onFocus={e => e.target.style.borderColor = '#36B1DF'}
+              onBlur={e => e.target.style.borderColor = '#2a2a2a'}
+            />
           </div>
-          <div style={{ fontSize: 48, fontWeight: 800, color: '#36B1DF', fontFamily: "'Barlow Condensed', sans-serif" }}>
-            {barberias.length}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button style={chipStyle(statusFilter === 'all')} onClick={() => setStatusFilter('all')}>Todas</button>
+            <button style={chipStyle(statusFilter === 'activas')} onClick={() => setStatusFilter('activas')}>Activas</button>
+            <button style={chipStyle(statusFilter === 'suspendidas')} onClick={() => setStatusFilter('suspendidas')}>Suspendidas</button>
           </div>
         </div>
 
-        {/* Lista */}
+        {/* ── Lista ── */}
         {loading ? (
           <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 14 }}>
-            Cargando...
+            Cargando…
           </div>
-        ) : barberias.length === 0 ? (
-          <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 14 }}>
-            No hay barberías registradas aún
+        ) : filtered.length === 0 ? (
+          <div style={{
+            color: '#555', textAlign: 'center', padding: '60px 20px',
+            background: '#111', border: '1px dashed #2a2a2a', borderRadius: 14
+          }}>
+            <p style={{ fontSize: 32, marginBottom: 10 }}>🔍</p>
+            <p style={{ fontSize: 14, marginBottom: 4 }}>
+              {barberias.length === 0 ? 'No hay barberías registradas aún' : 'Sin resultados con estos filtros'}
+            </p>
+            {search && (
+              <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: '#36B1DF', fontSize: 13, cursor: 'pointer', fontFamily: "'Barlow', sans-serif" }}>
+                Limpiar búsqueda
+              </button>
+            )}
           </div>
         ) : (
-          <div>
-            <div style={{ fontSize: 14, color: '#555', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
-              Listado
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {barberias.map((barber, i) => (
-                <div key={i} style={{
-                  background: '#141414', border: '1px solid #1f1f1f',
-                  borderRadius: 10, padding: '14px 18px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  gap: 14,
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p style={{ fontSize: 12, color: '#444', fontWeight: 600 }}>
+              {filtered.length} {filtered.length === 1 ? 'barbería' : 'barberías'}
+            </p>
+
+            {filtered.map((b) => {
+              const isOpen = expanded === b.slug;
+              return (
+                <div key={b.slug} style={{
+                  background: '#141414',
+                  border: `1px solid ${isOpen ? '#36B1DF44' : '#1f1f1f'}`,
+                  borderRadius: 12,
                   transition: 'border-color 0.2s',
-                  flexWrap: 'wrap'
-                }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = '#36B1DF44'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = '#1f1f1f'}
-                >
-                  {/* Info de la barbería */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 240px', minWidth: 0 }}>
-                    <div style={{
-                      width: 36, height: 36,
-                      background: '#36B1DF22', border: '1px solid #36B1DF44',
-                      borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 16, fontWeight: 800, color: '#36B1DF', flexShrink: 0
-                    }}>
-                      {barber.nombre.charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ color: '#ccc', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {barber.nombre}
+                  opacity: b.activa ? 1 : 0.65
+                }}>
+                  {/* Fila principal (clickable para expandir) */}
+                  <div
+                    onClick={() => setExpanded(isOpen ? null : b.slug)}
+                    style={{
+                      padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      cursor: 'pointer', flexWrap: 'wrap'
+                    }}
+                  >
+                    {/* Avatar + nombre */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 220px', minWidth: 0 }}>
+                      <div style={{
+                        width: 40, height: 40, flexShrink: 0,
+                        background: b.activa ? '#36B1DF18' : '#2a2a2a',
+                        border: `1px solid ${b.activa ? '#36B1DF44' : '#3a3a3a'}`,
+                        borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 17, fontWeight: 800, color: b.activa ? '#36B1DF' : '#666',
+                        fontFamily: "'Barlow Condensed', sans-serif"
+                      }}>
+                        {b.nombre.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ color: '#eee', fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {b.nombre}
+                          </span>
+                          {!b.activa && (
+                            <span style={{
+                              fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
+                              background: '#ef444418', color: '#ef4444', border: '1px solid #ef444444',
+                              letterSpacing: 0.5
+                            }}>SUSPENDIDA</span>
+                          )}
+                          {b.gcalConnected && (
+                            <span title="Google Calendar conectado" style={{
+                              fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20,
+                              background: '#4285F418', color: '#4285F4', border: '1px solid #4285F444'
+                            }}>GCAL</span>
+                          )}
                         </div>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
-                          background: barber.activa ? '#10b98115' : '#ef444415',
-                          color: barber.activa ? '#10b981' : '#ef4444',
-                          border: `1px solid ${barber.activa ? '#10b98144' : '#ef444444'}`,
-                          flexShrink: 0
-                        }}>
-                          {barber.activa ? 'ACTIVA' : 'SUSPENDIDA'}
-                        </span>
+                        <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          /{b.slug} · {b.email_admin}
+                        </div>
                       </div>
-                      <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        /{barber.slug}
+                    </div>
+
+                    {/* Mini métricas */}
+                    <div style={{ display: 'flex', gap: 18, flexShrink: 0, alignItems: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 18, fontWeight: 800, color: b.citasHoy > 0 ? '#4ade80' : '#444', fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>
+                          {b.citasHoy}
+                        </p>
+                        <p style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, marginTop: 3 }}>hoy</p>
                       </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 18, fontWeight: 800, color: '#888', fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>
+                          {b.citasTotal}
+                        </p>
+                        <p style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, marginTop: 3 }}>citas</p>
+                      </div>
+                      <div style={{ textAlign: 'center', minWidth: 64 }}>
+                        <p style={{ fontSize: 18, fontWeight: 800, color: '#f59e0b', fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>
+                          {fmtMoney(b.ingresos)}
+                        </p>
+                        <p style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, marginTop: 3 }}>ingresos</p>
+                      </div>
+                      <span style={{
+                        color: '#444', fontSize: 12, transition: 'transform 0.2s',
+                        transform: isOpen ? 'rotate(180deg)' : 'none'
+                      }}>▼</span>
                     </div>
                   </div>
 
-                  {/* Botones de acceso */}
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                    <button
-                      onClick={() => toggleLealtad(barber.slug, barber.lealtad_activa)}
-                      title={barber.lealtad_activa ? 'Desactivar lealtad' : 'Activar lealtad'}
-                      style={{
-                        background: barber.lealtad_activa ? '#f59e0b15' : '#2a2a2a',
-                        border: `1px solid ${barber.lealtad_activa ? '#f59e0b44' : '#3a3a3a'}`,
-                        color: barber.lealtad_activa ? '#f59e0b' : '#666',
-                        borderRadius: 8,
-                        padding: '8px 12px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        transition: 'all 0.15s',
-                        fontFamily: "'Barlow', sans-serif"
-                      }}
-                    >
-                      {barber.lealtad_activa ? '⭐ Lealtad ON' : '☆ Lealtad OFF'}
-                    </button>
-                    <button
-                      onClick={() => toggleProductos(barber.slug, barber.productos_activos)}
-                      title={barber.productos_activos ? 'Desactivar productos' : 'Activar productos'}
-                      style={{
-                        background: barber.productos_activos ? '#8b5cf615' : '#2a2a2a',
-                        border: `1px solid ${barber.productos_activos ? '#8b5cf644' : '#3a3a3a'}`,
-                        color: barber.productos_activos ? '#a78bfa' : '#666',
-                        borderRadius: 8,
-                        padding: '8px 12px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        transition: 'all 0.15s',
-                        fontFamily: "'Barlow', sans-serif"
-                      }}
-                    >
-                      {barber.productos_activos ? '🛍 Productos ON' : '🛍 Productos OFF'}
-                    </button>
-                    <button
-                      onClick={() => toggleIdioma(barber.slug, barber.idioma)}
-                      title={barber.idioma === 'en' ? 'Cambiar a Español' : 'Switch to English'}
-                      style={{
-                        background: barber.idioma === 'en' ? '#3b82f615' : '#2a2a2a',
-                        border: `1px solid ${barber.idioma === 'en' ? '#3b82f644' : '#3a3a3a'}`,
-                        color: barber.idioma === 'en' ? '#60a5fa' : '#999',
-                        borderRadius: 8,
-                        padding: '8px 12px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        transition: 'all 0.15s',
-                        fontFamily: "'Barlow', sans-serif"
-                      }}
-                    >
-                      {barber.idioma === 'en' ? '🇺🇸 English' : '🇲🇽 Español'}
-                    </button>
-                    <button
-                      onClick={() => toggleActiva(barber.slug, barber.activa)}
-                      title={barber.activa ? 'Suspender barberia' : 'Activar barberia'}
-                      style={{
-                        background: barber.activa ? '#ef444415' : '#10b98115',
-                        border: `1px solid ${barber.activa ? '#ef444444' : '#10b98144'}`,
-                        color: barber.activa ? '#ef4444' : '#10b981',
-                        borderRadius: 8,
-                        padding: '8px 12px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        transition: 'all 0.15s',
-                        fontFamily: "'Barlow', sans-serif"
-                      }}
-                    >
-                      {barber.activa ? '⏸ Suspender' : '▶ Activar'}
-                    </button>
-                    <a
-                      href={`/${barber.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        textDecoration: 'none',
-                        background: '#36B1DF15',
-                        border: '1px solid #36B1DF44',
-                        color: '#5FC8EC',
-                        borderRadius: 8,
-                        padding: '8px 14px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        fontFamily: "'Barlow', sans-serif"
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = '#36B1DF';
-                        e.currentTarget.style.color = '#0a0a0a';
-                        e.currentTarget.style.borderColor = '#36B1DF';
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = '#36B1DF15';
-                        e.currentTarget.style.color = '#5FC8EC';
-                        e.currentTarget.style.borderColor = '#36B1DF44';
-                      }}
-                    >
-                      👤 Cliente
-                    </a>
-                    <a
-                      href={`/${barber.slug}/admin`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        textDecoration: 'none',
-                        background: '#2a2a2a',
-                        border: '1px solid #3a3a3a',
-                        color: '#aaa',
-                        borderRadius: 8,
-                        padding: '8px 14px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        fontFamily: "'Barlow', sans-serif"
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = '#3a3a3a';
-                        e.currentTarget.style.color = '#fff';
-                        e.currentTarget.style.borderColor = '#4a4a4a';
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = '#2a2a2a';
-                        e.currentTarget.style.color = '#aaa';
-                        e.currentTarget.style.borderColor = '#3a3a3a';
-                      }}
-                    >
-                      ⚙️ Admin
-                    </a>
-                  </div>
+                  {/* Panel expandido: controles */}
+                  {isOpen && (
+                    <div style={{
+                      borderTop: '1px solid #1f1f1f',
+                      padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      gap: 16, flexWrap: 'wrap'
+                    }}>
+                      {/* Switches */}
+                      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                        <Switch
+                          on={b.lealtad_activa}
+                          onToggle={() => toggleField(b.slug, 'lealtad_activa', !b.lealtad_activa)}
+                          label="Lealtad"
+                          activeColor="#f59e0b"
+                        />
+                        <Switch
+                          on={b.productos_activos}
+                          onToggle={() => toggleField(b.slug, 'productos_activos', !b.productos_activos)}
+                          label="Productos"
+                          activeColor="#a78bfa"
+                        />
+                        <Switch
+                          on={b.idioma === 'en'}
+                          onToggle={() => toggleField(b.slug, 'idioma', b.idioma === 'en' ? 'es' : 'en')}
+                          label={b.idioma === 'en' ? 'English' : 'Español'}
+                          activeColor="#60a5fa"
+                          title="Cambiar idioma"
+                        />
+                      </div>
+
+                      {/* Links + suspender */}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <a
+                          href={`/${b.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            textDecoration: 'none', background: '#36B1DF15',
+                            border: '1px solid #36B1DF44', color: '#5FC8EC',
+                            borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            fontFamily: "'Barlow', sans-serif", transition: 'all 0.15s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#36B1DF'; e.currentTarget.style.color = '#0a0a0a'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#36B1DF15'; e.currentTarget.style.color = '#5FC8EC'; }}
+                        >
+                          👤 Ver como cliente
+                        </a>
+                        <a
+                          href={`/${b.slug}/admin`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            textDecoration: 'none', background: '#2a2a2a',
+                            border: '1px solid #3a3a3a', color: '#aaa',
+                            borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            fontFamily: "'Barlow', sans-serif", transition: 'all 0.15s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#3a3a3a'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#2a2a2a'; e.currentTarget.style.color = '#aaa'; }}
+                        >
+                          ⚙️ Panel admin
+                        </a>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleActiva(b.slug, b.activa); }}
+                          style={{
+                            background: b.activa ? 'transparent' : '#10b98115',
+                            border: `1px solid ${b.activa ? '#ef444444' : '#10b98144'}`,
+                            color: b.activa ? '#ef4444' : '#10b981',
+                            borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700,
+                            cursor: 'pointer', fontFamily: "'Barlow', sans-serif",
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            transition: 'all 0.15s'
+                          }}
+                          onMouseEnter={e => { if (b.activa) e.currentTarget.style.background = '#ef444415'; }}
+                          onMouseLeave={e => { if (b.activa) e.currentTarget.style.background = 'transparent'; }}
+                        >
+                          {b.activa ? '⏸ Suspender' : '▶ Reactivar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -515,7 +623,7 @@ export default function SuperAdminPanel() {
         minHeight: '100vh', background: '#0a0a0a',
         display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
-        <div style={{ color: '#555', fontSize: 14 }}>Cargando...</div>
+        <div style={{ color: '#555', fontSize: 14 }}>Cargando…</div>
       </div>
     );
   }
