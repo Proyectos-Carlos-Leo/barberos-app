@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { getPlan } from '../utils/plans';
 
 // ==================== PIEZAS COMPARTIDAS DEL LANDING ====================
 
@@ -106,7 +107,7 @@ function ClientLanding({ slug }) {
               {t("🎫 Ya tengo cita")}
             </button>
           </Link>
-          {barbershopConfig?.lealtad_activa !== false && (
+          {getPlan(barbershopConfig).lealtad && barbershopConfig?.lealtad_activa !== false && (
             <Link to={`/${slug}/sellos`} style={{ textDecoration: "none" }}>
               <button style={{
                 width: "100%",
@@ -153,7 +154,7 @@ function ClientLanding({ slug }) {
         )}
 
         {/* Catálogo de productos — desplegable */}
-        {barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
+        {getPlan(barbershopConfig).catalogo && barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
           <div style={{ marginTop: 40, width: "100%", maxWidth: 480 }}>
 
             {/* Header clickeable */}

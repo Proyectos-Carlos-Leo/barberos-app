@@ -6,6 +6,7 @@ import Header from './Header';
 import Notifications from './Notifications';
 import { SERVICES as DEFAULT_SERVICES } from '../utils/data';
 import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone, getBlockedTimes } from '../utils/helpers';
+import { getPlan, citasDelMes } from '../utils/plans';
 
 const STEPS = [
   { num: 1, label: "Tus datos" },
@@ -90,6 +91,13 @@ export default function ClientView() {
 
   // Validaciones anti-spam y seguridad
   const handleSubmit = async () => {
+    // 0. Límite de citas del mes según el plan de la barbería
+    const plan = getPlan(barbershopConfig);
+    if (plan.maxCitasMes != null && citasDelMes(appointments) >= plan.maxCitasMes) {
+      alert(t('⚠ La agenda de este mes está llena. Contacta directamente a la barbería para agendar.'));
+      return;
+    }
+
     // 1. Validar teléfono (solo dígitos, espacios, +, -, paréntesis)
     const cleanPhone = form.phone.trim();
     if (!/^[\d\s+\-()]{8,20}$/.test(cleanPhone)) {
@@ -176,7 +184,7 @@ export default function ClientView() {
             appointment={completedAppointment}
             barbershop={barbershopConfig}
             carrito={carrito}
-            productos={barbershopConfig?.productos_activos !== false ? productos : []}
+            productos={getPlan(barbershopConfig).catalogo && barbershopConfig?.productos_activos !== false ? productos : []}
             onReset={reset}
             onExit={() => navigate(`/${slug}`)}
           />
@@ -642,7 +650,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
       </div>
 
       {/* Productos disponibles */}
-      {barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
+      {getPlan(barbershopConfig).catalogo && barbershopConfig?.productos_activos !== false && productos && productos.length > 0 && (
         <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 28 }}>
           <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
             {t("También disponible")}

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, update } from 'firebase/database';
 import { auth, db } from '../firebase';
+import { PLANS } from '../utils/plans';
 
 const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
@@ -247,6 +248,7 @@ function SuperAdminDashboard({ onLogout }) {
         productos_activos: cfg.productos_activos !== false,
         idioma: cfg.idioma || 'es',
         activa: cfg.activa !== false,
+        plan: cfg.plan || 'premium',
         gcalConnected: !!cfg.google_calendar_connected,
         citasTotal: citas.length,
         citasHoy: cHoy,
@@ -464,6 +466,16 @@ function SuperAdminDashboard({ onLogout }) {
                               background: '#4285F418', color: '#4285F4', border: '1px solid #4285F444'
                             }}>GCAL</span>
                           )}
+                          {(() => {
+                            const p = PLANS[b.plan] || PLANS.premium;
+                            return (
+                              <span title={`Plan ${p.nombre}`} style={{
+                                fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
+                                background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}44`,
+                                letterSpacing: 0.5, textTransform: 'uppercase'
+                              }}>{p.icon} {p.nombre}</span>
+                            );
+                          })()}
                         </div>
                         <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           /{b.slug} · {b.email_admin}
@@ -500,6 +512,57 @@ function SuperAdminDashboard({ onLogout }) {
 
                   {/* Panel expandido: controles */}
                   {isOpen && (
+                    <>
+                    {/* Selector de plan */}
+                    <div style={{
+                      borderTop: '1px solid #1f1f1f',
+                      padding: '12px 16px',
+                      display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'
+                    }}>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: '#555', textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Plan
+                      </span>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {Object.values(PLANS).map(p => {
+                          const active = (b.plan || 'premium') === p.id;
+                          return (
+                            <button
+                              key={p.id}
+                              onClick={(e) => { e.stopPropagation(); toggleField(b.slug, 'plan', p.id); }}
+                              title={p.maxBarberos === null
+                                ? `${p.nombre}: barberos y citas ilimitadas`
+                                : `${p.nombre}: ${p.maxBarberos} barbero(s), ${p.maxCitasMes} citas/mes`}
+                              style={{
+                                background: active ? p.color : 'transparent',
+                                border: `1px solid ${active ? p.color : '#2a2a2a'}`,
+                                color: active ? '#0a0a0a' : '#777',
+                                borderRadius: 20, padding: '5px 12px',
+                                fontSize: 11, fontWeight: 800, cursor: 'pointer',
+                                fontFamily: "'Barlow', sans-serif",
+                                transition: 'all 0.15s', whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {p.icon} {p.nombre}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {(() => {
+                        const p = PLANS[b.plan] || PLANS.premium;
+                        return (
+                          <span style={{ fontSize: 10, color: '#444', marginLeft: 'auto' }}>
+                            {p.maxBarberos === null ? '∞ barberos' : `máx ${p.maxBarberos} barbero(s)`}
+                            {' · '}
+                            {p.maxCitasMes === null ? '∞ citas/mes' : `máx ${p.maxCitasMes} citas/mes`}
+                            {' · '}
+                            {p.reportes ? '✓ reportes' : '✗ reportes'}
+                            {' · '}
+                            {p.lealtad ? '✓ lealtad' : '✗ lealtad'}
+                          </span>
+                        );
+                      })()}
+                    </div>
+
                     <div style={{
                       borderTop: '1px solid #1f1f1f',
                       padding: '14px 16px',
@@ -583,6 +646,7 @@ function SuperAdminDashboard({ onLogout }) {
                         </button>
                       </div>
                     </div>
+                    </>
                   )}
                 </div>
               );

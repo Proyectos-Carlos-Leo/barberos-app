@@ -4,6 +4,7 @@ import { ref, onValue, push } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { getPlan } from '../utils/plans';
 import { useTheme } from '../context/ThemeContext';
 import { formatCurrency } from '../utils/helpers';
 
@@ -145,8 +146,8 @@ export default function MyStamps() {
     );
   }
 
-  // Bloqueado
-  if (barbershopConfig?.lealtad_activa === false) {
+  // Bloqueado (por preferencia del negocio o porque su plan no incluye lealtad)
+  if (barbershopConfig?.lealtad_activa === false || (barbershopConfig && !getPlan(barbershopConfig).lealtad)) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--bg-main)" }}>
         <div className="fade-in" style={{ textAlign: "center", maxWidth: 420 }}>

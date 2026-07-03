@@ -11,6 +11,7 @@ import ReportsView from './ReportsView';
 import ConfirmModal from './ConfirmModal';
 import { STATUS_COLORS } from '../utils/data';
 import { initNotifications, notifyNewAppointment, updateTabTitle } from '../utils/notifications';
+import { getPlan, upgradeWhatsAppUrl, PLANS } from '../utils/plans';
 import { imageToBase64 } from '../utils/imageUpload';
 import {
   getTodayStr,
@@ -186,15 +187,18 @@ export default function AdminView() {
   // Si no está autenticado, mostrar login
   if (!isAuth) return <AdminLogin onLogin={() => setIsAuth(true)} />;
 
+  // Plan de la barbería: define qué features están disponibles
+  const plan = getPlan(barbershopConfig);
+
   const navItems = [
     { key: "dashboard", label: t("Panel"), active: view === "dashboard", onClick: () => setView("dashboard") },
     { key: "team", label: t("Equipo"), active: view === "team", onClick: () => setView("team") },
     { key: "services", label: t("Servicios"), active: view === "services", onClick: () => setView("services") },
     { key: "schedule", label: t("Horarios"), active: view === "schedule", onClick: () => setView("schedule") },
-    { key: "reports", label: t("Reportes"), active: view === "reports", onClick: () => setView("reports") },
+    ...(plan.reportes ? [{ key: "reports", label: t("Reportes"), active: view === "reports", onClick: () => setView("reports") }] : []),
     { key: "history", label: t("Historial"), active: view === "history", onClick: () => setView("history") },
-    ...(barbershopConfig?.productos_activos !== false ? [{ key: "products", label: t("Productos"), active: view === "products", onClick: () => setView("products") }] : []),
-    ...(barbershopConfig?.lealtad_activa !== false ? [
+    ...(plan.inventario && barbershopConfig?.productos_activos !== false ? [{ key: "products", label: t("Productos"), active: view === "products", onClick: () => setView("products") }] : []),
+    ...(plan.lealtad && barbershopConfig?.lealtad_activa !== false ? [
       { key: "loyalty", label: t("Lealtad"), active: view === "loyalty", onClick: () => setView("loyalty"), badge: pendingRedemptionsCount > 0 ? pendingRedemptionsCount : null }
     ] : [])
   ];
@@ -252,12 +256,12 @@ export default function AdminView() {
       )}
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 14px" }}>
         {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
-        {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} />}
-        {view === "reports" && <ReportsView appointments={appointments} barbers={barbers} />}
+        {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} plan={plan} slug={slug} />}
+        {view === "reports" && (plan.reportes ? <ReportsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
         {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
         {view === "services" && <ServicesView slug={slug} />}
-        {view === "loyalty" && <LoyaltyView appointments={appointments} />}
+        {view === "loyalty" && (plan.lealtad ? <LoyaltyView appointments={appointments} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
         {view === "products" && <ProductsView slug={slug} />}
       </main>
     </div>
@@ -269,6 +273,8 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
   const { barbershopConfig, slug } = useApp();
   const t = useT(barbershopConfig?.idioma);
   const idioma = barbershopConfig?.idioma;
+  const plan = getPlan(barbershopConfig);
+  const isTopPlan = plan.id === 'premium' || plan.id === 'multisucursal';
   const [filterDate, setFilterDate] = useState(getTodayStr());
   const [filterBarber, setFilterBarber] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -426,6 +432,55 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           }}>
             📅 {new Date().toLocaleDateString(idioma === 'en' ? 'en-US' : 'es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
           </div>
+
+          {/* Plan actual */}
+          <div title={plan.maxBarberos === null
+            ? t("Barberos y citas ilimitadas")
+            : `${plan.maxBarberos} ${t("barbero(s)")} · ${plan.maxCitasMes} ${t("citas/mes")}`}
+            style={{
+              background: `${plan.color}18`,
+              border: `1px solid ${plan.color}55`,
+              color: plan.color,
+              padding: "8px 14px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 800,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              letterSpacing: 0.5,
+              whiteSpace: "nowrap",
+              textTransform: "uppercase"
+            }}>
+            {plan.icon} {t("Plan")} {plan.nombre}
+          </div>
+
+          {/* Mejorar plan (oculto si ya tiene el plan más alto) */}
+          {!isTopPlan && (
+            <a
+              href={upgradeWhatsAppUrl(slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "linear-gradient(135deg, #25D366, #1ebe5b)",
+                color: "#fff",
+                padding: "8px 14px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 800,
+                fontFamily: "'Barlow Condensed', sans-serif",
+                letterSpacing: 0.5,
+                whiteSpace: "nowrap",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                boxShadow: "0 2px 10px rgba(37, 211, 102, 0.3)",
+                transition: "transform 0.15s, box-shadow 0.15s"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(37, 211, 102, 0.45)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(37, 211, 102, 0.3)"; }}
+            >
+              🚀 {t("Mejorar plan")}
+            </a>
+          )}
         </div>
       </div>
 
@@ -929,10 +984,12 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 }
 
 // ==================== TEAM VIEW ====================
-function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) {
+function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, plan, slug }) {
   const { barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
   const [showForm, setShowForm] = useState(false);
+  // Límite de barberos según el plan (null = ilimitado)
+  const atBarberLimit = plan?.maxBarberos != null && barbers.length >= plan.maxBarberos;
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({ name: "", specialty: "", photo: null });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -984,9 +1041,40 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete }) 
           <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{activeBarbers} {t(activeBarbers !== 1 ? "barberos" : "barbero")} {t(activeBarbers !== 1 ? "activos" : "activo")} · {totalCompleted} {t("cortes totales")}</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? t("Cancelar") : t("+ Agregar barbero")}</button>
+          {atBarberLimit ? (
+            <a
+              href={upgradeWhatsAppUrl(slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "var(--accent-bg)", border: "1px solid var(--accent-border)",
+                color: "var(--accent)", borderRadius: 10, padding: "11px 18px",
+                fontSize: 13, fontWeight: 700, textDecoration: "none",
+                fontFamily: "'Barlow Condensed', sans-serif", textTransform: "uppercase", letterSpacing: 0.5
+              }}
+            >
+              🚀 {t("Mejorar plan para agregar más barberos")}
+            </a>
+          ) : (
+            <button className="btn-gold" onClick={() => setShowForm(!showForm)}>{showForm ? t("Cancelar") : t("+ Agregar barbero")}</button>
+          )}
         </div>
       </div>
+
+      {/* Aviso de límite del plan */}
+      {atBarberLimit && (
+        <div style={{
+          background: "var(--accent-bg)", border: "1px solid var(--accent-border)",
+          borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+          display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap"
+        }}>
+          <span style={{ fontSize: 18 }}>{plan?.icon || "📋"}</span>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", flex: 1, minWidth: 200 }}>
+            {t("Tu plan {plan} incluye hasta {max} barbero(s). Para agregar más, mejora tu plan.", { plan: plan?.nombre || "", max: plan?.maxBarberos ?? "" })}
+          </p>
+        </div>
+      )}
 
       {/* Stats top */}
       {barbersWithStats.length > 0 && (

@@ -3,6 +3,7 @@ import { ref, update } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { getPlan, upgradeWhatsAppUrl } from '../utils/plans';
 
 const PRESET_COLORS = [
   { name: 'Azul (default)', primary: '#36B1DF', light: '#5FC8EC', dark: '#1A7FAB', bg: '#051520', border: '#0a3d56' },
@@ -221,6 +222,64 @@ export default function AdminSettings({ open, onClose }) {
             </div>
           </div>
         )}
+
+        {/* Plan actual */}
+        {(() => {
+          const plan = getPlan(barbershopConfig);
+          const isTopPlan = plan.id === 'premium' || plan.id === 'multisucursal';
+          return (
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 22, marginBottom: 22 }}>
+              <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 10 }}>
+                {t("Tu plan")}
+              </label>
+              <div style={{
+                background: `${plan.color}10`,
+                border: `1px solid ${plan.color}44`,
+                borderRadius: 12, padding: "16px 18px",
+                display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap"
+              }}>
+                <div style={{
+                  width: 46, height: 46, borderRadius: 12, flexShrink: 0,
+                  background: `${plan.color}22`, border: `1px solid ${plan.color}55`,
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22
+                }}>
+                  {plan.icon}
+                </div>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18, fontWeight: 800, color: plan.color, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    {t("Plan")} {plan.nombre}
+                  </p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>
+                    {plan.maxBarberos === null ? t("Barberos ilimitados") : `${plan.maxBarberos} ${t("barbero(s)")}`}
+                    {" · "}
+                    {plan.maxCitasMes === null ? t("Citas ilimitadas") : `${plan.maxCitasMes} ${t("citas/mes")}`}
+                    {plan.reportes ? ` · ${t("Reportes")}` : ""}
+                    {plan.inventario ? ` · ${t("Inventario")}` : ""}
+                    {plan.lealtad ? ` · ${t("Lealtad")}` : ""}
+                  </p>
+                </div>
+                {!isTopPlan && (
+                  <a
+                    href={upgradeWhatsAppUrl(slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 7,
+                      background: "linear-gradient(135deg, #25D366, #1ebe5b)",
+                      color: "#fff", borderRadius: 9, padding: "10px 18px",
+                      fontSize: 13, fontWeight: 800, textDecoration: "none",
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      textTransform: "uppercase", letterSpacing: 0.5,
+                      boxShadow: "0 2px 10px rgba(37,211,102,0.3)"
+                    }}
+                  >
+                    🚀 {t("Mejorar plan")}
+                  </a>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Google Calendar OAuth */}
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 22, marginBottom: 22 }}>
