@@ -506,6 +506,106 @@ main { max-width: 100%; overflow-x: hidden; }
 /* Las tags de estado mantienen sus colores claros */
 .tag { border: 1px solid transparent; }
 
+/* ==================== LANDING (pantallas de inicio) ==================== */
+
+/* Firma de marca: cinta de barber pole en el color del negocio */
+/* Periodo horizontal exacto de una raya a 45°: 30px × √2 = 42.43px (loop sin costura) */
+@keyframes ribbonSlide { from { background-position: 0 0; } to { background-position: 42.43px 0; } }
+.barber-ribbon {
+  width: 130px;
+  height: 7px;
+  border-radius: 4px;
+  margin: 0 auto 38px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--accent) 0 10px,
+    var(--accent-light) 10px 20px,
+    var(--accent-dark) 20px 30px
+  );
+  animation: ribbonSlide 2.8s linear infinite;
+  box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.35);
+}
+
+/* Orbes de luz difusa para dar atmósfera al fondo */
+.landing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  background: var(--accent);
+  opacity: 0.16;
+}
+[data-theme="light"] .landing-orb { opacity: 0.22; }
+
+/* Textura de rayas diagonales muy sutil (guiño a la barbería) */
+.landing-pinstripes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  color: var(--text-primary);
+  background-image: repeating-linear-gradient(115deg, currentColor 0 1px, transparent 1px 16px);
+}
+
+/* Logo con anillo exterior */
+.landing-logo {
+  width: 84px;
+  height: 84px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 30px;
+  box-shadow:
+    0 0 0 7px rgba(var(--accent-rgb), 0.1),
+    0 14px 44px rgba(var(--accent-rgb), 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.landing-logo:hover {
+  transform: translateY(-3px) rotate(-2deg);
+  box-shadow:
+    0 0 0 9px rgba(var(--accent-rgb), 0.14),
+    0 18px 52px rgba(var(--accent-rgb), 0.45);
+}
+
+/* Botón secundario del landing (reemplaza el gris muerto) */
+.btn-landing-secondary {
+  width: 100%;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.btn-landing-secondary:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+[data-theme="light"] .btn-landing-secondary { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+/* Chips de contacto (dirección / teléfono) */
+.landing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
 /* ==================== BOOKING SUMMARY BAR ==================== */
 .booking-summary-bar {
   position: fixed;

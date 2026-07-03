@@ -4,6 +4,41 @@ import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 
+// ==================== PIEZAS COMPARTIDAS DEL LANDING ====================
+
+// Fondo con atmósfera: orbes de luz + rayas diagonales sutiles
+function LandingBackdrop() {
+  return (
+    <>
+      <div className="landing-orb" style={{ width: 380, height: 380, top: "-120px", left: "-120px" }} />
+      <div className="landing-orb" style={{ width: 320, height: 320, bottom: "-100px", right: "-90px" }} />
+      <div className="landing-pinstripes" />
+    </>
+  );
+}
+
+// Logo con anillo (ícono SVG limpio por dentro)
+function LandingLogo({ children }) {
+  return <div className="landing-logo">{children}</div>;
+}
+
+const ScissorsIcon = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="6" cy="6" r="3"/>
+    <circle cx="6" cy="18" r="3"/>
+    <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+    <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+    <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+);
+
 function ClientLanding({ slug }) {
   const { theme, toggleTheme } = useTheme();
   const { barbershopConfig, productos } = useApp();
@@ -23,31 +58,22 @@ function ClientLanding({ slug }) {
       position: "relative",
       background: theme === 'dark'
         ? "radial-gradient(ellipse at center, var(--accent-bg) 0%, var(--bg-main) 70%)"
-        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)"
+        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)",
+      overflow: "hidden"
     }}>
+      <LandingBackdrop />
       <button
         className="theme-toggle"
         onClick={toggleTheme}
         title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-        style={{ position: "absolute", top: 20, right: 20 }}
+        style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
 
-      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px", maxWidth: 480 }}>
+      <div className="fade-in-up" style={{ textAlign: "center", padding: "40px 20px", maxWidth: 480, position: "relative", zIndex: 1 }}>
         {/* Logo */}
-        <div style={{
-          width: 80, height: 80,
-          background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
-          borderRadius: 20,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 32px",
-          boxShadow: "0 10px 40px rgba(var(--accent-rgb),0.3)"
-        }}>
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
-            <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
-          </svg>
-        </div>
+        <LandingLogo><ScissorsIcon /></LandingLogo>
 
         {/* Título */}
         <h1 style={{
@@ -65,14 +91,8 @@ function ClientLanding({ slug }) {
           {eslogan}
         </p>
 
-        {/* Línea divisora azul */}
-        <div style={{
-          width: 40, height: 3,
-          background: "var(--accent)",
-          borderRadius: 2,
-          margin: "0 auto 36px",
-          opacity: 0.6
-        }} />
+        {/* Cinta de barber pole — firma de la marca */}
+        <div className="barber-ribbon" />
 
         {/* Botones */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360, margin: "0 auto" }}>
@@ -82,7 +102,7 @@ function ClientLanding({ slug }) {
             </button>
           </Link>
           <Link to={`/${slug}/mi-cita`} style={{ textDecoration: "none" }}>
-            <button className="btn-large gray" style={{ width: "100%", fontSize: 15, padding: "14px 32px" }}>
+            <button className="btn-landing-secondary">
               {t("🎫 Ya tengo cita")}
             </button>
           </Link>
@@ -120,16 +140,14 @@ function ClientLanding({ slug }) {
 
         {/* Info de la barbería */}
         {(barbershopConfig?.direccion || barbershopConfig?.telefono) && (
-          <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+          <div style={{ marginTop: 36, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
             {barbershopConfig.direccion && (
-              <p style={{ color: "var(--text-tertiary)", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>📍</span><span>{barbershopConfig.direccion}</span>
-              </p>
+              <span className="landing-chip">📍 {barbershopConfig.direccion}</span>
             )}
             {barbershopConfig.telefono && (
-              <p style={{ color: "var(--text-tertiary)", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>📞</span><span>{barbershopConfig.telefono}</span>
-              </p>
+              <a href={`tel:${barbershopConfig.telefono}`} className="landing-chip" style={{ textDecoration: "none" }}>
+                📞 {barbershopConfig.telefono}
+              </a>
             )}
           </div>
         )}
@@ -250,30 +268,21 @@ function AdminLanding({ slug }) {
       position: "relative",
       background: theme === 'dark'
         ? "radial-gradient(ellipse at center, var(--accent-bg) 0%, var(--bg-main) 70%)"
-        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)"
+        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)",
+      overflow: "hidden"
     }}>
+      <LandingBackdrop />
       <button
         className="theme-toggle"
         onClick={toggleTheme}
         title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-        style={{ position: "absolute", top: 20, right: 20 }}
+        style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
 
-      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px", maxWidth: 480 }}>
-        <div style={{
-          width: 80, height: 80,
-          background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
-          borderRadius: 20,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 32px",
-          boxShadow: "0 10px 40px rgba(var(--accent-rgb),0.3)"
-        }}>
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
-            <path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 110 4 2 2 0 010-4z"/>
-          </svg>
-        </div>
+      <div className="fade-in-up" style={{ textAlign: "center", padding: "40px 20px", maxWidth: 480, position: "relative", zIndex: 1 }}>
+        <LandingLogo><LockIcon /></LandingLogo>
 
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
@@ -290,13 +299,7 @@ function AdminLanding({ slug }) {
           Panel del dueño
         </p>
 
-        <div style={{
-          width: 40, height: 3,
-          background: "var(--accent)",
-          borderRadius: 2,
-          margin: "0 auto 36px",
-          opacity: 0.6
-        }} />
+        <div className="barber-ribbon" />
 
         <Link to={`/${slug}/admin/panel`} style={{ textDecoration: "none" }}>
           <button className="btn-large" style={{ width: "100%", maxWidth: 360, fontSize: 16, padding: "16px 32px" }}>
@@ -304,8 +307,8 @@ function AdminLanding({ slug }) {
           </button>
         </Link>
 
-        <div style={{ marginTop: 40, color: "var(--text-dim)", fontSize: 12 }}>
-          <p>🔒 Acceso restringido al dueño</p>
+        <div style={{ marginTop: 36 }}>
+          <span className="landing-chip" style={{ fontSize: 11.5 }}>🔒 Acceso restringido al dueño</span>
         </div>
       </div>
     </div>
@@ -324,29 +327,20 @@ function GlobalLogin() {
       position: "relative",
       background: theme === 'dark'
         ? "radial-gradient(ellipse at center, var(--accent-bg) 0%, var(--bg-main) 70%)"
-        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)"
+        : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)",
+      overflow: "hidden"
     }}>
+      <LandingBackdrop />
       <button
         className="theme-toggle"
         onClick={toggleTheme}
-        style={{ position: "absolute", top: 20, right: 20 }}
+        style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
 
-      <div className="fade-in-up" style={{ textAlign: "center", padding: "0 20px", maxWidth: 500 }}>
-        <div style={{
-          width: 80, height: 80,
-          background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
-          borderRadius: 20,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 32px",
-          boxShadow: "0 10px 40px rgba(var(--accent-rgb),0.3)"
-        }}>
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="white">
-            <path d="M7 2h10l-2 4H9L7 2zm5 6a1 1 0 110 2 1 1 0 010-2zM4 18c0-4.4 3.6-8 8-8s8 3.6 8 8H4z"/>
-          </svg>
-        </div>
+      <div className="fade-in-up" style={{ textAlign: "center", padding: "40px 20px", maxWidth: 500, position: "relative", zIndex: 1 }}>
+        <LandingLogo><ScissorsIcon /></LandingLogo>
 
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
