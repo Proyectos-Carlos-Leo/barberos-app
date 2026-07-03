@@ -23,6 +23,7 @@ export function AppProvider({ children, slug }) {
   const t = useT(barbershopConfig?.idioma);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [citasReady, setCitasReady] = useState(false); // true solo tras la 1a carga real de /citas
   const [notFound, setNotFound] = useState(false);
   const [suspended, setSuspended] = useState(false);
 
@@ -102,9 +103,11 @@ export function AppProvider({ children, slug }) {
   // ========== CITAS ==========
   useEffect(() => {
     if (!basePath || notFound) return;
+    setCitasReady(false); // nueva barbería/slug: esperar de nuevo la 1a carga real
     const unsub = onValue(ref(db, `${basePath}/citas`), (snapshot) => {
       const data = snapshot.val();
       setAppointments(data ? Object.entries(data).map(([id, val]) => ({ ...val, id })) : []);
+      setCitasReady(true); // ya llegó el snapshot real (aunque esté vacío)
     });
     return () => unsub();
   }, [basePath, notFound]);
@@ -228,7 +231,7 @@ export function AppProvider({ children, slug }) {
   const value = {
     slug, basePath, barbershopConfig, suspended,
     appointments, barbers, blocks, services, productos,
-    notifications, loading, notFound,
+    notifications, loading, citasReady, notFound,
     addAppointment, updateAppointmentStatus, deleteAppointment,
     addBarber, toggleBarber, deleteBarber,
     addNotification, removeNotification,

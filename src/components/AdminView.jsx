@@ -31,7 +31,7 @@ export default function AdminView() {
   const previousIdsRef = useRef(null);
   const previousRedemptionsRef = useRef(null);
   const [pendingRedemptionsCount, setPendingRedemptionsCount] = useState(0);
-  const { appointments, barbers, blocks, barbershopConfig, slug, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading } = useApp();
+  const { appointments, barbers, blocks, barbershopConfig, slug, updateAppointmentStatus, deleteAppointment, toggleBarber, addBarber, deleteBarber, loading, citasReady } = useApp();
   const t = useT(barbershopConfig?.idioma);
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -82,11 +82,15 @@ export default function AdminView() {
 
   // Detectar citas nuevas y notificar
   useEffect(() => {
-    if (!isAuth || loading) return;
+    // citasReady evita la condición de carrera: sin esto, el efecto puede correr
+    // primero con appointments=[] (antes de que /citas termine de cargar) y guardar
+    // ese vacío como "punto de partida" — luego, cuando llegan las citas reales
+    // (que ya existían), el sistema las trata como "nuevas" y dispara notificación.
+    if (!isAuth || loading || !citasReady) return;
 
     const currentIds = new Set(appointments.map(a => a.id));
 
-    // Primera carga: solo guardar IDs, no notificar
+    // Primera carga real: solo guardar IDs, no notificar
     if (previousIdsRef.current === null) {
       previousIdsRef.current = currentIds;
       return;
@@ -105,7 +109,7 @@ export default function AdminView() {
     updateTabTitle(pendingCount);
 
     previousIdsRef.current = currentIds;
-  }, [appointments, isAuth, loading]);
+  }, [appointments, isAuth, loading, citasReady]);
 
   // Limpiar título al salir
   useEffect(() => {
