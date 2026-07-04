@@ -375,9 +375,9 @@ exports.exchangeGoogleOAuthCode = onRequest(
   async (req, res) => {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-    const { code, slug, redirect_uri } = req.body || {};
-    if (!code || !slug || !redirect_uri) {
-      return res.status(400).json({ error: "Faltan parámetros: code, slug, redirect_uri" });
+    const { code, slug, redirect_uri, id_token } = req.body || {};
+    if (!code || !slug || !redirect_uri || !id_token) {
+      return res.status(400).json({ error: "Faltan parámetros: code, slug, redirect_uri, id_token" });
     }
 
     // Validar formato de slug (solo minúsculas, números y guiones)
@@ -389,6 +389,24 @@ exports.exchangeGoogleOAuthCode = onRequest(
     const slugSnap = await admin.database().ref(`barberias/${slug}/config`).once("value");
     if (!slugSnap.exists()) {
       return res.status(404).json({ error: "Barbería no encontrada" });
+    }
+
+    // SEGURIDAD: verificar que quien conecta sea el admin de ESTA barbería
+    // (o un fundador). Sin esto, cualquiera podría secuestrar el calendario.
+    const FOUNDER_UIDS = ["p8knfgFj1OXQkS6xKHSjtkPXEG43", "DFOJycimNmTyxBWVoMgESgXkP5p1"];
+    let decoded;
+    try {
+      decoded = await admin.auth().verifyIdToken(id_token);
+    } catch (e) {
+      return res.status(401).json({ error: "Sesión inválida. Inicia sesión de nuevo en el panel." });
+    }
+    const emailAdmin = slugSnap.val()?.email_admin || "";
+    const isFounder  = FOUNDER_UIDS.includes(decoded.uid);
+    const isAdmin    = decoded.email && emailAdmin &&
+      decoded.email.toLowerCase() === String(emailAdmin).toLowerCase();
+    if (!isFounder && !isAdmin) {
+      console.warn(`[${slug}] Intento de conexión OAuth rechazado: ${decoded.email || decoded.uid}`);
+      return res.status(403).json({ error: "No tienes permiso para conectar el calendario de esta barbería." });
     }
 
     try {

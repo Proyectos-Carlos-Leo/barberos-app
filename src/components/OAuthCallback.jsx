@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const FUNCTION_BASE = 'https://us-central1-barberos-app-174cb.cloudfunctions.net';
 
@@ -26,14 +28,25 @@ export default function OAuthCallback() {
       return;
     }
 
-    // Intercambiar el código por tokens vía Cloud Function
-    fetch(`${FUNCTION_BASE}/exchangeGoogleOAuthCode`, {
+    // Esperar a que Firebase Auth restaure la sesión del admin y luego
+    // intercambiar el código enviando su ID token (la función lo verifica)
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      unsub();
+      if (!user) {
+        setStatus('error');
+        setMsg('Debes iniciar sesión como administrador de la barbería antes de conectar Google Calendar.');
+        return;
+      }
+      const idToken = await user.getIdToken();
+
+      fetch(`${FUNCTION_BASE}/exchangeGoogleOAuthCode`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code,
         slug: state,
         redirect_uri: `${window.location.origin}/oauth/callback`,
+        id_token: idToken,
       }),
     })
       .then(r => r.json())
@@ -51,6 +64,7 @@ export default function OAuthCallback() {
         setStatus('error');
         setMsg('Error de red al conectar con Google.');
       });
+    });
   }, []); // eslint-disable-line
 
   return (

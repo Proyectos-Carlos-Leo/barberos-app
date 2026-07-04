@@ -276,6 +276,16 @@ export default function ClientView() {
       return;
     }
 
+    // 6. Re-verificar que el horario siga libre (evita doble reserva si alguien
+    // más lo tomó mientras este cliente estaba en la pantalla de confirmación)
+    const takenNow = getTakenTimes(appointments, form.barberId, form.date);
+    if (takenNow.includes(form.time)) {
+      alert(t('⚠ Ese horario se acaba de ocupar. Por favor elige otro.'));
+      update('time', '');
+      setStep(3);
+      return;
+    }
+
     const newAppt = await addAppointment({
       client: cleanName,
       phone: cleanPhone,

@@ -133,6 +133,7 @@ const en = {
   "¿Repetimos tu corte de siempre?": "Shall we book your usual cut again?",
   "Agendar en 1 toque": "Book in 1 tap",
   "Prefiero otro horario": "I prefer another time",
+  "⚠ Ese horario se acaba de ocupar. Por favor elige otro.": "⚠ That time slot was just taken. Please pick another one.",
   "clientes": "clients",
   "cliente": "client",
   "Directorio automático construido desde tus citas": "Automatic directory built from your appointments",

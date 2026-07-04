@@ -8,7 +8,7 @@
 
         "config": {
           ".read": true,
-          ".write": "auth != null && (!data.exists() ? newData.child('email_admin').val() == auth.token.email : data.child('email_admin').val() == auth.token.email)",
+          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || (!data.exists() ? newData.child('email_admin').val() == auth.token.email : data.child('email_admin').val() == auth.token.email))",
           "google_oauth": {
             ".read": false,
             ".write": false
@@ -22,28 +22,28 @@
 
         "barberos": {
           ".read": true,
-          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
         },
 
         "servicios": {
           ".read": true,
-          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
         },
 
         "productos": {
           ".read": true,
-          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
         },
 
         "bloqueos": {
           ".read": true,
-          ".write": "auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email"
+          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
         },
 
         "citas": {
           ".read": true,
           "$citaId": {
-            ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists()) || (data.exists() && newData.exists() && newData.child('status').val() == 'cancelada')",
+            ".write": "(auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)) || (!data.exists() && newData.exists()) || (data.exists() && newData.exists() && newData.child('status').val() == 'cancelada')",
             "client": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
             "phone":  { ".validate": "newData.isString() && newData.val().length >= 7 && newData.val().length <= 20" },
             "email":  { ".validate": "newData.isString() && newData.val().length <= 120" },
@@ -54,7 +54,7 @@
         "canjes": {
           ".read": true,
           "$canjeId": {
-            ".write": "(auth != null && root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email) || (!data.exists() && newData.exists())",
+            ".write": "(auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)) || (!data.exists() && newData.exists())",
             "phone":  { ".validate": "newData.isString() && newData.val().length >= 7 && newData.val().length <= 20" },
             "client": { ".validate": "newData.isString() && newData.val().length <= 100" }
           }
