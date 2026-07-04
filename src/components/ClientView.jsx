@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
@@ -14,6 +14,63 @@ const STEPS = [
   { num: 3, label: "Fecha y hora" },
   { num: 4, label: "Confirmar" }
 ];
+
+// ==================== AGENDAR DE NUEVO (1 TOQUE) ====================
+const REBOOK_PHONE_KEY = 'barberos_client_phone';
+
+const normPhoneRB = (p) => String(p || "").replace(/\D/g, "").slice(-10);
+
+const savePhoneForRebook = (phone) => {
+  try { localStorage.setItem(REBOOK_PHONE_KEY, phone); } catch (e) { /* modo privado */ }
+};
+const getSavedPhone = () => {
+  try { return localStorage.getItem(REBOOK_PHONE_KEY) || ""; } catch (e) { return ""; }
+};
+
+// Encuentra el primer horario libre para un barbero en los próximos 14 días
+const findNextAvailableSlot = (barbershopConfig, appointments, blocks, barberId) => {
+  const horario = barbershopConfig?.horario || {};
+  const inicio = horario.hora_inicio || '09:00';
+  const fin = horario.hora_fin || '20:00';
+  const dur = horario.duracion || 30;
+  const DAY_KEYS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+
+  const slots = [];
+  const [sH, sM] = inicio.split(':').map(Number);
+  const [eH, eM] = fin.split(':').map(Number);
+  let cur = sH * 60 + sM;
+  const endMin = eH * 60 + eM;
+  while (cur + dur <= endMin) {
+    slots.push(`${String(Math.floor(cur / 60)).padStart(2, '0')}:${String(cur % 60).padStart(2, '0')}`);
+    cur += dur;
+  }
+  if (slots.length === 0) return null;
+
+  const now = new Date();
+  for (let d = 0; d < 14; d++) {
+    const day = new Date(now);
+    day.setDate(now.getDate() + d);
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+
+    // Día activo según config
+    if (horario.dias_activos && horario.dias_activos[DAY_KEYS[day.getDay()]] === false) continue;
+
+    const taken = getTakenTimes(appointments, barberId, dateStr);
+    const blocked = getBlockedTimes(blocks, barberId, dateStr);
+    if (blocked.includes('FULL_DAY')) continue;
+
+    for (const time of slots) {
+      // Hoy: solo horarios con al menos 30 min de anticipación
+      if (d === 0) {
+        const [h, m] = time.split(':').map(Number);
+        if (h * 60 + m <= now.getHours() * 60 + now.getMinutes() + 30) continue;
+      }
+      if (taken.includes(time) || blocked.includes(time)) continue;
+      return { date: dateStr, time };
+    }
+  }
+  return null;
+};
 
 export default function ClientView() {
   const navigate = useNavigate();
@@ -54,6 +111,77 @@ export default function ClientView() {
   const { appointments, barbers, blocks, services: firebaseServices, productos, addAppointment, loading, slug, barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
   const SERVICES = firebaseServices && firebaseServices.length > 0 ? firebaseServices : DEFAULT_SERVICES;
+
+  // ---- Cliente recurrente: "agendar de nuevo en 1 toque" ----
+  const [rebookDismissed, setRebookDismissed] = useState(false);
+  const savedPhone = getSavedPhone();
+
+  const rebook = useMemo(() => {
+    if (!savedPhone || rebookDismissed) return null;
+    const key = normPhoneRB(savedPhone);
+    const mine = appointments.filter(a => normPhoneRB(a.phone) === key && a.status !== 'cancelada');
+    if (mine.length === 0) return null;
+
+    // Identidad: la cita más reciente que creó
+    const latest = [...mine].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))[0];
+
+    // Favoritos por frecuencia (preferir completadas)
+    const pool = mine.filter(a => a.status === 'completada');
+    const source = pool.length > 0 ? pool : mine;
+    const freq = (arr) => {
+      const f = {};
+      arr.forEach(v => { if (v != null) f[v] = (f[v] || 0) + 1; });
+      return Object.entries(f).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    };
+    const favServiceId = freq(source.map(a => String(a.service?.id ?? "")));
+    const favBarberId = freq(source.map(a => String(a.barberId)));
+
+    const service = SERVICES.find(s => String(s.id) === favServiceId)
+      || SERVICES.find(s => s.name === source[0]?.service?.name);
+    const barber = barbers.filter(b => b.active).find(b => String(b.id) === favBarberId);
+    if (!service || !barber) return null;
+
+    const slot = findNextAvailableSlot(barbershopConfig, appointments, blocks, barber.id);
+    if (!slot) return null;
+
+    return {
+      name: latest.client || "",
+      firstName: (latest.client || "").trim().split(/\s+/)[0] || "",
+      phone: latest.phone || savedPhone,
+      email: latest.client_email || "",
+      service, barber, slot,
+    };
+  }, [savedPhone, rebookDismissed, appointments, barbers, blocks, barbershopConfig, SERVICES]);
+
+  const handleRebookOneTap = () => {
+    if (!rebook) return;
+    setForm(f => ({
+      ...f,
+      client: rebook.name,
+      phone: rebook.phone,
+      email: rebook.email,
+      barberId: rebook.barber.id,
+      serviceId: rebook.service.id,
+      date: rebook.slot.date,
+      time: rebook.slot.time,
+    }));
+    setStep(4);
+  };
+
+  const handleRebookChooseTime = () => {
+    if (!rebook) return;
+    setForm(f => ({
+      ...f,
+      client: rebook.name,
+      phone: rebook.phone,
+      email: rebook.email,
+      barberId: rebook.barber.id,
+      serviceId: rebook.service.id,
+      date: "",
+      time: "",
+    }));
+    setStep(3);
+  };
 
   // Ahora sí el loading puede ir aquí, después de todos los hooks
   if (loading) return <LoadingScreen />;
@@ -161,6 +289,7 @@ export default function ClientView() {
       totalProductos: carrito.length > 0 ? totalProductos : null,
     });
     if (newAppt) {
+      savePhoneForRebook(cleanPhone); // recordarlo para "agendar de nuevo en 1 toque"
       setCompletedAppointment({ ...newAppt, barber: selectedBarber });
       setDone(true);
     }
@@ -207,6 +336,10 @@ export default function ClientView() {
             agregarProducto={agregarProducto}
             quitarProducto={quitarProducto}
             totalProductos={totalProductos}
+            rebook={rebook}
+            onRebookOneTap={handleRebookOneTap}
+            onRebookChooseTime={handleRebookChooseTime}
+            onRebookDismiss={() => setRebookDismissed(true)}
           />
         )}
       </main>
@@ -215,7 +348,7 @@ export default function ClientView() {
 }
 
 // ==================== BOOKING FLOW ====================
-function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, blockedTimes, isFullDayBlocked, handleNext, handleSubmit, carrito, agregarProducto, quitarProducto, totalProductos }) {
+function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBarber, selectedService, takenTimes, blockedTimes, isFullDayBlocked, handleNext, handleSubmit, carrito, agregarProducto, quitarProducto, totalProductos, rebook, onRebookOneTap, onRebookChooseTime, onRebookDismiss }) {
   const { barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
   return (
@@ -226,6 +359,18 @@ function BookingFlow({ form, update, step, setStep, errors, barbers, selectedBar
         </h1>
         <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>{t("Reserva en línea de forma rápida y sencilla")}</p>
       </div>
+
+      {/* Cliente recurrente: agendar de nuevo en 1 toque */}
+      {step === 1 && rebook && (
+        <RebookCard
+          rebook={rebook}
+          idioma={barbershopConfig?.idioma}
+          onOneTap={onRebookOneTap}
+          onChooseTime={onRebookChooseTime}
+          onDismiss={onRebookDismiss}
+        />
+      )}
+
       <StepsIndicator currentStep={step} steps={STEPS} idioma={barbershopConfig?.idioma} />
       {step === 1 && <Step1ClientInfo form={form} update={update} errors={errors} barbers={barbers} selectedBarber={selectedBarber} onNext={handleNext} />}
       {step === 2 && <Step2Service form={form} update={update} carrito={carrito} agregarProducto={agregarProducto} quitarProducto={quitarProducto} onBack={() => setStep(1)} onNext={handleNext} />}
@@ -304,6 +449,80 @@ function BookingSummaryBar({ barber, service, date, time, totalProductos, idioma
         </div>
       </div>
     </>
+  );
+}
+
+// ==================== REBOOK CARD ====================
+// Tarjeta para clientes recurrentes: repite su corte habitual en 1 toque
+function RebookCard({ rebook, idioma, onOneTap, onChooseTime, onDismiss }) {
+  const t = useT(idioma);
+  return (
+    <div className="fade-in-up" style={{
+      position: "relative",
+      background: "linear-gradient(135deg, var(--accent-bg), var(--bg-elevated))",
+      border: "1.5px solid var(--accent-border)",
+      borderRadius: 16,
+      padding: "18px 20px",
+      marginBottom: 26,
+      boxShadow: "0 6px 24px rgba(var(--accent-rgb), 0.12)"
+    }}>
+      <button
+        onClick={onDismiss}
+        aria-label={t("Cerrar")}
+        style={{
+          position: "absolute", top: 10, right: 10,
+          background: "transparent", border: "none",
+          color: "var(--text-muted)", fontSize: 15, cursor: "pointer",
+          width: 28, height: 28, borderRadius: 8, lineHeight: 1
+        }}
+      >✕</button>
+
+      <p style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: 20, fontWeight: 800, color: "var(--text-primary)",
+        letterSpacing: 0.3, marginBottom: 4
+      }}>
+        {t("Hola")} {rebook.firstName} 👋
+      </p>
+      <p style={{ fontSize: 13.5, color: "var(--text-secondary)", marginBottom: 12 }}>
+        {t("¿Repetimos tu corte de siempre?")}
+      </p>
+
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 16 }}>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
+          ✂️ {rebook.service.name} · <span style={{ color: "var(--accent)" }}>{formatCurrency(rebook.service.price)}</span>
+        </span>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
+          💈 {rebook.barber.name}
+        </span>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
+          📅 {formatDate(rebook.slot.date, idioma)} · {rebook.slot.time}
+        </span>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button className="btn-gold" onClick={onOneTap} style={{ fontSize: 14, padding: "12px 22px" }}>
+          ⚡ {t("Agendar en 1 toque")}
+        </button>
+        <button
+          onClick={onChooseTime}
+          style={{
+            background: "transparent",
+            border: "1px solid var(--border-strong)",
+            color: "var(--text-secondary)",
+            borderRadius: 10, padding: "12px 18px",
+            fontSize: 13, fontWeight: 700, cursor: "pointer",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            textTransform: "uppercase", letterSpacing: 0.5,
+            transition: "border-color 0.2s, color 0.2s"
+          }}
+          onMouseEnter={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.color = "var(--accent)"; }}
+          onMouseLeave={e => { e.target.style.borderColor = "var(--border-strong)"; e.target.style.color = "var(--text-secondary)"; }}
+        >
+          {t("Prefiero otro horario")}
+        </button>
+      </div>
+    </div>
   );
 }
 
