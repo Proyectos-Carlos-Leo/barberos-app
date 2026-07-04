@@ -16,6 +16,7 @@ export const PLANS = {
     inventario: false,   // tab Productos en admin
     lealtad: false,      // programa de sellos
     catalogo: false,     // catálogo de productos visible al cliente
+    crm: false,          // tab Clientes (mini-CRM)
   },
   profesional: {
     id: 'profesional',
@@ -28,6 +29,7 @@ export const PLANS = {
     inventario: true,
     lealtad: false,
     catalogo: false,
+    crm: true,
   },
   premium: {
     id: 'premium',
@@ -40,6 +42,7 @@ export const PLANS = {
     inventario: true,
     lealtad: true,
     catalogo: true,
+    crm: true,
   },
   multisucursal: {
     id: 'multisucursal',
@@ -52,6 +55,7 @@ export const PLANS = {
     inventario: true,
     lealtad: true,
     catalogo: true,
+    crm: true,
   },
 };
 

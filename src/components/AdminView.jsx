@@ -193,6 +193,7 @@ export default function AdminView() {
   const navItems = [
     { key: "dashboard", label: t("Panel"), active: view === "dashboard", onClick: () => setView("dashboard") },
     { key: "team", label: t("Equipo"), active: view === "team", onClick: () => setView("team") },
+    ...(plan.crm ? [{ key: "clients", label: t("Clientes"), active: view === "clients", onClick: () => setView("clients") }] : []),
     { key: "services", label: t("Servicios"), active: view === "services", onClick: () => setView("services") },
     { key: "schedule", label: t("Horarios"), active: view === "schedule", onClick: () => setView("schedule") },
     ...(plan.reportes ? [{ key: "reports", label: t("Reportes"), active: view === "reports", onClick: () => setView("reports") }] : []),
@@ -259,6 +260,7 @@ export default function AdminView() {
         {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} plan={plan} slug={slug} />}
         {view === "reports" && (plan.reportes ? <ReportsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
         {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
+        {view === "clients" && (plan.crm ? <ClientsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
         {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
         {view === "services" && <ServicesView slug={slug} />}
         {view === "loyalty" && (plan.lealtad ? <LoyaltyView appointments={appointments} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
@@ -1247,6 +1249,325 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
 }
 
 // ==================== HISTORY VIEW ====================
+// ==================== CLIENTES (MINI-CRM) ====================
+// Directorio de clientes construido automáticamente desde las citas.
+// Sin datos nuevos en Firebase: todo se deriva de lo que ya existe.
+
+const normalizePhone = (p) => String(p || "").replace(/\D/g, "").slice(-10);
+
+const waLink = (phone, msg) => {
+  const digits = String(phone || "").replace(/\D/g, "");
+  const full = digits.length === 10 ? `52${digits}` : digits;
+  return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
+};
+
+function ClientsView({ appointments, barbers }) {
+  const { barbershopConfig, slug } = useApp();
+  const t = useT(barbershopConfig?.idioma);
+  const idioma = barbershopConfig?.idioma;
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all"); // all | risk | frequent | new
+  const [sortBy, setSortBy] = useState("recent"); // recent | visits | spent
+  const [expanded, setExpanded] = useState(null);
+
+  const bookingUrl = `${window.location.origin}/${slug}/cliente`;
+  const shopName = barbershopConfig?.nombre || "la barbería";
+
+  // ---- Derivar clientes de las citas ----
+  const clients = useMemo(() => {
+    const map = new Map();
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const monthPrefix = todayStr.slice(0, 7);
+
+    appointments.forEach(a => {
+      const key = normalizePhone(a.phone);
+      if (!key || key.length < 7) return;
+      if (!map.has(key)) {
+        map.set(key, { key, phone: a.phone, name: a.client, appts: [] });
+      }
+      const cl = map.get(key);
+      cl.appts.push(a);
+      // Usar el nombre más reciente que haya dado
+      if ((a.createdAt || "") > (cl._nameAt || "")) {
+        cl.name = a.client;
+        cl.phone = a.phone;
+        cl._nameAt = a.createdAt || "";
+      }
+    });
+
+    const list = [];
+    map.forEach(cl => {
+      const completed = cl.appts
+        .filter(a => a.status === "completada")
+        .sort((x, y) => (x.date || "").localeCompare(y.date || ""));
+      const visits = completed.length;
+      const spent = completed.reduce((s, a) => s + (a.service?.price || 0) + (a.totalProductos || 0), 0);
+      const lastVisit = visits > 0 ? completed[visits - 1].date : null;
+      const firstDate = cl.appts.map(a => a.date).sort()[0] || null;
+      const upcoming = cl.appts
+        .filter(a => a.date >= todayStr && (a.status === "pendiente" || a.status === "confirmada"))
+        .sort((x, y) => (x.date + x.time).localeCompare(y.date + y.time))[0] || null;
+
+      // Servicio y barbero favoritos (por frecuencia en completadas)
+      const freq = (arr) => {
+        const f = {};
+        arr.forEach(v => { if (v) f[v] = (f[v] || 0) + 1; });
+        return Object.entries(f).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+      };
+      const favService = freq(completed.map(a => a.service?.name));
+      const favBarberId = freq(completed.map(a => String(a.barberId)));
+      const favBarber = barbers.find(b => String(b.id) === favBarberId)?.name || null;
+
+      // Días desde la última visita
+      const daysSince = lastVisit
+        ? Math.floor((now - new Date(lastVisit + "T12:00:00")) / 86400000)
+        : null;
+
+      // Intervalo promedio entre visitas (si tiene 2+)
+      let avgInterval = null;
+      if (visits >= 2) {
+        const gaps = [];
+        for (let i = 1; i < completed.length; i++) {
+          const d1 = new Date(completed[i - 1].date + "T12:00:00");
+          const d2 = new Date(completed[i].date + "T12:00:00");
+          gaps.push((d2 - d1) / 86400000);
+        }
+        avgInterval = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+      }
+
+      // En riesgo: 2+ visitas y lleva más del doble de su ritmo habitual sin venir (mín. 45 días)
+      const atRisk = visits >= 2 && daysSince != null &&
+        daysSince > Math.max(45, (avgInterval || 30) * 2) && !upcoming;
+
+      const isNew = firstDate ? firstDate.startsWith(monthPrefix) : false;
+      const isFrequent = visits >= 5;
+
+      list.push({
+        ...cl, visits, spent, lastVisit, daysSince, upcoming,
+        favService, favBarber, atRisk, isNew, isFrequent,
+        history: [...cl.appts].sort((x, y) => (y.date + (y.time || "")).localeCompare(x.date + (x.time || ""))),
+      });
+    });
+    return list;
+  }, [appointments, barbers]);
+
+  // ---- Métricas de encabezado ----
+  const stats = useMemo(() => {
+    const total = clients.length;
+    const nuevos = clients.filter(c => c.isNew).length;
+    const enRiesgo = clients.filter(c => c.atRisk).length;
+    const conVisitas = clients.filter(c => c.visits > 0);
+    const ticket = conVisitas.length > 0
+      ? conVisitas.reduce((s, c) => s + c.spent / c.visits, 0) / conVisitas.length
+      : 0;
+    return { total, nuevos, enRiesgo, ticket };
+  }, [clients]);
+
+  // ---- Filtros + orden ----
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = clients.filter(cl => {
+      if (filter === "risk" && !cl.atRisk) return false;
+      if (filter === "frequent" && !cl.isFrequent) return false;
+      if (filter === "new" && !cl.isNew) return false;
+      if (q && !(cl.name || "").toLowerCase().includes(q) && !String(cl.phone || "").includes(q)) return false;
+      return true;
+    });
+    if (sortBy === "visits") list.sort((a, b) => b.visits - a.visits);
+    else if (sortBy === "spent") list.sort((a, b) => b.spent - a.spent);
+    else list.sort((a, b) => (b.lastVisit || "0").localeCompare(a.lastVisit || "0"));
+    return list;
+  }, [clients, search, filter, sortBy]);
+
+  const msgRecovery = (cl) =>
+    `${idioma === "en" ? "Hi" : "Hola"} ${cl.name}! 👋 ${idioma === "en"
+      ? `We miss you at ${shopName} 💈 Ready for your next cut? Book here: ${bookingUrl}`
+      : `Hace tiempo no te vemos por ${shopName} 💈 ¿Agendamos tu próximo corte? Reserva aquí: ${bookingUrl}`}`;
+  const msgHello = (cl) =>
+    `${idioma === "en" ? "Hi" : "Hola"} ${cl.name}! ${idioma === "en"
+      ? `Greetings from ${shopName} 💈`
+      : `Te saludamos de ${shopName} 💈`}`;
+
+  const chip = (active) => ({
+    background: active ? "var(--accent)" : "transparent",
+    border: `1px solid ${active ? "var(--accent)" : "var(--border-strong)"}`,
+    color: active ? "#0a0a0a" : "var(--text-tertiary)",
+    borderRadius: 20, padding: "6px 13px", fontSize: 12, fontWeight: 700,
+    cursor: "pointer", fontFamily: "'Barlow', sans-serif", transition: "all 0.15s", whiteSpace: "nowrap"
+  });
+
+  const StatTile = ({ label, value, color = "var(--accent)", sub }) => (
+    <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
+      <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{label}</p>
+      <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>{value}</p>
+      {sub && <p style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>{sub}</p>}
+    </div>
+  );
+
+  return (
+    <div className="fade-in">
+      <div style={{ marginBottom: 24 }}>
+        <h1 className="section-title" style={{ marginBottom: 4 }}>{t("Tus")} <span className="gold">{t("clientes")}</span></h1>
+        <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
+          {t("Directorio automático construido desde tus citas")}
+        </p>
+      </div>
+
+      {/* Métricas */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+        <StatTile label={t("Clientes totales")} value={stats.total} />
+        <StatTile label={t("Nuevos este mes")} value={stats.nuevos} color="#4ade80" />
+        <StatTile label={t("En riesgo")} value={stats.enRiesgo} color={stats.enRiesgo > 0 ? "#f59e0b" : "var(--text-muted)"} sub={stats.enRiesgo > 0 ? t("Escríbeles para recuperarlos") : null} />
+        <StatTile label={t("Ticket promedio")} value={formatCurrency(Math.round(stats.ticket))} color="#a78bfa" />
+      </div>
+
+      {/* Controles */}
+      <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <div style={{ position: "relative", marginBottom: 12 }}>
+          <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t("Buscar cliente por nombre o teléfono…")}
+            style={{ paddingLeft: 38 }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <button style={chip(filter === "all")} onClick={() => setFilter("all")}>{t("Todos")}</button>
+          <button style={chip(filter === "risk")} onClick={() => setFilter("risk")}>⚠️ {t("En riesgo")} {stats.enRiesgo > 0 ? `(${stats.enRiesgo})` : ""}</button>
+          <button style={chip(filter === "frequent")} onClick={() => setFilter("frequent")}>⭐ {t("Frecuentes")}</button>
+          <button style={chip(filter === "new")} onClick={() => setFilter("new")}>🌱 {t("Nuevos")}</button>
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ marginLeft: "auto", width: "auto", minWidth: 160 }}>
+            <option value="recent">{t("Última visita")}</option>
+            <option value="visits">{t("Más visitas")}</option>
+            <option value="spent">{t("Mayor gasto")}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Lista */}
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
+          <p style={{ fontSize: 36, marginBottom: 8 }}>👥</p>
+          <p style={{ fontSize: 14 }}>{clients.length === 0 ? t("Aún no hay clientes registrados") : t("Sin resultados con estos filtros")}</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <p style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 600 }}>
+            {filtered.length} {t(filtered.length === 1 ? "cliente" : "clientes")}
+          </p>
+          {filtered.map(cl => {
+            const isOpen = expanded === cl.key;
+            return (
+              <div key={cl.key} className="appt-card" style={{ padding: 0, borderRadius: 12, cursor: "default" }}>
+                {/* Fila principal */}
+                <div
+                  onClick={() => setExpanded(isOpen ? null : cl.key)}
+                  style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", flexWrap: "wrap" }}
+                >
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+                    background: cl.atRisk ? "#f59e0b18" : "var(--accent-bg)",
+                    border: `1px solid ${cl.atRisk ? "#f59e0b55" : "var(--accent-border)"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 17, fontWeight: 800, color: cl.atRisk ? "#f59e0b" : "var(--accent)",
+                    fontFamily: "'Barlow Condensed', sans-serif"
+                  }}>
+                    {(cl.name || "?").charAt(0).toUpperCase()}
+                  </div>
+
+                  <div style={{ flex: "1 1 180px", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ color: "var(--text-primary)", fontSize: 15, fontWeight: 700 }}>{cl.name}</span>
+                      {cl.atRisk && <span className="tag" style={{ background: "#f59e0b18", color: "#f59e0b", border: "1px solid #f59e0b44", fontSize: 9 }}>⚠️ {t("En riesgo")}</span>}
+                      {cl.isFrequent && !cl.atRisk && <span className="tag" style={{ background: "var(--accent-bg)", color: "var(--accent)", border: "1px solid var(--accent-border)", fontSize: 9 }}>⭐ VIP</span>}
+                      {cl.isNew && <span className="tag" style={{ background: "#4ade8018", color: "#4ade80", border: "1px solid #4ade8044", fontSize: 9 }}>🌱 {t("Nuevo")}</span>}
+                    </div>
+                    <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 2 }}>
+                      📱 {cl.phone}
+                      {cl.lastVisit && ` · ${t("última visita")}: ${formatDate(cl.lastVisit, idioma)}`}
+                      {cl.daysSince != null && cl.daysSince > 0 && ` (${t("hace {n} días", { n: cl.daysSince })})`}
+                    </p>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 16, alignItems: "center", flexShrink: 0 }}>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: 17, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>{cl.visits}</p>
+                      <p style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, marginTop: 2 }}>{t("visitas")}</p>
+                    </div>
+                    <div style={{ textAlign: "center", minWidth: 58 }}>
+                      <p style={{ fontSize: 17, fontWeight: 800, color: "#4ade80", fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1 }}>{formatCurrency(cl.spent)}</p>
+                      <p style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, marginTop: 2 }}>{t("gastado")}</p>
+                    </div>
+                    <a
+                      href={waLink(cl.phone, cl.atRisk ? msgRecovery(cl) : msgHello(cl))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      title={cl.atRisk ? t("Enviar mensaje de recuperación") : "WhatsApp"}
+                      style={{
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: "linear-gradient(135deg, #25D366, #1ebe5b)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        textDecoration: "none", fontSize: 17,
+                        boxShadow: "0 2px 8px rgba(37,211,102,0.3)"
+                      }}
+                    >💬</a>
+                    <span style={{ color: "var(--text-dim)", fontSize: 11, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>▼</span>
+                  </div>
+                </div>
+
+                {/* Detalle expandido */}
+                {isOpen && (
+                  <div style={{ borderTop: "1px solid var(--border)", padding: "14px 16px" }}>
+                    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 14 }}>
+                      {cl.favService && (
+                        <div>
+                          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{t("Servicio favorito")}</p>
+                          <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginTop: 2 }}>✂️ {cl.favService}</p>
+                        </div>
+                      )}
+                      {cl.favBarber && (
+                        <div>
+                          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{t("Barbero favorito")}</p>
+                          <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginTop: 2 }}>💈 {cl.favBarber}</p>
+                        </div>
+                      )}
+                      {cl.upcoming && (
+                        <div>
+                          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{t("Próxima cita")}</p>
+                          <p style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginTop: 2 }}>📅 {formatDate(cl.upcoming.date, idioma)} · {cl.upcoming.time}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Historial reciente */}
+                    <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5, marginBottom: 8 }}>{t("Historial reciente")}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {cl.history.slice(0, 5).map(a => (
+                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, color: "var(--text-tertiary)", flexWrap: "wrap" }}>
+                          <span style={{
+                            width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                            background: a.status === "completada" ? "#4ade80" : a.status === "cancelada" ? "#f87171" : a.status === "confirmada" ? "var(--accent)" : "#f59e0b"
+                          }} />
+                          <span style={{ minWidth: 90 }}>{formatDate(a.date, idioma)}</span>
+                          <span style={{ color: "var(--text-secondary)" }}>{a.service?.name || "—"}</span>
+                          <span style={{ marginLeft: "auto", fontWeight: 600 }}>{a.service?.price ? formatCurrency(a.service.price) : ""}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HistoryView({ appointments, barbers }) {
   const { barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
