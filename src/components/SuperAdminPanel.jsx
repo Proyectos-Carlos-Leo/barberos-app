@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, onValue, update, set, remove } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { PLANS } from '../utils/plans';
+import { emailToGroupId } from './GroupPanel';
 
 const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
@@ -211,6 +212,7 @@ function SuperAdminDashboard({ onLogout }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // all | activas | suspendidas
   const [expanded, setExpanded] = useState(null);
+  const [panelView, setPanelView] = useState('barberias'); // barberias | grupos
 
   useEffect(() => {
     const unsubscribe = onValue(ref(db, 'barberias'), (snapshot) => {
@@ -365,6 +367,34 @@ function SuperAdminDashboard({ onLogout }) {
           <GlobalStat label="Ingresos procesados" value={fmtMoney(globals.ingresosTotal)} sub="Citas completadas" color="#f59e0b" />
         </div>
 
+        {/* ── Selector de sección ── */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 22 }}>
+          {[
+            { key: 'barberias', label: '💈 Barberías' },
+            { key: 'grupos', label: '🏢 Grupos Multi-Sucursal' },
+          ].map(v => (
+            <button
+              key={v.key}
+              onClick={() => setPanelView(v.key)}
+              style={{
+                background: panelView === v.key ? '#a78bfa' : 'transparent',
+                border: `1px solid ${panelView === v.key ? '#a78bfa' : '#2a2a2a'}`,
+                color: panelView === v.key ? '#0a0a0a' : '#777',
+                borderRadius: 10, padding: '9px 18px',
+                fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                textTransform: 'uppercase', letterSpacing: 0.5,
+                transition: 'all 0.15s'
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        {panelView === 'grupos' && <GroupsManager allBarberias={barberias} />}
+
+        {panelView === 'barberias' && (<>
         {/* ── Buscador + filtros ── */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: '1 1 260px', minWidth: 200 }}>
@@ -653,7 +683,251 @@ function SuperAdminDashboard({ onLogout }) {
             })}
           </div>
         )}
+        </>)}
       </div>
+    </div>
+  );
+}
+
+// =========================================================
+// GESTIÓN DE GRUPOS MULTI-SUCURSAL
+// =========================================================
+function GroupsManager({ allBarberias }) {
+  const [grupos, setGrupos] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [expanded, setExpanded] = useState(null);
+  const [form, setForm] = useState({ nombre: '', email: '', slugs: {}, asignarPlan: true });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const unsub = onValue(ref(db, 'grupos'), (snap) => {
+      setGrupos(snap.val() || {});
+      setLoading(false);
+    }, () => setLoading(false));
+    return () => unsub();
+  }, []);
+
+  const toggleFormSlug = (slug) =>
+    setForm(f => ({ ...f, slugs: { ...f.slugs, [slug]: !f.slugs[slug] } }));
+
+  const handleCreate = async () => {
+    const nombre = form.nombre.trim();
+    const email = form.email.trim().toLowerCase();
+    const selectedSlugs = Object.keys(form.slugs).filter(s => form.slugs[s]);
+
+    if (!nombre) { alert('Ponle nombre al grupo'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Email del dueño inválido'); return; }
+    if (selectedSlugs.length === 0) { alert('Selecciona al menos una barbería'); return; }
+
+    const gid = emailToGroupId(email);
+    if (grupos[gid]) { alert('Ya existe un grupo para ese email. Edítalo en la lista.'); return; }
+
+    setSaving(true);
+    try {
+      const slugsObj = {};
+      selectedSlugs.forEach(s => { slugsObj[s] = true; });
+      await set(ref(db, `grupos/${gid}`), {
+        nombre,
+        email_owner: email,
+        slugs: slugsObj,
+        createdAt: new Date().toISOString(),
+      });
+      if (form.asignarPlan) {
+        await Promise.all(selectedSlugs.map(s =>
+          update(ref(db, `barberias/${s}/config`), { plan: 'multisucursal' })
+        ));
+      }
+      setForm({ nombre: '', email: '', slugs: {}, asignarPlan: true });
+      setShowForm(false);
+    } catch (e) {
+      console.error(e);
+      alert('Error al crear el grupo. Verifica las reglas de Firebase.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleGroupSlug = async (gid, slug, currentlyIn) => {
+    try {
+      await set(ref(db, `grupos/${gid}/slugs/${slug}`), currentlyIn ? null : true);
+    } catch (e) { alert('Error al actualizar el grupo.'); }
+  };
+
+  const handleDelete = async (gid, nombre) => {
+    if (!window.confirm(`¿Eliminar el grupo "${nombre}"?\n\nLas barberías NO se borran, solo el acceso consolidado del dueño.`)) return;
+    try { await remove(ref(db, `grupos/${gid}`)); } catch (e) { alert('Error al eliminar.'); }
+  };
+
+  const inputStyle = {
+    background: '#0a0a0a', color: '#fff', border: '1px solid #2a2a2a',
+    borderRadius: 8, padding: '11px 14px', width: '100%', fontSize: 14,
+    outline: 'none', boxSizing: 'border-box', fontFamily: "'Barlow', sans-serif"
+  };
+
+  const gruposList = Object.entries(grupos).map(([gid, g]) => ({ gid, ...g }));
+
+  return (
+    <div>
+      {/* Crear grupo */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+        <p style={{ fontSize: 12, color: '#444', fontWeight: 600 }}>
+          {gruposList.length} {gruposList.length === 1 ? 'grupo' : 'grupos'} · El dueño entra en <span style={{ color: '#a78bfa' }}>/mi-grupo</span>
+        </p>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{
+            background: showForm ? 'transparent' : 'linear-gradient(135deg, #a78bfa, #c4b5fd)',
+            border: showForm ? '1px solid #2a2a2a' : 'none',
+            color: showForm ? '#888' : '#0a0a0a',
+            borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 800,
+            cursor: 'pointer', fontFamily: "'Barlow Condensed', sans-serif",
+            textTransform: 'uppercase', letterSpacing: 0.5
+          }}
+        >
+          {showForm ? 'Cancelar' : '➕ Crear grupo'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ background: '#141414', border: '1px solid #a78bfa44', borderRadius: 14, padding: 20, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 14 }}>
+            <div>
+              <label style={{ fontSize: 10, color: '#666', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Nombre del grupo</label>
+              <input style={inputStyle} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Grupo Barberías del Norte" />
+            </div>
+            <div>
+              <label style={{ fontSize: 10, color: '#666', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Email del dueño</label>
+              <input style={inputStyle} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="dueno@grupo.com" type="email" />
+            </div>
+          </div>
+
+          <label style={{ fontSize: 10, color: '#666', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>Sucursales del grupo</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {allBarberias.map(b => (
+              <button
+                key={b.slug}
+                onClick={() => toggleFormSlug(b.slug)}
+                style={{
+                  background: form.slugs[b.slug] ? '#a78bfa' : 'transparent',
+                  border: `1px solid ${form.slugs[b.slug] ? '#a78bfa' : '#2a2a2a'}`,
+                  color: form.slugs[b.slug] ? '#0a0a0a' : '#777',
+                  borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+                }}
+              >
+                {form.slugs[b.slug] ? '✓ ' : ''}{b.nombre}
+              </button>
+            ))}
+            {allBarberias.length === 0 && <span style={{ color: '#555', fontSize: 13 }}>No hay barberías registradas.</span>}
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#999', cursor: 'pointer', marginBottom: 16 }}>
+            <input
+              type="checkbox"
+              checked={form.asignarPlan}
+              onChange={e => setForm(f => ({ ...f, asignarPlan: e.target.checked }))}
+              style={{ width: 16, height: 16, accentColor: '#a78bfa' }}
+            />
+            Asignar plan Multi-Sucursal a las barberías seleccionadas
+          </label>
+
+          <p style={{ fontSize: 11, color: '#555', marginBottom: 14 }}>
+            ℹ️ El dueño necesita un usuario en Firebase Authentication con ese email para poder entrar a /mi-grupo.
+          </p>
+
+          <button
+            onClick={handleCreate}
+            disabled={saving}
+            style={{
+              background: 'linear-gradient(135deg, #a78bfa, #c4b5fd)',
+              color: '#0a0a0a', border: 'none', borderRadius: 10,
+              padding: '11px 24px', fontSize: 13, fontWeight: 800,
+              cursor: saving ? 'wait' : 'pointer',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              textTransform: 'uppercase', letterSpacing: 0.5
+            }}
+          >
+            {saving ? 'Creando…' : 'Crear grupo'}
+          </button>
+        </div>
+      )}
+
+      {/* Lista de grupos */}
+      {loading ? (
+        <div style={{ color: '#555', textAlign: 'center', padding: 40, fontSize: 14 }}>Cargando…</div>
+      ) : gruposList.length === 0 && !showForm ? (
+        <div style={{ color: '#555', textAlign: 'center', padding: '50px 20px', background: '#111', border: '1px dashed #2a2a2a', borderRadius: 14 }}>
+          <p style={{ fontSize: 32, marginBottom: 10 }}>🏢</p>
+          <p style={{ fontSize: 14 }}>Aún no hay grupos multi-sucursal.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {gruposList.map(g => {
+            const isOpen = expanded === g.gid;
+            const groupSlugs = Object.keys(g.slugs || {}).filter(s => g.slugs[s]);
+            return (
+              <div key={g.gid} style={{ background: '#141414', border: `1px solid ${isOpen ? '#a78bfa44' : '#1f1f1f'}`, borderRadius: 12 }}>
+                <div
+                  onClick={() => setExpanded(isOpen ? null : g.gid)}
+                  style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', flexWrap: 'wrap' }}
+                >
+                  <div style={{
+                    width: 40, height: 40, flexShrink: 0,
+                    background: '#a78bfa18', border: '1px solid #a78bfa44',
+                    borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18
+                  }}>🏢</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ color: '#eee', fontSize: 15, fontWeight: 700 }}>{g.nombre}</span>
+                    <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {g.email_owner} · {groupSlugs.length} sucursal{groupSlugs.length !== 1 ? 'es' : ''}
+                    </div>
+                  </div>
+                  <span style={{ color: '#444', fontSize: 12, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                </div>
+
+                {isOpen && (
+                  <div style={{ borderTop: '1px solid #1f1f1f', padding: '14px 16px' }}>
+                    <p style={{ fontSize: 10, color: '#555', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
+                      Sucursales (clic para agregar / quitar)
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                      {allBarberias.map(b => {
+                        const inGroup = !!(g.slugs && g.slugs[b.slug]);
+                        return (
+                          <button
+                            key={b.slug}
+                            onClick={() => toggleGroupSlug(g.gid, b.slug, inGroup)}
+                            style={{
+                              background: inGroup ? '#a78bfa' : 'transparent',
+                              border: `1px solid ${inGroup ? '#a78bfa' : '#2a2a2a'}`,
+                              color: inGroup ? '#0a0a0a' : '#777',
+                              borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700,
+                              cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+                            }}
+                          >
+                            {inGroup ? '✓ ' : ''}{b.nombre}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      onClick={() => handleDelete(g.gid, g.nombre)}
+                      style={{
+                        background: 'transparent', border: '1px solid #ef444444', color: '#ef4444',
+                        borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+                      }}
+                    >
+                      🗑 Eliminar grupo
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

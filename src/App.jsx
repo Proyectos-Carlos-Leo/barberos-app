@@ -5,6 +5,7 @@ import ClientView from './components/ClientView';
 import AdminView from './components/AdminView';
 import NotFound from './components/NotFound';
 import SuperAdminPanel from './components/SuperAdminPanel';
+import GroupPanel from './components/GroupPanel';
 import CheckAppointment from './components/CheckAppointment';
 import MyStamps from './components/MyStamps';
 import OAuthCallback from './components/OAuthCallback';
@@ -14,6 +15,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginScreen />} />
       <Route path="/founders" element={<SuperAdminPanel />} />
+      <Route path="/mi-grupo" element={<GroupPanel />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/:slug" element={<SlugWrapper><LoginScreen mode="client" /></SlugWrapper>} />
       <Route path="/:slug/cliente" element={<SlugWrapper><ClientView /></SlugWrapper>} />

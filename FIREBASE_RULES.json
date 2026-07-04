@@ -92,6 +92,13 @@
           ".write": "auth != null && (root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')"
         }
       }
+    },
+    "grupos": {
+      ".read": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')",
+      "$grupoId": {
+        ".read": "auth != null && (data.child('email_owner').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')",
+        ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')"
+      }
     }
   }
 }
