@@ -1,63 +1,95 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false,
-
     "barberias": {
+      ".read": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')",
       "$slug": {
-
+        ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')",
         "config": {
           ".read": true,
-          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || (!data.exists() ? newData.child('email_admin').val() == auth.token.email : data.child('email_admin').val() == auth.token.email))",
+          ".write": "auth != null && (data.child('email_admin').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')",
           "google_oauth": {
             ".read": false,
             ".write": false
           }
         },
-
         "private": {
           ".read": false,
           ".write": false
         },
-
-        "barberos": {
-          ".read": true,
-          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
-        },
-
-        "servicios": {
-          ".read": true,
-          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
-        },
-
-        "productos": {
-          ".read": true,
-          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
-        },
-
-        "bloqueos": {
-          ".read": true,
-          ".write": "auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)"
-        },
-
         "citas": {
           ".read": true,
           "$citaId": {
-            ".write": "(auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)) || (!data.exists() && newData.exists()) || (data.exists() && newData.exists() && newData.child('status').val() == 'cancelada')",
-            "client": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
-            "phone":  { ".validate": "newData.isString() && newData.val().length >= 7 && newData.val().length <= 20" },
-            "email":  { ".validate": "newData.isString() && newData.val().length <= 120" },
-            "notes":  { ".validate": "newData.isString() && newData.val().length <= 500" }
+            ".write": "
+              (
+                !data.exists() && newData.exists()
+                && newData.hasChildren(['client', 'phone', 'service', 'date', 'time', 'status', 'folio'])
+                && newData.child('client').isString()
+                && newData.child('client').val().length > 1
+                && newData.child('client').val().length < 80
+                && newData.child('phone').isString()
+                && newData.child('phone').val().length >= 8
+                && newData.child('phone').val().length <= 20
+                && newData.child('status').val() == 'pendiente'
+                && newData.child('folio').isString()
+                && newData.child('folio').val().length == 6
+                && (!newData.child('notes').exists() || newData.child('notes').val().length < 500)
+                && (!newData.child('client_email').exists() || (newData.child('client_email').isString() && newData.child('client_email').val().length < 100))
+                && root.child('barberias').child($slug).child('config').exists()
+              ) || (
+                data.exists() && newData.exists()
+                && newData.child('status').val() == 'cancelada'
+                && data.child('folio').val() == newData.child('folio').val()
+                && data.child('phone').val() == newData.child('phone').val()
+                && data.child('client').val() == newData.child('client').val()
+              ) || (
+                auth != null && (
+                  root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email
+                  || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43'
+                  || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1'
+                )
+              )"
           }
         },
-
         "canjes": {
           ".read": true,
           "$canjeId": {
-            ".write": "(auth != null && (auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1' || root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email)) || (!data.exists() && newData.exists())",
-            "phone":  { ".validate": "newData.isString() && newData.val().length >= 7 && newData.val().length <= 20" },
-            "client": { ".validate": "newData.isString() && newData.val().length <= 100" }
+            ".write": "
+              (
+                !data.exists() && newData.exists()
+                && newData.hasChildren(['client', 'phone', 'reward_requested', 'status', 'createdAt'])
+                && newData.child('status').val() == 'pendiente'
+                && newData.child('phone').isString()
+                && newData.child('phone').val().length >= 8
+                && newData.child('phone').val().length <= 20
+                && newData.child('client').isString()
+                && newData.child('client').val().length > 1
+                && newData.child('client').val().length < 80
+                && newData.child('reward_requested').isString()
+                && newData.child('reward_requested').val().length < 100
+              ) || (
+                auth != null && (
+                  root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email
+                  || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43'
+                  || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1'
+                )
+              )"
           }
+        },
+        "barberos": {
+          ".read": true,
+          ".write": "auth != null && (root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')"
+        },
+        "servicios": {
+          ".read": true,
+          ".write": "auth != null && (root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')"
+        },
+        "bloqueos": {
+          ".read": true,
+          ".write": "auth != null && (root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')"
+        },
+        "productos": {
+          ".read": true,
+          ".write": "auth != null && (root.child('barberias').child($slug).child('config').child('email_admin').val() == auth.token.email || auth.uid == 'p8knfgFj1OXQkS6xKHSjtkPXEG43' || auth.uid == 'DFOJycimNmTyxBWVoMgESgXkP5p1')"
         }
       }
     }
