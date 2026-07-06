@@ -141,6 +141,7 @@ function GroupLogin({ onLogin }) {
 function GroupDashboard({ user, onLogout }) {
   const [grupo, setGrupo] = useState(undefined); // undefined = cargando, null = no existe
   const [branchData, setBranchData] = useState({});
+  const [copied, setCopied] = useState(null); // slug cuyo link se acaba de copiar
 
   // Cargar el grupo del dueño (ID derivado de su email)
   useEffect(() => {
@@ -354,7 +355,7 @@ function GroupDashboard({ user, onLogout }) {
                 </div>
 
                 {/* Acciones */}
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
                   <a
                     href={`/${b.slug}/admin`}
                     target="_blank"
@@ -368,6 +369,38 @@ function GroupDashboard({ user, onLogout }) {
                   >
                     ⚙️ Panel admin
                   </a>
+                  <a
+                    href={`/${b.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Así ven tu barbería los clientes"
+                    style={{
+                      textDecoration: 'none', background: '#2a2a2a',
+                      border: '1px solid #3a3a3a', color: '#aaa',
+                      borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700,
+                      fontFamily: "'Barlow', sans-serif", whiteSpace: 'nowrap'
+                    }}
+                  >
+                    👤 Ver como cliente
+                  </a>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/${b.slug}/cliente`);
+                      setCopied(b.slug);
+                      setTimeout(() => setCopied(null), 2000);
+                    }}
+                    title="Copiar el link de agendar para compartirlo con clientes"
+                    style={{
+                      background: copied === b.slug ? '#10b98122' : 'transparent',
+                      border: `1px solid ${copied === b.slug ? '#10b98155' : '#3a3a3a'}`,
+                      color: copied === b.slug ? '#10b981' : '#aaa',
+                      borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700,
+                      cursor: 'pointer', fontFamily: "'Barlow', sans-serif", whiteSpace: 'nowrap',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {copied === b.slug ? '✓ Copiado' : '🔗 Copiar link de citas'}
+                  </button>
                 </div>
               </div>
             </div>
