@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 import { getPlan, upgradeWhatsAppUrl } from '../utils/plans';
-import { IconConfiguracion, IconApariencia, IconCompletado } from './icons/BrandIcons';
+import { IconConfiguracion, IconApariencia, IconCompletado, PLAN_ICON_MAP, IconPremium } from './icons/BrandIcons';
 
 const stripEmoji = (str) =>
   String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
@@ -247,7 +247,7 @@ export default function AdminSettings({ open, onClose }) {
                   background: `${plan.color}22`, border: `1px solid ${plan.color}55`,
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22
                 }}>
-                  {plan.icon}
+                  {(() => { const PlanIcon = PLAN_ICON_MAP[plan.id] || IconPremium; return <PlanIcon size={22} glow={false} color={plan.color} />; })()}
                 </div>
                 <div style={{ flex: 1, minWidth: 160 }}>
                   <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18, fontWeight: 800, color: plan.color, textTransform: "uppercase", letterSpacing: 0.5 }}>

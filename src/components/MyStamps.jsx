@@ -5,7 +5,7 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 import { getPlan } from '../utils/plans';
-import { IconNavaja, IconBuscar, IconBloquear } from './icons/BrandIcons';
+import { IconNavaja, IconBuscar, IconBloquear, IconSol, IconLuna } from './icons/BrandIcons';
 
 const stripEmoji = (str) =>
   String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
@@ -186,7 +186,7 @@ export default function MyStamps() {
         : "radial-gradient(ellipse at center, #e0f4fc 0%, #f4f6f8 70%)"
     }}>
       <button className="theme-toggle" onClick={toggleTheme} style={{ position: "absolute", top: 20, right: 20 }}>
-        {theme === 'dark' ? '☀️' : '🌙'}
+{theme === 'dark' ? <IconSol size={16} glow={false} /> : <IconLuna size={16} glow={false} />}
       </button>
       <button onClick={() => navigate(`/${slug}`)} style={{ position: "absolute", top: 20, left: 20, background: "transparent", border: "1px solid var(--border-strong)", color: "var(--text-tertiary)", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>
         {t("← Volver")}

@@ -17,7 +17,8 @@ import {
   IconReportes, IconBloquear, IconLista, IconPopular, IconPremium, IconRapido,
   IconApariencia, IconBarba, IconClienteJoven, IconCompletado, IconDescanso,
   IconNotificaciones, IconEmail, IconCrecimiento, IconTiempo, IconGanancias, IconFactura
-, IconBuscar, IconEliminar, IconAgregar
+, IconBuscar, IconEliminar, IconAgregar, PLAN_ICON_MAP,
+  IconLista as IconListaFallback, IconBuzonVacio
 } from './icons/BrandIcons';
 
 // Quita el emoji líder de un texto ya traducido (los diccionarios ES/EN
@@ -464,7 +465,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               whiteSpace: "nowrap",
               textTransform: "uppercase"
             }}>
-            {plan.icon} {t("Plan")} {plan.nombre}
+            {(() => { const PlanIcon = PLAN_ICON_MAP[plan.id] || IconListaFallback; return <PlanIcon size={13} glow={false} color={plan.color} />; })()} {t("Plan")} {plan.nombre}
           </div>
 
           {/* Mejorar plan (oculto si ya tiene el plan más alto) */}
@@ -829,7 +830,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
       <div style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
-            <p style={{ fontSize: 36, marginBottom: 8 }}>📭</p>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><IconBuzonVacio size={36} glow={false} /></div>
             <p style={{ fontSize: 14, marginBottom: 14 }}>{t("No hay citas con estos filtros")}</p>
             <button
               onClick={() => { setSearchQuery(""); setFilterDate(getTodayStr()); setFilterBarber("all"); setFilterStatus("all"); }}
@@ -1083,7 +1084,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
           borderRadius: 10, padding: "12px 16px", marginBottom: 20,
           display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap"
         }}>
-          <span style={{ fontSize: 18 }}>{plan?.icon || "📋"}</span>
+          {(() => { const PlanIcon = PLAN_ICON_MAP[plan?.id] || IconListaFallback; return <PlanIcon size={18} glow={false} />; })()}
           <p style={{ fontSize: 13, color: "var(--text-secondary)", flex: 1, minWidth: 200 }}>
             {t("Tu plan {plan} incluye hasta {max} barbero(s). Para agregar más, mejora tu plan.", { plan: plan?.nombre || "", max: plan?.maxBarberos ?? "" })}
           </p>
@@ -3380,7 +3381,7 @@ Folio: ${appt.folio || '—'}`);
           {/* Empty state global */}
           {dayAppts.length === 0 && (
             <div style={{ position: 'absolute', left: 50, right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-              <p style={{ fontSize: 32, marginBottom: 6 }}>📭</p>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}><IconBuzonVacio size={32} glow={false} /></div>
               <p style={{ fontSize: 13, fontWeight: 600 }}>{t('Sin citas este día')}</p>
             </div>
           )}

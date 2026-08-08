@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
-import { IconNavaja, IconPremium, IconPaquete, IconBarberia, IconConfiguracion } from './icons/BrandIcons';
+import { IconNavaja, IconPremium, IconPaquete, IconBarberia, IconConfiguracion, IconSol, IconLuna } from './icons/BrandIcons';
 
 const stripEmoji = (str) =>
   String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
@@ -73,7 +73,7 @@ function ClientLanding({ slug }) {
         title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
         style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}
       >
-        {theme === 'dark' ? '☀️' : '🌙'}
+{theme === 'dark' ? <IconSol size={16} glow={false} /> : <IconLuna size={16} glow={false} />}
       </button>
 
       <div className="fade-in-up" style={{ textAlign: "center", padding: "40px 20px", maxWidth: 480, position: "relative", zIndex: 1 }}>
@@ -283,7 +283,7 @@ function AdminLanding({ slug }) {
         title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
         style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}
       >
-        {theme === 'dark' ? '☀️' : '🌙'}
+{theme === 'dark' ? <IconSol size={16} glow={false} /> : <IconLuna size={16} glow={false} />}
       </button>
 
       <div className="fade-in-up" style={{ textAlign: "center", padding: "40px 20px", maxWidth: 480, position: "relative", zIndex: 1 }}>
@@ -341,7 +341,7 @@ function GlobalLogin() {
         onClick={toggleTheme}
         style={{ position: "absolute", top: 20, right: 20, zIndex: 2 }}
       >
-        {theme === 'dark' ? '☀️' : '🌙'}
+{theme === 'dark' ? <IconSol size={16} glow={false} /> : <IconLuna size={16} glow={false} />}
       </button>
 
       <div className="fade-in-up" style={{ textAlign: "center", padding: "40px 20px", maxWidth: 500, position: "relative", zIndex: 1 }}>

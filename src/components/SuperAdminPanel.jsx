@@ -4,7 +4,7 @@ import { ref, onValue, update, set, remove } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { PLANS } from '../utils/plans';
 import { emailToGroupId } from './GroupPanel';
-import { IconConfiguracion, IconBarberia, IconGrupo, IconBuscar, IconClienteJoven, IconEliminar, IconAgregar } from './icons/BrandIcons';
+import { IconConfiguracion, IconBarberia, IconGrupo, IconBuscar, IconClienteJoven, IconEliminar, IconAgregar, PLAN_ICON_MAP, IconPremium } from './icons/BrandIcons';
 
 const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
@@ -503,8 +503,9 @@ function SuperAdminDashboard({ onLogout }) {
                               <span title={`Plan ${p.nombre}`} style={{
                                 fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
                                 background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}44`,
-                                letterSpacing: 0.5, textTransform: 'uppercase'
-                              }}>{p.icon} {p.nombre}</span>
+                                letterSpacing: 0.5, textTransform: 'uppercase',
+                                display: 'inline-flex', alignItems: 'center', gap: 4
+                              }}>{(() => { const PlanIcon = PLAN_ICON_MAP[p.id] || IconPremium; return <PlanIcon size={10} glow={false} color={p.color} />; })()} {p.nombre}</span>
                             );
                           })()}
                         </div>
@@ -573,7 +574,10 @@ function SuperAdminDashboard({ onLogout }) {
                                 transition: 'all 0.15s', whiteSpace: 'nowrap'
                               }}
                             >
-                              {p.icon} {p.nombre}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                {(() => { const PlanIcon = PLAN_ICON_MAP[p.id] || IconPremium; return <PlanIcon size={12} glow={false} color={active ? '#0a0a0a' : p.color} />; })()}
+                                {p.nombre}
+                              </span>
                             </button>
                           );
                         })}

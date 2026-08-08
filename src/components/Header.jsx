@@ -4,7 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
-import { IconConfiguracion } from './icons/BrandIcons';
+import { IconConfiguracion, IconSol, IconLuna } from './icons/BrandIcons';
 import { useTheme } from '../context/ThemeContext';
 import AdminSettings from './AdminSettings';
 
@@ -117,7 +117,7 @@ export default function Header({ userType, navItems = [] }) {
             title={theme === 'dark' ? t('Modo claro') : t('Modo oscuro')}
             aria-label={t("Cambiar tema")}
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+    {theme === 'dark' ? <IconSol size={16} glow={false} /> : <IconLuna size={16} glow={false} />}
           </button>
 
           {/* Badge rol — clickeable para admin */}

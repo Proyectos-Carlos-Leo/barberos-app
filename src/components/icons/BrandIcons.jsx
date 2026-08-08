@@ -472,6 +472,46 @@ export function IconGrupo({ size = 24, glow = true, color = ICON_COLORS.purple }
   );
 }
 
+// Sol — modo claro (dorado)
+export function IconSol({ size = 24, glow = true, color = ICON_COLORS.gold }) {
+  const s = strokeProps(color);
+  const rays = [0, 45, 90, 135, 180, 225, 270, 315];
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <circle cx="12" cy="12" r="4.2" {...s} />
+      {rays.map((deg) => (
+        <path key={deg} d="M12 3.3 L12 5.8" {...s} strokeWidth={1.8} transform={`rotate(${deg} 12 12)`} />
+      ))}
+    </IconBase>
+  );
+}
+
+// Luna — modo oscuro (azul claro, forma creciente dentro de un círculo)
+export function IconLuna({ size = 24, glow = true, color = ICON_COLORS.blue }) {
+  const s = strokeProps(color);
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <circle cx="12" cy="12" r="9" {...s} strokeWidth={1.2} opacity={0.35} />
+      <path d="M14.5 5.5 C 10.5 6, 8 9.2, 8 13 C 8 16.8, 10.8 20, 14.5 20 C 11.3 20, 9 17, 9 13 C 9 9, 11.3 5.9, 14.5 5.5 Z" {...s} />
+    </IconBase>
+  );
+}
+
+// Buzón vacío — empty state (cyan/gris)
+export function IconBuzonVacio({ size = 24, glow = true, color = ICON_COLORS.cyan }) {
+  const s = strokeProps(color);
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <rect x="4" y="9" width="13" height="9" rx="1.5" {...s} />
+      <path d="M4 9 C 4 6, 6.3 4, 9 4 L 12 4 C 14.7 4, 17 6, 17 9" {...s} />
+      <path d="M4 9 L17 9" {...s} strokeWidth={1.3} />
+      <path d="M17 12 L20.5 12 L20.5 15.5 L17 15.5" {...s} strokeWidth={1.3} />
+      <path d="M8.5 13 L12.5 13" {...s} strokeWidth={1.3} strokeDasharray="0.5 2" />
+      <FlowerAccent color={color} cx={18.5} cy={19} r={1.7} />
+    </IconBase>
+  );
+}
+
 // ==================== MAPA NOMBRE → COMPONENTE ====================
 // Útil para reemplazos programáticos y para el catálogo de vista previa.
 export const BRAND_ICONS = {
@@ -504,4 +544,17 @@ export const BRAND_ICONS = {
   eliminar: IconEliminar,
   agregar: IconAgregar,
   grupo: IconGrupo,
+  sol: IconSol,
+  luna: IconLuna,
+  buzonVacio: IconBuzonVacio,
+};
+
+// ---- Íconos de planes de suscripción (usado por utils/plans.js) ----
+// plans.js es un archivo .js plano (no JSX), así que guarda solo un
+// identificador de texto en `plan.icon`; este mapa lo resuelve a componente.
+export const PLAN_ICON_MAP = {
+  basico: IconCrecimiento,
+  profesional: IconBarberia,
+  premium: IconPremium,
+  multisucursal: IconGrupo,
 };
