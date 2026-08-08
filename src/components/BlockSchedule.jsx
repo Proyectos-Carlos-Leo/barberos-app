@@ -4,6 +4,10 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { formatDate, getTodayStr } from '../utils/helpers';
 import { useT } from '../utils/i18n';
+import { IconBloquear, IconCalendar, IconDescanso, IconTiempo } from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 
 // Generar horas desde config
 function generateHours(horario) {
@@ -95,7 +99,7 @@ export default function BlockSchedule({ barbers, blocks }) {
         fontSize: 18, fontWeight: 700, letterSpacing: 1,
         textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
       }}>
-        {t("🚫 Bloqueo de horarios")}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconBloquear size={18} glow={false} />{stripEmoji(t("🚫 Bloqueo de horarios"))}</span>
       </h3>
       <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 20 }}>
         {t("Bloquea horas, días completos o vacaciones")}
@@ -108,9 +112,9 @@ export default function BlockSchedule({ barbers, blocks }) {
         </label>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
           {[
-            { val: 'hours', label: t('⏰ Horas sueltas'), desc: t('Comida, descanso') },
-            { val: 'fullDay', label: t('📅 Día completo'), desc: t('Día libre') },
-            { val: 'range', label: t('🏖 Vacaciones'), desc: t('Varios días') }
+            { val: 'hours', label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconTiempo size={13} glow={false} />{stripEmoji(t('⏰ Horas sueltas'))}</span>, desc: t('Comida, descanso') },
+            { val: 'fullDay', label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconCalendar size={13} glow={false} />{stripEmoji(t('📅 Día completo'))}</span>, desc: t('Día libre') },
+            { val: 'range', label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconDescanso size={13} glow={false} />{stripEmoji(t('🏖 Vacaciones'))}</span>, desc: t('Varios días') }
           ].map(opt => (
             <div key={opt.val} onClick={() => setType(opt.val)} style={{
               padding: 12, borderRadius: 10,
@@ -192,7 +196,7 @@ export default function BlockSchedule({ barbers, blocks }) {
       {success && <p style={{ color: 'var(--success)', fontSize: 12, marginBottom: 10 }}>{t("✓ Bloqueo guardado")}</p>}
 
       <button className="btn-gold" onClick={handleSave} disabled={saving} style={{ width: '100%' }}>
-        {saving ? t('Guardando...') : t('🚫 Aplicar bloqueo')}
+        {saving ? t('Guardando...') : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconBloquear size={13} glow={false} color="#0a0a0a" />{stripEmoji(t('🚫 Aplicar bloqueo'))}</span>}
       </button>
 
       {/* Lista de bloqueos activos */}
@@ -207,14 +211,15 @@ export default function BlockSchedule({ barbers, blocks }) {
           </h4>
           <div style={{ display: 'grid', gap: 8 }}>
             {sortedBlocks.map(block => {
-              const typeLabel = { hours: t('⏰ Horas'), fullDay: t('📅 Día completo'), range: t('🏖 Vacaciones') }[block.type] || '🚫';
+              const typeIcon = { hours: <IconTiempo size={12} glow={false} />, fullDay: <IconCalendar size={12} glow={false} />, range: <IconDescanso size={12} glow={false} /> }[block.type] || <IconBloquear size={12} glow={false} />;
+              const typeLabel = { hours: stripEmoji(t('⏰ Horas')), fullDay: stripEmoji(t('📅 Día completo')), range: stripEmoji(t('🏖 Vacaciones')) }[block.type] || '';
               return (
                 <div key={block.id} style={{
                   background: 'var(--bg-elevated-2)', border: '1px solid var(--border)',
                   borderRadius: 8, padding: '10px 14px',
                   display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'
                 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{typeLabel}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>{typeIcon}{typeLabel}</span>
                   <span style={{ flex: 1, fontSize: 13 }}>
                     <strong>{getBarberName(block.barberId)}</strong>
                     <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>

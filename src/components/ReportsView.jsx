@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react';
 import { formatCurrency, getTodayStr } from '../utils/helpers';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { IconReportes, IconGanancias, IconFactura, IconCalendar, IconBarberia, IconPaquete } from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 
 // ==================== EXPORTAR CSV ====================
 const downloadCSV = (filename, rows) => {
@@ -383,7 +387,7 @@ export default function ReportsView({ appointments, barbers }) {
               opacity: completed.length === 0 ? 0.4 : 1
             }}
           >
-            {t("📊 Exportar barberos")}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconReportes size={13} glow={false} />{stripEmoji(t("📊 Exportar barberos"))}</span>
           </button>
           <button
             onClick={() => exportFullReport(appointments, barbers)}
@@ -411,14 +415,14 @@ export default function ReportsView({ appointments, barbers }) {
       {/* Resumen general */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
         <KPI label={t("Total citas completadas")} value={completed.length} color="#4ade80" icon="✓" />
-        <KPI label={t("Ingresos totales")} value={formatCurrency(totalRevenue)} color="var(--accent)" icon="💰" />
-        <KPI label={t("Ticket promedio")} value={formatCurrency(Math.round(avgTicket))} color="#60a5fa" icon="🧾" />
-        <KPI label={t("Últimos 7 días")} value={formatCurrency(totalLast7)} color="#a78bfa" icon="📅" />
+        <KPI label={t("Ingresos totales")} value={formatCurrency(totalRevenue)} color="var(--accent)" icon={<IconGanancias size={18} glow={false} />} />
+        <KPI label={t("Ticket promedio")} value={formatCurrency(Math.round(avgTicket))} color="#60a5fa" icon={<IconFactura size={18} glow={false} />} />
+        <KPI label={t("Últimos 7 días")} value={formatCurrency(totalLast7)} color="#a78bfa" icon={<IconCalendar size={18} glow={false} />} />
       </div>
 
       {/* HISTOGRAMA: Ingresos últimos 7 días */}
       <Card
-        title={t("📊 Ingresos últimos {n} días", { n: daysRange })}
+        title={<span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconReportes size={17} glow={false} />{stripEmoji(t("📊 Ingresos últimos {n} días", { n: daysRange }))}</span>}
         subtitle={`${t("Total")}: ${formatCurrency(totalLastN)}`}
         action={
           <div style={{ display: "flex", gap: 6, background: "var(--bg-track)", padding: 4, borderRadius: 8 }}>
@@ -447,7 +451,7 @@ export default function ReportsView({ appointments, barbers }) {
         }
       >
         {totalLast7 === 0 ? (
-          <EmptyState icon="📊" message={t("Aún no hay ingresos registrados")} />
+          <EmptyState icon={<IconReportes size={32} glow={false} />} message={t("Aún no hay ingresos registrados")} />
         ) : (
           <div style={{ padding: "24px 0 0" }}>
             {/* Área del histograma */}
@@ -624,7 +628,7 @@ export default function ReportsView({ appointments, barbers }) {
         action={<RangePill value={barbersRange} onChange={setBarbersRange} idioma={idioma} />}
       >
         {topBarbers.length === 0 || topBarbers.every(b => b.count === 0) ? (
-          <EmptyState icon="📊" message={t("Aún no hay datos suficientes")} />
+          <EmptyState icon={<IconReportes size={32} glow={false} />} message={t("Aún no hay datos suficientes")} />
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {topBarbers.map((b, i) => {
@@ -688,12 +692,12 @@ export default function ReportsView({ appointments, barbers }) {
 
       {/* Servicios más vendidos */}
       <Card
-        title={t("💈 Servicios más vendidos")}
+        title={<span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconBarberia size={17} glow={false} />{stripEmoji(t("💈 Servicios más vendidos"))}</span>}
         subtitle={t("Por cantidad de cortes")}
         action={<RangePill value={servicesRange} onChange={setServicesRange} idioma={idioma} />}
       >
         {topServices.length === 0 ? (
-          <EmptyState icon="📊" message={t("Aún no hay datos suficientes")} />
+          <EmptyState icon={<IconReportes size={32} glow={false} />} message={t("Aún no hay datos suficientes")} />
         ) : (
           <div style={{ display: "grid", gap: 14 }}>
             {topServices.map(s => {
@@ -1100,7 +1104,7 @@ function ProductosStats({ appointments, compact = false, idioma }) {
                 {i + 1}
               </span>
               <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', background: 'var(--bg-input)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {p.image ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 18 }}>📦</span>}
+                {p.image ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconPaquete size={18} glow={false} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>

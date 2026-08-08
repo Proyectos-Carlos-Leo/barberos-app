@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { IconConfiguracion } from './icons/BrandIcons';
 import { useTheme } from '../context/ThemeContext';
 import AdminSettings from './AdminSettings';
 
@@ -148,7 +149,7 @@ export default function Header({ userType, navItems = [] }) {
                 if (icon) icon.style.transform = "rotate(0deg)";
               }}
             >
-              <span className="gear-icon" style={{ display: "inline-block", transition: "transform 0.35s ease" }}>⚙️</span>
+              <span className="gear-icon" style={{ display: "inline-flex", transition: "transform 0.35s ease" }}><IconConfiguracion size={16} glow={false} /></span>
             </button>
           ) : (
             <span style={{

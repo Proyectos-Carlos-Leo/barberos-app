@@ -410,6 +410,68 @@ export function IconApariencia({ size = 24, glow = true, color = ICON_COLORS.mag
   );
 }
 
+// ==================== SET 3 — COMPLEMENTARIOS (UI) ====================
+// Conceptos que no estaban en las imágenes de referencia pero que la app
+// necesita para mantener consistencia visual (buscar, eliminar, agregar, grupo).
+
+// Buscar — lupa (cyan)
+export function IconBuscar({ size = 24, glow = true, color = ICON_COLORS.cyan }) {
+  const s = strokeProps(color);
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <circle cx="9.5" cy="9.5" r="6" {...s} />
+      <path d="M14 14 L19.5 19.5" {...s} />
+      <FlowerAccent color={color} cx={18} cy={5} r={1.8} />
+    </IconBase>
+  );
+}
+
+// Eliminar — bote de basura (rojo)
+export function IconEliminar({ size = 24, glow = true, color = ICON_COLORS.red }) {
+  const s = strokeProps(color);
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <path d="M4.5 6.5 L19.5 6.5" {...s} />
+      <path d="M8 6.5 L8.6 4.5 A1 1 0 0 1 9.6 3.8 L14.4 3.8 A1 1 0 0 1 15.4 4.5 L16 6.5" {...s} />
+      <path d="M6.5 6.5 L7.3 20 A1.5 1.5 0 0 0 8.8 21.3 L15.2 21.3 A1.5 1.5 0 0 0 16.7 20 L17.5 6.5" {...s} />
+      <path d="M10.3 10.5 L10.3 17.5 M13.7 10.5 L13.7 17.5" {...s} strokeWidth={1.3} />
+    </IconBase>
+  );
+}
+
+// Agregar — cruz (verde)
+export function IconAgregar({ size = 24, glow = true, color = ICON_COLORS.green }) {
+  const s = strokeProps(color);
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <circle cx="10.5" cy="10.5" r="7.5" {...s} />
+      <path d="M10.5 6.8 L10.5 14.2 M6.8 10.5 L14.2 10.5" {...s} />
+      <FlowerAccent color={color} cx={18} cy={17.5} r={2.2} />
+    </IconBase>
+  );
+}
+
+// Grupo — edificio de oficinas (morado)
+export function IconGrupo({ size = 24, glow = true, color = ICON_COLORS.purple }) {
+  const s = strokeProps(color);
+  return (
+    <IconBase size={size} glow={glow} color={color}>
+      <rect x="5.5" y="3" width="10" height="17.5" rx="1" {...s} />
+      <path d="M8 6.3 L8 6.3 M11.3 6.3 L11.3 6.3 M14.6 6.3 L14.6 6.3" {...s} strokeWidth={0} />
+      <rect x="7.3" y="6" width="1.6" height="1.6" fill={color} stroke="none" />
+      <rect x="11.2" y="6" width="1.6" height="1.6" fill={color} stroke="none" />
+      <rect x="7.3" y="9.5" width="1.6" height="1.6" fill={color} stroke="none" />
+      <rect x="11.2" y="9.5" width="1.6" height="1.6" fill={color} stroke="none" />
+      <rect x="7.3" y="13" width="1.6" height="1.6" fill={color} stroke="none" />
+      <rect x="11.2" y="13" width="1.6" height="1.6" fill={color} stroke="none" />
+      <path d="M15.5 11 L19.5 11 L19.5 20.5 L15.5 20.5" {...s} />
+      <rect x="17" y="14" width="1.4" height="1.4" fill={color} stroke="none" />
+      <path d="M9 20.5 L9 17.3 L11 17.3 L11 20.5" {...s} strokeWidth={1.3} />
+      <FlowerAccent color={color} cx={18.5} cy={19} r={1.7} />
+    </IconBase>
+  );
+}
+
 // ==================== MAPA NOMBRE → COMPONENTE ====================
 // Útil para reemplazos programáticos y para el catálogo de vista previa.
 export const BRAND_ICONS = {
@@ -438,4 +500,8 @@ export const BRAND_ICONS = {
   notificaciones: IconNotificaciones,
   configuracion: IconConfiguracion,
   apariencia: IconApariencia,
+  buscar: IconBuscar,
+  eliminar: IconEliminar,
+  agregar: IconAgregar,
+  grupo: IconGrupo,
 };

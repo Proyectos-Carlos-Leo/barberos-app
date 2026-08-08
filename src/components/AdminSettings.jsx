@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 import { getPlan, upgradeWhatsAppUrl } from '../utils/plans';
-import { IconConfiguracion, IconApariencia } from './icons/BrandIcons';
+import { IconConfiguracion, IconApariencia, IconCompletado } from './icons/BrandIcons';
 
 const stripEmoji = (str) =>
   String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
@@ -308,7 +308,7 @@ export default function AdminSettings({ open, onClose }) {
           {isCalConnected ? (
             <div style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, padding: "14px 16px" }}>
               <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
-                ✅ {t("Las nuevas citas se agregan automáticamente a tu Google Calendar.")}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconCompletado size={13} glow={false} />{t("Las nuevas citas se agregan automáticamente a tu Google Calendar.")}</span>
               </p>
               <button
                 onClick={handleDisconnectGoogle}

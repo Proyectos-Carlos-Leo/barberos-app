@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { IconNavaja } from './icons/BrandIcons';
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function NotFound() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px',
           fontSize: 36
-        }}>✂️</div>
+        }}><IconNavaja size={36} glow={false} /></div>
         <h1 style={{
           fontFamily: "'Barlow Condensed', sans-serif",
           fontSize: 48, fontWeight: 800,

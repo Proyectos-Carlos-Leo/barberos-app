@@ -4,6 +4,10 @@ import { ref, update } from 'firebase/database';
 import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { IconBuscar } from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatCurrency } from '../utils/helpers';
 
@@ -421,7 +425,7 @@ export default function CheckAppointment() {
               disabled={!folio || !phone}
               style={{ width: "100%" }}
             >
-              {t("🔍 Buscar mi cita")}
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}><IconBuscar size={14} glow={false} color="#0a0a0a" />{stripEmoji(t("🔍 Buscar mi cita"))}</span>
             </button>
           </div>
         )}

@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext';
+import { IconNotificaciones } from './icons/BrandIcons';
 
 export default function Notifications() {
   const { notifications, removeNotification } = useApp();
@@ -19,7 +20,7 @@ export default function Notifications() {
       {notifications.map(n => {
         const colors = {
           success: { bg: "var(--success-bg)", border: "var(--success)", icon: "✓" },
-          new: { bg: "var(--accent-bg)", border: "var(--accent)", icon: "🔔" },
+          new: { bg: "var(--accent-bg)", border: "var(--accent)", icon: <IconNotificaciones size={16} glow={false} /> },
           error: { bg: "var(--danger-bg)", border: "var(--danger)", icon: "✕" },
           info: { bg: "var(--accent-bg)", border: "var(--accent)", icon: "ℹ" }
         };

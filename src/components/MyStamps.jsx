@@ -5,7 +5,10 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 import { getPlan } from '../utils/plans';
-import { IconNavaja } from './icons/BrandIcons';
+import { IconNavaja, IconBuscar, IconBloquear } from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 import { useTheme } from '../context/ThemeContext';
 import { formatCurrency } from '../utils/helpers';
 
@@ -152,7 +155,7 @@ export default function MyStamps() {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "var(--bg-main)" }}>
         <div className="fade-in" style={{ textAlign: "center", maxWidth: 420 }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>🚫</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><IconBloquear size={56} glow={false} /></div>
           <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 12 }}>
             {t("Programa no disponible")}
           </h2>
@@ -407,7 +410,7 @@ export default function MyStamps() {
             </div>
 
             <button className="btn-gold" onClick={handleSearch} disabled={!phone} style={{ width: "100%" }}>
-              {t("🔍 Ver mis sellos")}
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}><IconBuscar size={14} glow={false} color="#0a0a0a" />{stripEmoji(t("🔍 Ver mis sellos"))}</span>
             </button>
           </div>
         )}

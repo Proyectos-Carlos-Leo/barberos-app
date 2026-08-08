@@ -17,6 +17,7 @@ import {
   IconReportes, IconBloquear, IconLista, IconPopular, IconPremium, IconRapido,
   IconApariencia, IconBarba, IconClienteJoven, IconCompletado, IconDescanso,
   IconNotificaciones, IconEmail, IconCrecimiento, IconTiempo, IconGanancias, IconFactura
+, IconBuscar, IconEliminar, IconAgregar
 } from './icons/BrandIcons';
 
 // Quita el emoji líder de un texto ya traducido (los diccionarios ES/EN
@@ -717,7 +718,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
       <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
         {/* Búsqueda rápida */}
         <div style={{ position: "relative", marginBottom: 12 }}>
-          <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
+          <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}><IconBuscar size={14} glow={false} color="var(--text-muted)" /></span>
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
@@ -903,7 +904,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
                     </div>
                   </div>
                   <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t("🗑 Eliminar")}</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ id: appt.id, name: appt.client }); }} style={{ padding: "6px 14px", background: "transparent", border: "1px solid var(--border-strong)", color: "#f87171", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconEliminar size={12} glow={false} />{stripEmoji(t("🗑 Eliminar"))}</span></button>
                   </div>
                 </div>
               )}
@@ -1111,7 +1112,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
 
       {showForm && (
         <div className="fade-in card" style={{ padding: 24, marginBottom: 20, border: "1px solid var(--accent-border)" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "var(--accent)" }}>{t("➕ Nuevo barbero")}</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 18, color: "var(--accent)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconAgregar size={14} glow={false} />{stripEmoji(t("➕ Nuevo barbero"))}</span></h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             <div>
               <label style={{ fontSize: 11, color: "var(--text-tertiary)", display: "block", marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>{t("Nombre *")}</label>
@@ -1160,7 +1161,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
                     color: "var(--danger)", padding: "6px 12px", borderRadius: 6,
                     fontSize: 11, fontWeight: 600, cursor: "pointer"
                   }}>
-                    {t("🗑 Quitar")}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconEliminar size={12} glow={false} />{stripEmoji(t("🗑 Quitar"))}</span>
                   </button>
                 )}
               </div>
@@ -1436,7 +1437,7 @@ function ClientsView({ appointments, barbers }) {
       {/* Controles */}
       <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
         <div style={{ position: "relative", marginBottom: 12 }}>
-          <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: 14, pointerEvents: "none" }}>🔍</span>
+          <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}><IconBuscar size={14} glow={false} color="var(--text-muted)" /></span>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -2273,7 +2274,7 @@ function LoyaltyView({ appointments }) {
 
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
             <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-              {t("🔍 Buscar cliente")}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconBuscar size={13} glow={false} />{stripEmoji(t("🔍 Buscar cliente"))}</span>
             </label>
             <input
               value={search}
@@ -2428,7 +2429,7 @@ function LoyaltyConfig({ slug, currentConfig, idioma }) {
                   cursor: "pointer"
                 }}
               >
-                {t("🗑 Quitar imagen")}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconEliminar size={12} glow={false} />{stripEmoji(t("🗑 Quitar imagen"))}</span>
               </button>
             )}
           </div>
@@ -2902,7 +2903,7 @@ function ServicesView({ slug }) {
             </button>
           )}
           <button className="btn-gold" onClick={() => { resetForm(); setShowForm(true); }}>
-            {t("➕ Nuevo servicio")}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconAgregar size={13} glow={false} />{stripEmoji(t("➕ Nuevo servicio"))}</span>
           </button>
         </div>
       </div>
@@ -2922,7 +2923,7 @@ function ServicesView({ slug }) {
             textTransform: "uppercase", marginBottom: 18,
             color: "var(--text-primary)"
           }}>
-            {editingId ? t("✏️ Editar servicio") : t("➕ Nuevo servicio")}
+            {editingId ? t("✏️ Editar servicio") : <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconAgregar size={13} glow={false} />{stripEmoji(t("➕ Nuevo servicio"))}</span>}
           </h3>
 
           {/* Emoji selector */}
@@ -3100,7 +3101,7 @@ function ServicesView({ slug }) {
                     cursor: "pointer"
                   }}
                 >
-                  🗑
+                  <IconEliminar size={13} glow={false} />
                 </button>
               </div>
             </div>
@@ -3857,7 +3858,7 @@ function ProductsView({ slug }) {
                     color: '#ef4444', borderRadius: 8, padding: '8px 14px',
                     fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
                   }}>
-                    {deleting === p.id ? '...' : '🗑'}
+                    {deleting === p.id ? '...' : <IconEliminar size={13} glow={false} />}
                   </button>
                 </div>
               </div>

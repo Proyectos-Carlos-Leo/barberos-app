@@ -4,7 +4,7 @@ import { ref, onValue, update, set, remove } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { PLANS } from '../utils/plans';
 import { emailToGroupId } from './GroupPanel';
-import { IconConfiguracion } from './icons/BrandIcons';
+import { IconConfiguracion, IconBarberia, IconGrupo, IconBuscar, IconClienteJoven, IconEliminar, IconAgregar } from './icons/BrandIcons';
 
 const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
@@ -371,8 +371,8 @@ function SuperAdminDashboard({ onLogout }) {
         {/* ── Selector de sección ── */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 22 }}>
           {[
-            { key: 'barberias', label: '💈 Barberías' },
-            { key: 'grupos', label: '🏢 Grupos Multi-Sucursal' },
+            { key: 'barberias', label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><IconBarberia size={14} glow={false} />Barberías</span> },
+            { key: 'grupos', label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><IconGrupo size={14} glow={false} />Grupos Multi-Sucursal</span> },
           ].map(v => (
             <button
               key={v.key}
@@ -399,7 +399,7 @@ function SuperAdminDashboard({ onLogout }) {
         {/* ── Buscador + filtros ── */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: '1 1 260px', minWidth: 200 }}>
-            <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#555', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
+            <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><IconBuscar size={14} glow={false} color="#555" /></span>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -432,7 +432,7 @@ function SuperAdminDashboard({ onLogout }) {
             color: '#555', textAlign: 'center', padding: '60px 20px',
             background: '#111', border: '1px dashed #2a2a2a', borderRadius: 14
           }}>
-            <p style={{ fontSize: 32, marginBottom: 10 }}>🔍</p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><IconBuscar size={32} glow={false} color="#555" /></div>
             <p style={{ fontSize: 14, marginBottom: 4 }}>
               {barberias.length === 0 ? 'No hay barberías registradas aún' : 'Sin resultados con estos filtros'}
             </p>
@@ -640,7 +640,7 @@ function SuperAdminDashboard({ onLogout }) {
                           onMouseEnter={e => { e.currentTarget.style.background = '#36B1DF'; e.currentTarget.style.color = '#0a0a0a'; }}
                           onMouseLeave={e => { e.currentTarget.style.background = '#36B1DF15'; e.currentTarget.style.color = '#5FC8EC'; }}
                         >
-                          👤 Ver como cliente
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconClienteJoven size={13} glow={false} />Ver como cliente</span>
                         </a>
                         <a
                           href={`/${b.slug}/admin`}
@@ -786,7 +786,7 @@ function GroupsManager({ allBarberias }) {
             textTransform: 'uppercase', letterSpacing: 0.5
           }}
         >
-          {showForm ? 'Cancelar' : '➕ Crear grupo'}
+          {showForm ? 'Cancelar' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconAgregar size={13} glow={false} />Crear grupo</span>}
         </button>
       </div>
 
@@ -859,7 +859,7 @@ function GroupsManager({ allBarberias }) {
         <div style={{ color: '#555', textAlign: 'center', padding: 40, fontSize: 14 }}>Cargando…</div>
       ) : gruposList.length === 0 && !showForm ? (
         <div style={{ color: '#555', textAlign: 'center', padding: '50px 20px', background: '#111', border: '1px dashed #2a2a2a', borderRadius: 14 }}>
-          <p style={{ fontSize: 32, marginBottom: 10 }}>🏢</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><IconGrupo size={32} glow={false} /></div>
           <p style={{ fontSize: 14 }}>Aún no hay grupos multi-sucursal.</p>
         </div>
       ) : (
@@ -877,7 +877,7 @@ function GroupsManager({ allBarberias }) {
                     width: 40, height: 40, flexShrink: 0,
                     background: '#a78bfa18', border: '1px solid #a78bfa44',
                     borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18
-                  }}>🏢</div>
+                  }}><IconGrupo size={18} glow={false} /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ color: '#eee', fontSize: 15, fontWeight: 700 }}>{g.nombre}</span>
                     <div style={{ color: '#555', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -920,7 +920,7 @@ function GroupsManager({ allBarberias }) {
                         cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
                       }}
                     >
-                      🗑 Eliminar grupo
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconEliminar size={13} glow={false} />Eliminar grupo</span>
                     </button>
                   </div>
                 )}

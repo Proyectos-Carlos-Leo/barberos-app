@@ -3,6 +3,10 @@ import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
+import { IconNavaja, IconPremium, IconPaquete, IconBarberia, IconConfiguracion } from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 import { getPlan } from '../utils/plans';
 
 // ==================== PIEZAS COMPARTIDAS DEL LANDING ====================
@@ -99,7 +103,7 @@ function ClientLanding({ slug }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360, margin: "0 auto" }}>
           <Link to={`/${slug}/cliente`} style={{ textDecoration: "none" }}>
             <button className="btn-large" style={{ width: "100%", fontSize: 16, padding: "16px 32px" }}>
-              {t("✂️ Agendar mi cita")}
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}><IconNavaja size={15} glow={false} color="#0a0a0a" />{stripEmoji(t("✂️ Agendar mi cita"))}</span>
             </button>
           </Link>
           <Link to={`/${slug}/mi-cita`} style={{ textDecoration: "none" }}>
@@ -133,7 +137,7 @@ function ClientLanding({ slug }) {
                   e.currentTarget.style.borderColor = "var(--accent-border)";
                 }}
               >
-                {t("⭐ Ver mis sellos")}
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}><IconPremium size={13} glow={false} />{stripEmoji(t("⭐ Ver mis sellos"))}</span>
               </button>
             </Link>
           )}
@@ -215,7 +219,7 @@ function ClientLanding({ slug }) {
                       <div style={{ height: 110, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                         {p.image
                           ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          : <span style={{ fontSize: 30 }}>📦</span>
+                          : <IconPaquete size={30} glow={false} />
                         }
                         {agotado && (
                           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -246,7 +250,7 @@ function ClientLanding({ slug }) {
 
         {/* Footer */}
         <div style={{ marginTop: 40, color: "var(--text-dim)", fontSize: 12 }}>
-          <p>💈 Powered by <strong style={{ color: "var(--accent)", letterSpacing: 1 }}>MBT</strong></p>
+          <p style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconBarberia size={13} glow={false} />Powered by <strong style={{ color: "var(--accent)", letterSpacing: 1 }}>MBT</strong></p>
         </div>
       </div>
     </div>
@@ -304,7 +308,7 @@ function AdminLanding({ slug }) {
 
         <Link to={`/${slug}/admin/panel`} style={{ textDecoration: "none" }}>
           <button className="btn-large" style={{ width: "100%", maxWidth: 360, fontSize: 16, padding: "16px 32px" }}>
-            ⚙️ Administrar barbería
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}><IconConfiguracion size={15} glow={false} color="#0a0a0a" />Administrar barbería</span>
           </button>
         </Link>
 

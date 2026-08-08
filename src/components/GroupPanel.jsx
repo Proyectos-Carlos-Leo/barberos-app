@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue } from 'firebase/database';
 import { auth, db } from '../firebase';
-import { IconConfiguracion } from './icons/BrandIcons';
+import { IconConfiguracion, IconGrupo } from './icons/BrandIcons';
 
 // El ID del grupo es el email del dueño saneado (mismo formato que usa /founders al crearlo)
 export const emailToGroupId = (email) =>
@@ -54,7 +54,7 @@ function GroupLogin({ onLogin }) {
           borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 28px', boxShadow: `0 8px 32px ${PURPLE}66`, fontSize: 32
         }}>
-          🏢
+          <IconGrupo size={32} glow={false} color="#0a0a0a" />
         </div>
 
         <h1 style={{
@@ -225,7 +225,7 @@ function GroupDashboard({ user, onLogout }) {
     return (
       <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <div style={{ textAlign: 'center', maxWidth: 420, fontFamily: "'Barlow', sans-serif" }}>
-          <div style={{ fontSize: 52, marginBottom: 16 }}>🏢</div>
+          <div style={{ fontSize: 52, marginBottom: 16 }}><IconGrupo size={18} glow={false} color="#0a0a0a" /></div>
           <h2 style={{ color: '#fff', fontFamily: "'Barlow Condensed', sans-serif", fontSize: 24, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
             Sin grupo asignado
           </h2>
@@ -270,7 +270,7 @@ function GroupDashboard({ user, onLogout }) {
             width: 40, height: 40, flexShrink: 0,
             background: `linear-gradient(135deg, ${PURPLE}, #c4b5fd)`,
             borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19
-          }}>🏢</div>
+          }}><IconGrupo size={18} glow={false} color="#0a0a0a" /></div>
           <div style={{ minWidth: 0 }}>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 18, fontFamily: "'Barlow Condensed', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {grupo.nombre || 'Mi grupo'}
