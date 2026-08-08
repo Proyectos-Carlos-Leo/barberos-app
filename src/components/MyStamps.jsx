@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 import { getPlan } from '../utils/plans';
+import { IconNavaja } from './icons/BrandIcons';
 import { useTheme } from '../context/ThemeContext';
 import { formatCurrency } from '../utils/helpers';
 
@@ -273,7 +274,7 @@ export default function MyStamps() {
                         }}>
                           {filled && STAMP_IMAGE ? (
                             <img src={STAMP_IMAGE} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : filled ? "✂️" : ""}
+                          ) : filled ? <IconNavaja size={14} glow={false} color="#fff" /> : ""}
                         </div>
                       );
                     })}

@@ -4,6 +4,7 @@ import { ref, onValue, update, set, remove } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { PLANS } from '../utils/plans';
 import { emailToGroupId } from './GroupPanel';
+import { IconConfiguracion } from './icons/BrandIcons';
 
 const FOUNDER_UIDS = [
   'p8knfgFj1OXQkS6xKHSjtkPXEG43',
@@ -656,7 +657,7 @@ function SuperAdminDashboard({ onLogout }) {
                           onMouseEnter={e => { e.currentTarget.style.background = '#3a3a3a'; e.currentTarget.style.color = '#fff'; }}
                           onMouseLeave={e => { e.currentTarget.style.background = '#2a2a2a'; e.currentTarget.style.color = '#aaa'; }}
                         >
-                          ⚙️ Panel admin
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconConfiguracion size={13} glow={false} color="#aaa" />Panel admin</span>
                         </a>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleActiva(b.slug, b.activa); }}

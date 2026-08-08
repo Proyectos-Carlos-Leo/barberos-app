@@ -4,6 +4,10 @@ import { db } from '../firebase';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 import { getPlan, upgradeWhatsAppUrl } from '../utils/plans';
+import { IconConfiguracion, IconApariencia } from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 
 const PRESET_COLORS = [
   { name: 'Azul (default)', primary: '#36B1DF', light: '#5FC8EC', dark: '#1A7FAB', bg: '#051520', border: '#0a3d56' },
@@ -110,7 +114,7 @@ export default function AdminSettings({ open, onClose }) {
             fontSize: 22, fontWeight: 800, letterSpacing: 1,
             textTransform: "uppercase", color: "var(--text-primary)"
           }}>
-            {t("⚙️ Configuración")}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconConfiguracion size={18} glow={false} />{stripEmoji(t("⚙️ Configuración"))}</span>
           </h2>
           <button
             onClick={onClose}
@@ -132,7 +136,7 @@ export default function AdminSettings({ open, onClose }) {
             fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
             display: "block", marginBottom: 12
           }}>
-            {t("🎨 Color secundario")}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconApariencia size={14} glow={false} />{stripEmoji(t("🎨 Color secundario"))}</span>
           </label>
           <div style={{
             display: "grid",

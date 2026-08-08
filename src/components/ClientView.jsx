@@ -7,6 +7,12 @@ import Notifications from './Notifications';
 import { SERVICES as DEFAULT_SERVICES } from '../utils/data';
 import { getNext7Days, getTakenTimes, formatDate, formatCurrency, validateName, validatePhone, getBlockedTimes } from '../utils/helpers';
 import { getPlan, citasDelMes } from '../utils/plans';
+import {
+  IconNavaja, IconBarberia, IconCalendar, IconPaquete, IconBloquear, IconRapido
+} from './icons/BrandIcons';
+
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 
 const STEPS = [
   { num: 1, label: "Tus datos" },
@@ -436,13 +442,13 @@ function BookingSummaryBar({ barber, service, date, time, totalProductos, idioma
             display: "flex", alignItems: "center", gap: 14,
             overflow: "hidden", flexWrap: "wrap", rowGap: 4
           }}>
-            <Chip icon="💈">{barber.name}</Chip>
+            <Chip icon={<IconBarberia size={13} glow={false} />}>{barber.name}</Chip>
             {service
-              ? <Chip icon="✂️">{service.name}</Chip>
-              : <Chip icon="✂️" muted>{t("Elige servicio")}</Chip>}
+              ? <Chip icon={<IconNavaja size={13} glow={false} />}>{service.name}</Chip>
+              : <Chip icon={<IconNavaja size={13} glow={false} />} muted>{t("Elige servicio")}</Chip>}
             {(date && time)
-              ? <Chip icon="📅">{formatDate(date, idioma)} · {time}</Chip>
-              : <Chip icon="📅" muted>{t("Elige fecha y hora")}</Chip>}
+              ? <Chip icon={<IconCalendar size={13} glow={false} />}>{formatDate(date, idioma)} · {time}</Chip>
+              : <Chip icon={<IconCalendar size={13} glow={false} />} muted>{t("Elige fecha y hora")}</Chip>}
           </div>
 
           <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -500,19 +506,19 @@ function RebookCard({ rebook, idioma, onOneTap, onChooseTime, onDismiss }) {
 
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 16 }}>
         <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-          ✂️ {rebook.service.name} · <span style={{ color: "var(--accent)" }}>{formatCurrency(rebook.service.price)}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconNavaja size={14} glow={false} />{rebook.service.name}</span> · <span style={{ color: "var(--accent)" }}>{formatCurrency(rebook.service.price)}</span>
         </span>
         <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-          💈 {rebook.barber.name}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconBarberia size={14} glow={false} />{rebook.barber.name}</span>
         </span>
         <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-          📅 {formatDate(rebook.slot.date, idioma)} · {rebook.slot.time}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconCalendar size={14} glow={false} />{formatDate(rebook.slot.date, idioma)} · {rebook.slot.time}</span>
         </span>
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <button className="btn-gold" onClick={onOneTap} style={{ fontSize: 14, padding: "12px 22px" }}>
-          ⚡ {t("Agendar en 1 toque")}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconRapido size={14} glow={false} color="#0a0a0a" />{t("Agendar en 1 toque")}</span>
         </button>
         <button
           onClick={onChooseTime}
@@ -901,7 +907,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
                   <div style={{ height: 110, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     {p.image
                       ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontSize: 30 }}>📦</span>
+                      : <IconPaquete size={30} glow={false} />
                     }
                     {agotado && (
                       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1047,7 +1053,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           display: "block", marginBottom: 12,
           fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5
         }}>
-          {t("📅 Fecha")}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconCalendar size={13} glow={false} />{stripEmoji(t("📅 Fecha"))}</span>
         </label>
         <div style={{
           display: "flex",
@@ -1119,7 +1125,7 @@ function Step3DateTime({ form, update, takenTimes, blockedTimes, isFullDayBlocke
           marginBottom: 20,
           textAlign: "center"
         }}>
-          <p style={{ fontSize: 32, marginBottom: 8 }}>🚫</p>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><IconBloquear size={32} glow={false} /></div>
           <p style={{ color: "var(--danger)", fontWeight: 700, fontSize: 15 }}>
             {t("Este día no está disponible")}
           </p>
@@ -1294,7 +1300,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
           {carrito.map((item, i) => (
             <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: i < carrito.length - 1 ? "1px solid var(--border)" : "none" }}>
               <div style={{ width: 36, height: 36, borderRadius: 6, overflow: "hidden", background: "var(--bg-input)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {item.image ? <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span>📦</span>}
+                {item.image ? <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <IconPaquete size={22} glow={false} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>{item.name}</p>
@@ -1569,7 +1575,7 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
                 borderBottom: i < carrito.length - 1 ? "1px solid var(--border)" : "none"
               }}>
                 <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", background: "var(--bg-input)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {item.image ? <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 20 }}>📦</span>}
+                  {item.image ? <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <IconPaquete size={20} glow={false} />}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{item.name}</p>
@@ -1617,7 +1623,7 @@ function SuccessView({ appointment, barbershop, carrito = [], productos = [], on
             {productos.slice(0, 4).map(p => (
               <div key={p.id} style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
                 <div style={{ height: 100, background: "var(--bg-input)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {p.image ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 28 }}>📦</span>}
+                  {p.image ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <IconPaquete size={28} glow={false} />}
                 </div>
                 <div style={{ padding: "8px 10px" }}>
                   <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text-primary)", marginBottom: 2 }}>{p.name}</p>

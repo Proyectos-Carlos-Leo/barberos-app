@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue } from 'firebase/database';
 import { auth, db } from '../firebase';
+import { IconConfiguracion } from './icons/BrandIcons';
 
 // El ID del grupo es el email del dueño saneado (mismo formato que usa /founders al crearlo)
 export const emailToGroupId = (email) =>
@@ -367,7 +368,7 @@ function GroupDashboard({ user, onLogout }) {
                       fontFamily: "'Barlow', sans-serif", whiteSpace: 'nowrap'
                     }}
                   >
-                    ⚙️ Panel admin
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconConfiguracion size={13} glow={false} color="#c4b5fd" />Panel admin</span>
                   </a>
                   <a
                     href={`/${b.slug}`}

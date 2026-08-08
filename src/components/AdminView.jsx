@@ -12,6 +12,17 @@ import ConfirmModal from './ConfirmModal';
 import { STATUS_COLORS } from '../utils/data';
 import { initNotifications, notifyNewAppointment, updateTabTitle } from '../utils/notifications';
 import { getPlan, upgradeWhatsAppUrl, PLANS } from '../utils/plans';
+import {
+  IconNavaja, IconBarberia, IconCalendar, IconPaquete, IconConfiguracion,
+  IconReportes, IconBloquear, IconLista, IconPopular, IconPremium, IconRapido,
+  IconApariencia, IconBarba, IconClienteJoven, IconCompletado, IconDescanso,
+  IconNotificaciones, IconEmail, IconCrecimiento, IconTiempo, IconGanancias, IconFactura
+} from './icons/BrandIcons';
+
+// Quita el emoji líder de un texto ya traducido (los diccionarios ES/EN
+// conservan el emoji al inicio del string) para reemplazarlo por un ícono real.
+const stripEmoji = (str) =>
+  String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]+\s*/u, '');
 import { imageToBase64 } from '../utils/imageUpload';
 import {
   getTodayStr,
@@ -219,7 +230,7 @@ export default function AdminView() {
           gap: 16,
           flexWrap: "wrap"
         }}>
-          <span style={{ fontSize: 20 }}>🔔</span>
+          <IconNotificaciones size={20} glow={false} />
           <p style={{ fontSize: 13, color: "var(--accent)", flex: 1, minWidth: 200 }}>
             <strong>{t("Activa las notificaciones")}</strong> {t("para recibir un aviso cada vez que alguien agende una cita")}
           </p>
@@ -418,7 +429,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "rgba(var(--accent-rgb), 0.1)"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--accent-border)"; e.currentTarget.style.background = "var(--accent-bg)"; }}
           >
-            {t("📧 Email confirmación")}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconEmail size={13} glow={false} />{stripEmoji(t("📧 Email confirmación"))}</span>
           </button>
           <div style={{
             background: "var(--accent-bg)",
@@ -432,7 +443,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
             letterSpacing: 0.5,
             whiteSpace: "nowrap"
           }}>
-            📅 {new Date().toLocaleDateString(idioma === 'en' ? 'en-US' : 'es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconCalendar size={13} glow={false} />{new Date().toLocaleDateString(idioma === 'en' ? 'en-US' : 'es-MX', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}</span>
           </div>
 
           {/* Plan actual */}
@@ -539,28 +550,28 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           fontSize: 10, color: "var(--text-muted)",
           textTransform: "uppercase", letterSpacing: 1,
           marginBottom: 10, fontWeight: 700
-        }}>{t("⚡ Acciones rápidas")}</p>
+        }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconRapido size={13} glow={false} />{stripEmoji(t("⚡ Acciones rápidas"))}</span></p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
           <QuickAction
-            icon="📅"
+            icon={<IconCalendar size={20} glow={false} />}
             label={t("Calendario")}
             color="#4285F4"
             onClick={() => { setCalendarDate(getTodayStr()); setShowCalendar(true); }}
           />
           <QuickAction
-            icon="📊"
+            icon={<IconReportes size={20} glow={false} />}
             label={t("Ver reportes")}
             color="var(--accent)"
             onClick={() => document.querySelector('[data-key="reports"]')?.click()}
           />
           <QuickAction
-            icon="🚫"
+            icon={<IconBloquear size={20} glow={false} />}
             label={t("Bloquear hora")}
             color="#f87171"
             onClick={() => document.querySelector('[data-key="schedule"]')?.click()}
           />
           <QuickAction
-            icon="💈"
+            icon={<IconBarberia size={20} glow={false} />}
             label={t("Editar servicios")}
             color="#f59e0b"
             onClick={() => document.querySelector('[data-key="services"]')?.click()}
@@ -700,7 +711,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           fontSize: 20, fontWeight: 800,
           textTransform: "uppercase", letterSpacing: 1,
           color: "var(--text-secondary)"
-        }}>📋 {t("Todas las citas")}</h2>
+        }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconLista size={18} glow={false} />{t("Todas las citas")}</span></h2>
       </div>
 
       <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
@@ -944,7 +955,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
               fontSize: 22, fontWeight: 800, letterSpacing: 1,
               textTransform: "uppercase", color: "var(--text-primary)", marginBottom: 6
             }}>
-              {t("📧 Email de confirmación")}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconEmail size={13} glow={false} />{stripEmoji(t("📧 Email de confirmación"))}</span>
             </h2>
             <p style={{ color: "var(--text-tertiary)", fontSize: 13, marginBottom: 20 }}>
               {t("Desde qué email se enviarán las confirmaciones de citas")}
@@ -1436,8 +1447,8 @@ function ClientsView({ appointments, barbers }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <button style={chip(filter === "all")} onClick={() => setFilter("all")}>{t("Todos")}</button>
           <button style={chip(filter === "risk")} onClick={() => setFilter("risk")}>⚠️ {t("En riesgo")} {stats.enRiesgo > 0 ? `(${stats.enRiesgo})` : ""}</button>
-          <button style={chip(filter === "frequent")} onClick={() => setFilter("frequent")}>⭐ {t("Frecuentes")}</button>
-          <button style={chip(filter === "new")} onClick={() => setFilter("new")}>🌱 {t("Nuevos")}</button>
+          <button style={chip(filter === "frequent")} onClick={() => setFilter("frequent")}><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconPremium size={12} glow={false} />{t("Frecuentes")}</span></button>
+          <button style={chip(filter === "new")} onClick={() => setFilter("new")}><span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconCrecimiento size={12} glow={false} />{t("Nuevos")}</span></button>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ marginLeft: "auto", width: "auto", minWidth: 160 }}>
             <option value="recent">{t("Última visita")}</option>
             <option value="visits">{t("Más visitas")}</option>
@@ -1481,8 +1492,8 @@ function ClientsView({ appointments, barbers }) {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ color: "var(--text-primary)", fontSize: 15, fontWeight: 700 }}>{cl.name}</span>
                       {cl.atRisk && <span className="tag" style={{ background: "#f59e0b18", color: "#f59e0b", border: "1px solid #f59e0b44", fontSize: 9 }}>⚠️ {t("En riesgo")}</span>}
-                      {cl.isFrequent && !cl.atRisk && <span className="tag" style={{ background: "var(--accent-bg)", color: "var(--accent)", border: "1px solid var(--accent-border)", fontSize: 9 }}>⭐ VIP</span>}
-                      {cl.isNew && <span className="tag" style={{ background: "#4ade8018", color: "#4ade80", border: "1px solid #4ade8044", fontSize: 9 }}>🌱 {t("Nuevo")}</span>}
+                      {cl.isFrequent && !cl.atRisk && <span className="tag" style={{ background: "var(--accent-bg)", color: "var(--accent)", border: "1px solid var(--accent-border)", fontSize: 9, display: "inline-flex", alignItems: "center", gap: 4 }}><IconPremium size={10} glow={false} />VIP</span>}
+                      {cl.isNew && <span className="tag" style={{ background: "#4ade8018", color: "#4ade80", border: "1px solid #4ade8044", fontSize: 9, display: "inline-flex", alignItems: "center", gap: 4 }}><IconCrecimiento size={10} glow={false} color="#4ade80" />{t("Nuevo")}</span>}
                     </div>
                     <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 2 }}>
                       📱 {cl.phone}
@@ -1525,19 +1536,19 @@ function ClientsView({ appointments, barbers }) {
                       {cl.favService && (
                         <div>
                           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{t("Servicio favorito")}</p>
-                          <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginTop: 2 }}>✂️ {cl.favService}</p>
+                          <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}><IconNavaja size={14} glow={false} />{cl.favService}</p>
                         </div>
                       )}
                       {cl.favBarber && (
                         <div>
                           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{t("Barbero favorito")}</p>
-                          <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginTop: 2 }}>💈 {cl.favBarber}</p>
+                          <p style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}><IconBarberia size={14} glow={false} />{cl.favBarber}</p>
                         </div>
                       )}
                       {cl.upcoming && (
                         <div>
                           <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.5 }}>{t("Próxima cita")}</p>
-                          <p style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginTop: 2 }}>📅 {formatDate(cl.upcoming.date, idioma)} · {cl.upcoming.time}</p>
+                          <p style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}><IconCalendar size={14} glow={false} color="#4ade80" />{formatDate(cl.upcoming.date, idioma)} · {cl.upcoming.time}</p>
                         </div>
                       )}
                     </div>
@@ -1750,7 +1761,7 @@ function HistoryView({ appointments, barbers }) {
       <div style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
-            <p style={{ fontSize: 36, marginBottom: 8 }}>📋</p>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><IconLista size={36} glow={false} /></div>
             <p style={{ fontSize: 14 }}>
               {hasFilters ? t("No hay citas que coincidan con los filtros") : t("Aún no hay citas completadas")}
             </p>
@@ -1793,7 +1804,7 @@ function HistoryView({ appointments, barbers }) {
                     {appt.service?.emoji || '✂️'} {appt.service?.name} · <strong style={{ color: "var(--text-secondary)" }}>{barber?.name || t("Sin asignar")}</strong>
                   </p>
                   <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                    📅 {formatDate(appt.date, idioma)} · 🕐 {appt.time}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconCalendar size={12} glow={false} />{formatDate(appt.date, idioma)}</span> · <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><IconTiempo size={12} glow={false} />{appt.time}</span>
                   </p>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -1905,7 +1916,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
     <div className="fade-in">
       <div style={{ marginBottom: 28 }}>
         <h1 className="section-title" style={{ marginBottom: 4 }}>
-          🕐 <span className="gold">{t("Horarios")}</span> {t("de atención")}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconTiempo size={22} glow={false} /><span><span className="gold">{t("Horarios")}</span> {t("de atención")}</span></span>
         </h1>
         <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
           {t("Configura cuándo y cómo puedes recibir citas")}
@@ -1919,7 +1930,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 18, fontWeight: 700, letterSpacing: 1,
             textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
-          }}>{t("📅 Días de atención")}</h3>
+          }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconCalendar size={16} glow={false} />{stripEmoji(t("📅 Días de atención"))}</span></h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
             {diasActivosCount} {t(diasActivosCount !== 1 ? "días" : "día")} {t(diasActivosCount !== 1 ? "activos" : "activo")}
           </p>
@@ -2001,7 +2012,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 18, fontWeight: 700, letterSpacing: 1,
             textTransform: "uppercase", marginBottom: 4, color: "var(--text-primary)"
-          }}>{t("⚡ Duración de cada cita")}</h3>
+          }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconRapido size={16} glow={false} />{stripEmoji(t("⚡ Duración de cada cita"))}</span></h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
             {t("Cada cuántos minutos se puede agendar un turno")}
           </p>
@@ -2361,13 +2372,13 @@ function LoyaltyConfig({ slug, currentConfig, idioma }) {
         fontSize: 18, fontWeight: 700, letterSpacing: 1,
         textTransform: "uppercase", marginBottom: 18, color: "var(--text-primary)"
       }}>
-        {t("⚙️ Configurar programa de lealtad")}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconConfiguracion size={16} glow={false} />{stripEmoji(t("⚙️ Configurar programa de lealtad"))}</span>
       </h3>
 
       {/* Imagen del sello */}
       <div style={{ marginBottom: 22 }}>
         <label style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 8 }}>
-          {t("🎨 Imagen del sello (opcional)")}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconApariencia size={14} glow={false} />{stripEmoji(t("🎨 Imagen del sello (opcional)"))}</span>
         </label>
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           {/* Preview */}
@@ -2378,7 +2389,7 @@ function LoyaltyConfig({ slug, currentConfig, idioma }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden", fontSize: 24, flexShrink: 0
           }}>
-            {stampImage ? <img src={stampImage} alt="Sello" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "✂️"}
+            {stampImage ? <img src={stampImage} alt="Sello" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <IconNavaja size={28} glow={false} color="#0a0a0a" />}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={{
@@ -2466,7 +2477,7 @@ function LoyaltyConfig({ slug, currentConfig, idioma }) {
         marginBottom: 18
       }}>
         <p style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
-          {t("📋 Vista previa")}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconLista size={14} glow={false} />{stripEmoji(t("📋 Vista previa"))}</span>
         </p>
         <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
           "{t("Junta")} <strong style={{ color: "var(--accent)" }}>{stamps} {t("sellos")}</strong> {t("y obtén un")} <strong style={{ color: "var(--accent)" }}>{reward}</strong>"
@@ -2752,7 +2763,7 @@ function ClientLoyaltyCard({ client, requiredStamps, rewardName, stampImage, idi
               }}>
                 {filled && stampImage ? (
                   <img src={stampImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : filled ? "✂️" : "·"}
+                ) : filled ? <IconNavaja size={14} glow={false} color="#fff" /> : "·"}
               </div>
             );
           })}
@@ -2878,7 +2889,7 @@ function ServicesView({ slug }) {
       <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 className="section-title" style={{ marginBottom: 4 }}>
-            💈 <span className="gold">{t("Servicios")}</span> {t("ofrecidos")}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconBarberia size={22} glow={false} /><span><span className="gold">{t("Servicios")}</span> {t("ofrecidos")}</span></span>
           </h1>
           <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>
             {t("Edita los cortes y servicios que ofrece tu barbería")}
@@ -2887,7 +2898,7 @@ function ServicesView({ slug }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {services.length === 0 && (
             <button className="btn-ghost" onClick={loadDefaults}>
-              {t("📋 Cargar defaults")}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><IconLista size={14} glow={false} />{stripEmoji(t("📋 Cargar defaults"))}</span>
             </button>
           )}
           <button className="btn-gold" onClick={() => { resetForm(); setShowForm(true); }}>
@@ -3008,7 +3019,7 @@ function ServicesView({ slug }) {
           border: "1px dashed var(--border-strong)",
           borderRadius: 12
         }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>💈</p>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}><IconBarberia size={40} glow={false} /></div>
           <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>
             {t("Aún no tienes servicios configurados")}
           </p>
@@ -3785,7 +3796,7 @@ function ProductsView({ slug }) {
                 {p.image ? (
                   <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 48 }}>📦</span>
+                  <IconPaquete size={48} glow={false} />
                 )}
               </div>
 
