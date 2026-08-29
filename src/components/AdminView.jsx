@@ -218,7 +218,7 @@ export default function AdminView() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-main)" }}>
+    <div className="fade-in-up" style={{ minHeight: "100vh", background: "var(--bg-main)" }}>
       <Header userType="admin" navItems={navItems} />
       <Notifications />
       {showNotifBanner && (

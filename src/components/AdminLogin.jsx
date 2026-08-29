@@ -10,6 +10,7 @@ export default function AdminLogin({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
+  const [success, setSuccess] = useState(false);
   const { slug, barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
   const idioma = barbershopConfig?.idioma;
@@ -23,7 +24,8 @@ export default function AdminLogin({ onLogin }) {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      onLogin();
+      setSuccess(true);
+      setTimeout(onLogin, 650);
     } catch (err) {
       let msg = t('Error al iniciar sesión');
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
@@ -88,6 +90,28 @@ export default function AdminLogin({ onLogin }) {
           background: 'var(--bg-elevated)', border: '1px solid #222',
           borderRadius: 16, padding: 32
         }}>
+          {success ? (
+            <div className="fade-in" style={{ padding: '20px 0' }}>
+              <div className="pop-in" style={{
+                width: 64, height: 64, borderRadius: '50%',
+                background: 'var(--success-bg)', border: '2px solid var(--success)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 18px'
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <p style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 18, fontWeight: 700, letterSpacing: 0.5,
+                textTransform: 'uppercase', color: 'var(--text-primary)'
+              }}>
+                {t('¡Bienvenido de nuevo!')}
+              </p>
+            </div>
+          ) : (
+            <>
           {/* Email */}
           <div style={{ marginBottom: 16, textAlign: 'left' }}>
             <label style={{
@@ -168,6 +192,8 @@ export default function AdminLogin({ onLogin }) {
           >
             {loading ? t('Verificando...') : t('Entrar al Panel')}
           </button>
+            </>
+          )}
         </div>
 
         <p style={{ color: 'var(--text-faint)', fontSize: 12, marginTop: 24 }}>
