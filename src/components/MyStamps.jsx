@@ -255,7 +255,7 @@ export default function MyStamps() {
                       {stampsInCurrentRow}/{REQUIRED_STAMPS}
                     </p>
                   </div>
-                  <div style={{
+                  <div className="stagger" style={{
                     display: "grid",
                     gridTemplateColumns: `repeat(${Math.min(REQUIRED_STAMPS, 5)}, minmax(0, 1fr))`,
                     gap: 8

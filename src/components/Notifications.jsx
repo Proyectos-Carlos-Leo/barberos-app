@@ -30,7 +30,7 @@ export default function Notifications() {
           <div
             key={n.id}
             onClick={() => removeNotification(n.id)}
-            className="slide-in"
+            className={n.closing ? "slide-out" : "slide-in"}
             style={{
               background: c.bg,
               border: `1px solid ${c.border}`,

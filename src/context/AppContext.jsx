@@ -156,11 +156,12 @@ export function AppProvider({ children, slug }) {
   const addNotification = useCallback((notification) => {
     const id = `notif_${++notifIdRef.current}`;
     setNotifications(prev => [...prev, { ...notification, id }]);
-    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 5000);
+    setTimeout(() => removeNotification(id), 5000);
   }, []);
 
   const removeNotification = useCallback((id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, closing: true } : n));
+    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 220);
   }, []);
 
   // ========== CITAS CRUD ==========

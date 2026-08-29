@@ -424,8 +424,9 @@ function SuperAdminDashboard({ onLogout }) {
 
         {/* ── Lista ── */}
         {loading ? (
-          <div style={{ color: '#555', textAlign: 'center', padding: 60, fontSize: 14 }}>
-            Cargando…
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 60 }}>
+            <div className="spinner" />
+            <div style={{ color: '#555', fontSize: 14 }}>Cargando…</div>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{
@@ -860,7 +861,10 @@ function GroupsManager({ allBarberias }) {
 
       {/* Lista de grupos */}
       {loading ? (
-        <div style={{ color: '#555', textAlign: 'center', padding: 40, fontSize: 14 }}>Cargando…</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 40 }}>
+          <div className="spinner" />
+          <div style={{ color: '#555', fontSize: 14 }}>Cargando…</div>
+        </div>
       ) : gruposList.length === 0 && !showForm ? (
         <div style={{ color: '#555', textAlign: 'center', padding: '50px 20px', background: '#111', border: '1px dashed #2a2a2a', borderRadius: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><IconGrupo size={32} glow={false} /></div>
@@ -964,8 +968,9 @@ export default function SuperAdminPanel() {
     return (
       <div style={{
         minHeight: '100vh', background: '#0a0a0a',
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16
       }}>
+        <div className="spinner" />
         <div style={{ color: '#555', fontSize: 14 }}>Cargando…</div>
       </div>
     );

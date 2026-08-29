@@ -1,14 +1,30 @@
+import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useT } from '../utils/i18n';
 
 export default function ConfirmModal({ open, title, message, onConfirm, onCancel, confirmText, danger = true }) {
   const { barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
-  if (!open) return null;
+  const [rendered, setRendered] = useState(open);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      setClosing(false);
+    } else if (rendered) {
+      setClosing(true);
+      const timer = setTimeout(() => { setRendered(false); setClosing(false); }, 180);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  if (!rendered) return null;
 
   return (
     <div
       onClick={onCancel}
+      className={closing ? "overlay-out" : "overlay-in"}
       style={{
         position: "fixed",
         inset: 0,
@@ -22,7 +38,7 @@ export default function ConfirmModal({ open, title, message, onConfirm, onCancel
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="fade-in"
+        className={closing ? "modal-out" : "modal-in"}
         style={{
           background: "var(--bg-elevated)",
           border: "1px solid var(--border-strong)",

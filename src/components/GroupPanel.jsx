@@ -215,7 +215,8 @@ function GroupDashboard({ user, onLogout }) {
   // ---- Estados de carga / sin grupo ----
   if (grupo === undefined) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <div className="spinner" />
         <div style={{ color: '#555', fontSize: 14 }}>Cargando tu grupo…</div>
       </div>
     );
@@ -440,7 +441,8 @@ export default function GroupPanel() {
 
   if (authState === 'loading') {
     return (
-      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <div className="spinner" />
         <div style={{ color: '#555', fontSize: 14 }}>Cargando…</div>
       </div>
     );

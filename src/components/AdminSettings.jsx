@@ -88,6 +88,7 @@ export default function AdminSettings({ open, onClose }) {
   return (
     <div
       onClick={onClose}
+      className="overlay-in"
       style={{
         position: "fixed", inset: 0,
         background: "rgba(0,0,0,0.85)",
@@ -97,7 +98,7 @@ export default function AdminSettings({ open, onClose }) {
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="fade-in"
+        className="modal-in"
         style={{
           background: "var(--bg-elevated)",
           border: "1px solid var(--border-strong)",

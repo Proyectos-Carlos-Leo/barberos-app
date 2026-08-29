@@ -269,15 +269,17 @@ export default function AdminView() {
         </div>
       )}
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 14px" }}>
-        {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
-        {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} plan={plan} slug={slug} />}
-        {view === "reports" && (plan.reportes ? <ReportsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
-        {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
-        {view === "clients" && (plan.crm ? <ClientsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
-        {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
-        {view === "services" && <ServicesView slug={slug} />}
-        {view === "loyalty" && (plan.lealtad ? <LoyaltyView appointments={appointments} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
-        {view === "products" && <ProductsView slug={slug} />}
+        <div key={view} className="fade-in">
+          {view === "dashboard" && <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />}
+          {view === "team" && <TeamView barbers={barbers} appointments={appointments} blocks={blocks} onToggle={toggleBarber} onAdd={addBarber} onDelete={deleteBarber} plan={plan} slug={slug} />}
+          {view === "reports" && (plan.reportes ? <ReportsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
+          {view === "history" && <HistoryView appointments={appointments} barbers={barbers} />}
+          {view === "clients" && (plan.crm ? <ClientsView appointments={appointments} barbers={barbers} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
+          {view === "schedule" && <ScheduleView barbershopConfig={barbershopConfig} slug={slug} barbers={barbers} blocks={blocks} />}
+          {view === "services" && <ServicesView slug={slug} />}
+          {view === "loyalty" && (plan.lealtad ? <LoyaltyView appointments={appointments} /> : <DashboardView appointments={appointments} barbers={barbers} onStatusChange={updateAppointmentStatus} onDelete={deleteAppointment} />)}
+          {view === "products" && <ProductsView slug={slug} />}
+        </div>
       </main>
     </div>
   );
@@ -827,7 +829,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 
       <p className="appointments-list" style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 16, scrollMarginTop: 80 }}>{filtered.length} {t(filtered.length !== 1 ? 'citas' : 'cita')} {t(filtered.length !== 1 ? 'encontradas' : 'encontrada')}</p>
 
-      <div style={{ display: "grid", gap: 10 }}>
+      <div className="stagger" style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><IconBuzonVacio size={36} glow={false} /></div>
@@ -939,13 +941,13 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
 
       {/* Modal configurar email */}
       {showEmailConfig && (
-        <div onClick={() => setShowEmailConfig(false)} style={{
+        <div onClick={() => setShowEmailConfig(false)} className="overlay-in" style={{
           position: "fixed", inset: 0,
           background: "rgba(0,0,0,0.85)",
           display: "flex", alignItems: "center", justifyContent: "center",
           padding: 20, zIndex: 3000
         }}>
-          <div onClick={e => e.stopPropagation()} className="fade-in" style={{
+          <div onClick={e => e.stopPropagation()} className="modal-in" style={{
             background: "var(--bg-elevated)",
             border: "1px solid var(--border-strong)",
             borderRadius: 16,
@@ -3273,6 +3275,7 @@ Folio: ${appt.folio || '—'}`);
   return (
     <div
       onClick={e => e.target === e.currentTarget && onClose()}
+      className="overlay-in"
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(0,0,0,0.78)',
@@ -3280,7 +3283,7 @@ Folio: ${appt.folio || '—'}`);
         zIndex: 2000, padding: '20px 16px', overflowY: 'auto'
       }}
     >
-      <div className="fade-in" style={{
+      <div className="modal-in" style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
         borderRadius: 16, width: '100%', maxWidth: modalMaxWidth, marginBottom: 20,
         overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
@@ -3771,7 +3774,10 @@ function ProductsView({ slug }) {
 
       {/* Grid de productos */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-tertiary)' }}>{t("Cargando...")}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 60 }}>
+          <div className="spinner" />
+          <div style={{ color: 'var(--text-tertiary)' }}>{t("Cargando...")}</div>
+        </div>
       ) : products.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: 60,
@@ -3870,12 +3876,12 @@ function ProductsView({ slug }) {
 
       {/* Modal formulario */}
       {showForm && (
-        <div style={{
+        <div className="overlay-in" style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 1000, padding: 20
         }} onClick={e => e.target === e.currentTarget && setShowForm(false)}>
-          <div style={{
+          <div className="modal-in" style={{
             background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
             borderRadius: 16, padding: 28, width: '100%', maxWidth: 480,
             maxHeight: '90vh', overflowY: 'auto'

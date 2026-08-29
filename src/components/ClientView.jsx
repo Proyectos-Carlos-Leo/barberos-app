@@ -651,7 +651,7 @@ function Step1ClientInfo({ form, update, errors, barbers, selectedBarber, onNext
         {t("Elige a tu barbero *")}
       </p>
 
-      <div style={{
+      <div className="stagger" style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
         gap: 12,
@@ -790,7 +790,7 @@ function Step2Service({ form, update, carrito = [], agregarProducto, quitarProdu
         </p>
       </div>
 
-      <div style={{
+      <div className="stagger" style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
         gap: 10
@@ -1382,6 +1382,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
       {showPrivacyModal && (
         <div
           onClick={() => setShowPrivacyModal(false)}
+          className="overlay-in"
           style={{
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -1390,6 +1391,7 @@ function Step4Confirm({ form, selectedBarber, selectedService, carrito = [], qui
         >
           <div
             onClick={e => e.stopPropagation()}
+            className="modal-in"
             style={{
               background: "var(--bg-elevated)",
               border: "1px solid var(--border-strong)",
