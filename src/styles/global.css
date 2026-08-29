@@ -465,6 +465,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .stagger > *:nth-child(8) { animation-delay: 0.30s; }
 .stagger > *:nth-child(n+9) { animation-delay: 0.34s; }
 
+/* Sacudida sutil para señalar un error de formulario (ej. login inválido) */
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.shake { animation: shake 0.4s; }
+
 /* ==================== LINKS ==================== */
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }

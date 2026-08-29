@@ -502,7 +502,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
       </div>
 
       {/* 🆕 KPIs mejorados con sparklines y tendencias */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+      <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
         <StatCardPro
           label={t("Citas hoy")}
           value={stats.todayTotal}
@@ -555,7 +555,7 @@ function DashboardView({ appointments, barbers, onStatusChange, onDelete }) {
           textTransform: "uppercase", letterSpacing: 1,
           marginBottom: 10, fontWeight: 700
         }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><IconRapido size={13} glow={false} />{stripEmoji(t("⚡ Acciones rápidas"))}</span></p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+        <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
           <QuickAction
             icon={<IconCalendar size={20} glow={false} />}
             label={t("Calendario")}
@@ -1095,7 +1095,7 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
 
       {/* Stats top */}
       {barbersWithStats.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+        <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
           <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: 14 }}>
             <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{t("Equipo activo")}</p>
             <p style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif", marginTop: 4 }}>
@@ -1179,19 +1179,25 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16 }}>
+      <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16 }}>
         {barbersWithStats.map((b, idx) => {
           const stats = b.stats;
           const isTop = idx === 0 && stats.revenue > 0;
           return (
-            <div key={b.id} className="card" style={{
-              padding: 22,
-              opacity: b.active ? 1 : 0.55,
-              transition: "all 0.3s",
-              position: "relative",
-              border: isTop ? "1px solid #f59e0b44" : "1px solid var(--border)",
-              boxShadow: isTop ? "0 4px 20px rgba(245,158,11,0.1)" : "none"
-            }}>
+            <div
+              key={b.id}
+              className="card"
+              style={{
+                padding: 22,
+                opacity: b.active ? 1 : 0.55,
+                transition: "opacity 0.3s, transform 0.2s var(--ease-out), border-color 0.2s, box-shadow 0.2s var(--ease-out)",
+                position: "relative",
+                border: isTop ? "1px solid #f59e0b44" : "1px solid var(--border)",
+                boxShadow: isTop ? "0 4px 20px rgba(245,158,11,0.1)" : "none"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.borderColor = isTop ? "#f59e0b77" : "var(--border-strong)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = isTop ? "#f59e0b44" : "var(--border)"; }}
+            >
               {isTop && (
                 <div style={{
                   position: "absolute",
@@ -1230,8 +1236,8 @@ function TeamView({ barbers, appointments, blocks, onToggle, onAdd, onDelete, pl
                     <p style={{ fontSize: 10, color: "var(--danger)", marginTop: 4, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" }}>{t("● Inactivo")}</p>
                   )}
                 </div>
-                <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "var(--success-bg)" : "var(--danger-bg)", border: `1px solid ${b.active ? "var(--success)" : "var(--danger)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
-                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: b.active ? "var(--success)" : "var(--danger)", position: "absolute", top: 2, left: b.active ? 21 : 2, transition: "left 0.2s" }} />
+                <div style={{ width: 40, height: 22, borderRadius: 11, background: b.active ? "var(--success-bg)" : "var(--danger-bg)", border: `1px solid ${b.active ? "var(--success)" : "var(--danger)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s, border-color 0.2s", flexShrink: 0 }} onClick={() => onToggle(b.id)}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: b.active ? "var(--success)" : "var(--danger)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", position: "absolute", top: 2, left: b.active ? 21 : 2, transition: "left 0.25s var(--ease-spring)" }} />
                 </div>
               </div>
               <div className="divider" style={{ margin: "0 0 14px" }} />
@@ -1430,7 +1436,7 @@ function ClientsView({ appointments, barbers }) {
       </div>
 
       {/* Métricas */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+      <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
         <StatTile label={t("Clientes totales")} value={stats.total} />
         <StatTile label={t("Nuevos este mes")} value={stats.nuevos} color="#4ade80" />
         <StatTile label={t("En riesgo")} value={stats.enRiesgo} color={stats.enRiesgo > 0 ? "#f59e0b" : "var(--text-muted)"} sub={stats.enRiesgo > 0 ? t("Escríbeles para recuperarlos") : null} />
@@ -1468,7 +1474,7 @@ function ClientsView({ appointments, barbers }) {
           <p style={{ fontSize: 14 }}>{clients.length === 0 ? t("Aún no hay clientes registrados") : t("Sin resultados con estos filtros")}</p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <p style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 600 }}>
             {filtered.length} {t(filtered.length === 1 ? "cliente" : "clientes")}
           </p>
@@ -1748,7 +1754,7 @@ function HistoryView({ appointments, barbers }) {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
+      <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
         {[
           ["Total completadas", filtered.length, "#4ade80"],
           ["Ingresos totales", formatCurrency(totalRevenue), "var(--accent)"],
@@ -1762,7 +1768,7 @@ function HistoryView({ appointments, barbers }) {
       </div>
 
       {/* Lista */}
-      <div style={{ display: "grid", gap: 10 }}>
+      <div className="stagger" style={{ display: "grid", gap: 10 }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><IconLista size={36} glow={false} /></div>
@@ -1938,7 +1944,7 @@ function ScheduleView({ barbershopConfig, slug, barbers, blocks }) {
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 18 }}>
             {diasActivosCount} {t(diasActivosCount !== 1 ? "días" : "día")} {t(diasActivosCount !== 1 ? "activos" : "activo")}
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
+          <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
             {DAYS.map(d => {
               const active = diasActivos[d.key];
               return (
@@ -2260,7 +2266,7 @@ function LoyaltyView({ appointments }) {
       {/* TAB: CLIENTES */}
       {activeTab === 'clientes' && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 20 }}>
+          <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 20 }}>
             <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 12, padding: "18px 20px" }}>
               <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{t("Clientes")}</p>
               <p style={{ fontSize: 26, fontWeight: 800, color: "var(--accent)", fontFamily: "'Barlow Condensed', sans-serif" }}>{totalClients}</p>
@@ -2295,7 +2301,7 @@ function LoyaltyView({ appointments }) {
               </p>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: 12 }}>
+            <div className="stagger" style={{ display: "grid", gap: 12 }}>
               {filtered.map((client, i) => (
                 <ClientLoyaltyCard key={client.phone + i} client={client} requiredStamps={REQUIRED_STAMPS} rewardName={REWARD_NAME} stampImage={STAMP_IMAGE} idioma={barbershopConfig?.idioma} />
               ))}
@@ -2562,7 +2568,8 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName, idi
               padding: "8px 14px",
               fontSize: 12,
               fontWeight: 600,
-              cursor: "pointer"
+              cursor: "pointer",
+              transition: "background 0.15s, border-color 0.15s, color 0.15s"
             }}
           >
             {f.label}
@@ -2581,7 +2588,7 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName, idi
           </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
+        <div className="stagger" style={{ display: "grid", gap: 12 }}>
           {filtered.map(r => {
             const info = statusInfo[r.status] || statusInfo.pendiente;
             const initials = (r.client || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -2590,7 +2597,8 @@ function RedemptionsManager({ redemptions, slug, requiredStamps, rewardName, idi
                 background: "var(--bg-elevated)",
                 border: `1px solid ${r.status === 'pendiente' ? '#f59e0b44' : 'var(--border)'}`,
                 borderRadius: 12,
-                padding: 18
+                padding: 18,
+                transition: "border-color 0.2s"
               }}>
                 <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
                   <div style={{
@@ -3032,7 +3040,7 @@ function ServicesView({ slug }) {
           </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
+        <div className="stagger" style={{ display: "grid", gap: 12 }}>
           {services.map(svc => (
             <div key={svc.id} style={{
               background: "var(--bg-elevated)",
@@ -3430,7 +3438,7 @@ function StatCardPro({ label, value, color, change, spark, maxSpark, icon, subti
         padding: 14,
         position: "relative",
         overflow: "hidden",
-        transition: "all 0.2s",
+        transition: "transform 0.2s var(--ease-out), border-color 0.2s, box-shadow 0.2s var(--ease-out)",
         cursor: isClickable ? "pointer" : "default",
         boxShadow: isClickable ? `0 0 0 1px ${color}22` : "none"
       }}
@@ -3529,7 +3537,7 @@ function QuickAction({ icon, label, color, onClick }) {
         flexDirection: "column",
         alignItems: "center",
         gap: 4,
-        transition: "all 0.2s",
+        transition: "transform 0.18s var(--ease-out), border-color 0.18s, box-shadow 0.18s var(--ease-out)",
         fontFamily: "'Barlow', sans-serif"
       }}
       onMouseEnter={e => {
@@ -3542,6 +3550,8 @@ function QuickAction({ icon, label, color, onClick }) {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
+      onMouseDown={e => { e.currentTarget.style.transform = "translateY(-1px) scale(0.97)"; }}
+      onMouseUp={e => { e.currentTarget.style.transform = "translateY(-2px) scale(1)"; }}
     >
       <span style={{
         fontSize: 20,
@@ -3712,7 +3722,7 @@ function ProductsView({ slug }) {
 
       {/* KPIs de ganancias */}
       {productosConCosto.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
           {[
             { label: t('Ganancia neta potencial'), value: `$${gananciaTotal.toLocaleString()}`, color: '#4ade80', sub: t('Si vendes todo el stock') },
             { label: t('Margen promedio'), value: `${margenPromedio}%`, color: 'var(--accent)', sub: t('Sobre precio de venta') },
@@ -3789,12 +3799,18 @@ function ProductsView({ slug }) {
           <p style={{ fontSize: 14 }}>{t("Agrega los productos que vendes en tu barbería")}</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
           {products.map(p => (
-            <div key={p.id} style={{
-              background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-              borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s'
-            }}>
+            <div
+              key={p.id}
+              style={{
+                background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+                borderRadius: 14, overflow: 'hidden',
+                transition: 'border-color 0.2s, transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
               {/* Imagen */}
               <div style={{
                 height: 180, background: 'var(--bg-input)',

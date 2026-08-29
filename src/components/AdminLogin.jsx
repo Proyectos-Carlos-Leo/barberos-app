@@ -9,6 +9,7 @@ export default function AdminLogin({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
   const { slug, barbershopConfig } = useApp();
   const t = useT(barbershopConfig?.idioma);
   const idioma = barbershopConfig?.idioma;
@@ -36,6 +37,7 @@ export default function AdminLogin({ onLogin }) {
       }
       setError(msg);
       setLoading(false);
+      setShakeKey(k => k + 1);
     }
   };
 
@@ -82,7 +84,7 @@ export default function AdminLogin({ onLogin }) {
           {t("Solo el dueño puede entrar aquí")}
         </p>
 
-        <div style={{
+        <div key={shakeKey} className={shakeKey > 0 ? "shake" : ""} style={{
           background: 'var(--bg-elevated)', border: '1px solid #222',
           borderRadius: 16, padding: 32
         }}>
@@ -108,7 +110,8 @@ export default function AdminLogin({ onLogin }) {
                 border: `1px solid ${error ? '#dc2626' : 'var(--border-strong)'}`,
                 borderRadius: 8, padding: '12px 16px',
                 width: '100%', fontFamily: "'Barlow', sans-serif",
-                fontSize: 15, outline: 'none'
+                fontSize: 15, outline: 'none',
+                transition: 'border-color 0.2s'
               }}
             />
           </div>
@@ -134,11 +137,12 @@ export default function AdminLogin({ onLogin }) {
                 border: `1px solid ${error ? '#dc2626' : 'var(--border-strong)'}`,
                 borderRadius: 8, padding: '12px 16px',
                 width: '100%', fontFamily: "'Barlow', sans-serif",
-                fontSize: 15, outline: 'none', letterSpacing: 4
+                fontSize: 15, outline: 'none', letterSpacing: 4,
+                transition: 'border-color 0.2s'
               }}
             />
             {error && (
-              <p style={{ color: '#f87171', fontSize: 12, marginTop: 8 }}>
+              <p className="fade-in" style={{ color: '#f87171', fontSize: 12, marginTop: 8 }}>
                 ⚠ {error}
               </p>
             )}
@@ -157,8 +161,10 @@ export default function AdminLogin({ onLogin }) {
               fontSize: 16, fontWeight: 700,
               letterSpacing: 1, textTransform: 'uppercase',
               cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s'
+              transition: 'opacity 0.2s, transform 0.15s var(--ease-out)'
             }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
           >
             {loading ? t('Verificando...') : t('Entrar al Panel')}
           </button>

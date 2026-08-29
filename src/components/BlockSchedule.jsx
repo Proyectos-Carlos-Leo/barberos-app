@@ -209,7 +209,7 @@ export default function BlockSchedule({ barbers, blocks }) {
           }}>
             {t("Bloqueos activos")} ({sortedBlocks.length})
           </h4>
-          <div style={{ display: 'grid', gap: 8 }}>
+          <div className="stagger" style={{ display: 'grid', gap: 8 }}>
             {sortedBlocks.map(block => {
               const typeIcon = { hours: <IconTiempo size={12} glow={false} />, fullDay: <IconCalendar size={12} glow={false} />, range: <IconDescanso size={12} glow={false} /> }[block.type] || <IconBloquear size={12} glow={false} />;
               const typeLabel = { hours: stripEmoji(t('⏰ Horas')), fullDay: stripEmoji(t('📅 Día completo')), range: stripEmoji(t('🏖 Vacaciones')) }[block.type] || '';
